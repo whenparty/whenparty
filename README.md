@@ -6,6 +6,7 @@ Nginx reverse proxy infrastructure for the WhenParty project using Cloudflare Or
 
 - **Purpose**: Nginx reverse proxy only (no application services)
 - **Networks**: Docker networks `wp_www` (www service) and `wp_tempsites` (temp-site router); additional services (e.g. Telegram bot) should provision their own `wp_*` network
+- **Temp Sites Router**: The `whenparty-temp-sites` repo owns the wildcard `*.when.party` nginx config and Traefik router on `wp_tempsites`, syncing changes back into this stack during its deploy workflow
 - **TLS**: Cloudflare Origin Certificates with 15-year validity
 - **Deployment**: Automated via GitHub Actions
 
@@ -95,14 +96,25 @@ Deployment is automated via GitHub Actions:
 
 This infrastructure is part of a multi-repository architecture:
 
-```
+``` 
  whenparty-infra/          # This repo - Nginx proxy only
  whenparty-www/            # Main website (connects to wp_www)
  whenparty-telegram-bot/   # Telegram bot + PostgreSQL (connects to wp_tg_bot)
- whenparty-temp-sites/     # Temporary subdomains (connects to wp_tempsites)
+ whenparty-temp-sites/     # Temp projects + Traefik router + wildcard nginx config (wp_tempsites)
 ```
 
+`whenparty-temp-sites` now carries the Traefik router, wildcard nginx config, and project directories. Its deploy workflow copies `nginx-config/temp-sites.conf` into `/opt/services/whenparty/infra/nginx/conf.d/temp-sites.conf`, ensures the `traefik-tempsites` container is running on `wp_tempsites`, validates nginx, and reloads the proxy after every push.
+
 Each service provisions its own external Docker network (`wp_*`). nginx—and any shared infrastructure like monitoring—only joins the networks it must reach (`wp_www`, `wp_tempsites`, future `wp_tg_bot`, etc.), preserving isolation between application containers.
+
+## Temp Sites Router
+
+- `nginx/conf.d/temp-sites.conf` lives in the `whenparty-temp-sites` repo (`nginx-config/temp-sites.conf`). It terminates TLS for `*.when.party` using the Cloudflare Origin certificate and proxies every request to `http://traefik-tempsites:8000` on `wp_tempsites`.
+- `traefik-tempsites` is defined in `whenparty-temp-sites/traefik/docker-compose.yml`. The container runs continuously, listens on port 8000, exposes the dashboard at `traefik.when.party`, and discovers project containers through Traefik labels.
+- Temp projects under `whenparty-temp-sites/projects/<name>` ship a `compose.yml` (and optional `Dockerfile`). The GitHub Actions workflow builds/pushes images if needed, ensures `wp_tempsites` exists, runs `docker compose up -d --remove-orphans` in each changed project directory on the VPS, and prunes old images.
+- After each deploy, the workflow copies the wildcard config mentioned above, runs `nginx -t`, reloads nginx, and relies on this repo's `scripts/update-cloudflare-real-ip.sh` to keep `/opt/services/whenparty/infra/nginx/conf.d/cloudflare_real_ip.conf` current.
+
+Traffic for temp sites flows `Internet → Cloudflare → nginx (TLS) → Traefik → project container`, keeping nginx slim while Traefik handles per-host routing for disposable apps.
 
 ## Nginx Configuration
 
@@ -125,6 +137,7 @@ This infrastructure uses a **service-owned configuration** pattern:
   - Example: `whenparty-www` owns both `www.example.com` and apex redirect (`example.com` → `www.example.com`)
   - During deployment, services copy their config to `nginx/conf.d/`
   - Example: `www.conf` is copied from `whenparty-www` during its deployment
+- **Temp sites wildcard config** - maintained in `whenparty-temp-sites/nginx-config/temp-sites.conf`. It is copied into `/opt/services/whenparty/infra/nginx/conf.d/` by the temp-sites deploy workflow and proxies `*.when.party` to Traefik.
 
 ### Service Deployment Pattern
 
@@ -153,6 +166,16 @@ This pattern allows:
 - Independent service deployments
 - Automatic nginx configuration updates
 - Clear separation of concerns
+
+`whenparty-temp-sites` follows the same validation/reload steps but instead of writing per-project configs it keeps the shared `temp-sites.conf` in sync and offloads host routing to the long-running `traefik-tempsites` container.
+
+### Temp Sites Wildcard Config
+
+The `temp-sites.conf` file shipped in `whenparty-temp-sites/nginx-config/` defines a wildcard `server_name *.when.party`, pulls in the shared security headers and real-IP include from this repo, and proxies all requests to `http://traefik-tempsites:8000`. The deploy workflow for temp sites copies that file into `/opt/services/whenparty/infra/nginx/conf.d/`, runs `nginx -t`, and reloads the proxy. If traffic breaks, verify that:
+
+1. `/opt/services/whenparty/infra/nginx/conf.d/temp-sites.conf` matches the latest commit in `whenparty-temp-sites`.
+2. The `traefik-tempsites` container (defined in `whenparty-temp-sites/traefik/docker-compose.yml`) is healthy and attached to `wp_tempsites`.
+3. `scripts/update-cloudflare-real-ip.sh` is scheduled on the VPS so the Cloudflare allow list stays fresh for both `default.conf` and `temp-sites.conf`.
 
 ### Service Decommissioning
 
