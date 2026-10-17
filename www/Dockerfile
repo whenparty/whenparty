@@ -1,4 +1,4 @@
-FROM nginx:1.29.3-alpine
+FROM nginx:1.31.7-alpine
 
 # Enable gzip compression for better performance
 RUN sed -i 's/#gzip  on;/gzip  on;/' /etc/nginx/nginx.conf && \

@@ -64,7 +64,7 @@ Configure these secrets in the `temp-sites` repository:
 1. Create a folder under `projects/<name>/`.
 2. Add a `Dockerfile` (optional but recommended). Example static site:
    ```dockerfile
-   FROM nginx:1.29.3-alpine
+   FROM nginx:1.31.7-alpine
    COPY site/ /usr/share/nginx/html/
    HEALTHCHECK CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
    ```
