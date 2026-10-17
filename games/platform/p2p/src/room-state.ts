@@ -12,7 +12,7 @@ export interface GameRules<State, Move> {
   isMove: (value: unknown) => value is Move
   isState: (value: unknown) => value is State
   // Called when the player in a seat leaves (the host too), for example to skip their turn or
-  // end the game. Without it the seat is just freed, and the next peer to join takes it.
+  // end the game. Then the seat goes to the first member without one, or stays free.
   onSeatLeft?: (state: State, seat: string) => State
 }
 
@@ -62,17 +62,31 @@ const withSeat = <State>(room: RoomState<State>, seat: string, peerId: string | 
   seats: {...room.seats, [seat]: peerId}
 })
 
-// A joining peer becomes the last member and takes the first free seat, with the game as it
-// is. Without a free seat, it watches.
+// Free seats go to the members without one, in join order. Returns the same room when there is
+// nothing to fill.
+const fillSeats = <State>(room: RoomState<State>): RoomState<State> => {
+  const seated = new Set(Object.values(room.seats))
+  const waiting = room.members.filter(peerId => !seated.has(peerId))
+  const free = Object.keys(room.seats).filter(seat => room.seats[seat] === null)
+
+  if (waiting.length === 0 || free.length === 0) {
+    return room
+  }
+
+  const seats = {...room.seats}
+  free.forEach((seat, index) => (seats[seat] = waiting[index] ?? null))
+
+  return {...room, seats}
+}
+
+// A joining peer becomes the last member and takes a free seat, with the game as it is.
+// Without a free seat, it watches until one frees up.
 export const addPeer = <State>(room: RoomState<State>, peerId: string): RoomState<State> => {
   if (room.members.includes(peerId)) {
     return room
   }
 
-  const joined = {...room, members: [...room.members, peerId]}
-  const freeSeat = Object.keys(room.seats).find(seat => room.seats[seat] === null)
-
-  return freeSeat ? withSeat(joined, freeSeat, peerId) : joined
+  return fillSeats({...room, members: [...room.members, peerId]})
 }
 
 export const removePeer = <State, Move>(
@@ -92,9 +106,10 @@ export const removePeer = <State, Move>(
     return {...room, members, handled}
   }
 
+  // The game sees the seat left before it goes to someone else
   const game = rules.onSeatLeft ? rules.onSeatLeft(room.game, seat) : room.game
 
-  return {...withSeat(room, seat, null), members, handled, game}
+  return fillSeats({...withSeat(room, seat, null), members, handled, game})
 }
 
 const applyToGame = <State, Move>(

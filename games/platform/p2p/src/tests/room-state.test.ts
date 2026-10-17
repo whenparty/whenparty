@@ -86,6 +86,22 @@ describe('removePeer', () => {
     assert.equal(removePeer(race, room, 'stranger'), room)
   })
 
+  it('gives the freed seat to the first member without one, in join order', () => {
+    const room = addPeer(addPeer(playMoves(fullRoom(), [['host', 2]]), 'first'), 'second')
+    const left = removePeer(race, room, 'guest')
+
+    assert.deepEqual(left.seats, {A: 'host', B: 'first'})
+    assert.equal(left.game.total, 2)
+  })
+
+  it('lets the game react before the seat goes to someone else', () => {
+    const left = removePeer(forfeit, addPeer(fullRoom(), 'spectator'), 'guest')
+
+    // The forfeit counts against the seat that was left, not against the spectator who took it
+    assert.equal(left.game.winner, 'A')
+    assert.equal(left.seats.B, 'spectator')
+  })
+
   it('hands the freed seat and the game to the next peer who joins', () => {
     const room = playMoves(fullRoom(), [['host', 2]])
     const rejoined = addPeer(removePeer(race, room, 'guest'), 'new-guest')

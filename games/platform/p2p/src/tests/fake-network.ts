@@ -20,6 +20,10 @@ export interface FakeNetwork {
   notice: (observer: string, peer: string) => void
   // Lets every message in flight arrive, including the ones they cause
   settle: () => Promise<void>
+  // The page of a peer unloads, as on beforeunload or pagehide
+  unload: (selfId: string) => void
+  // How many times a peer sent on an action
+  sends: (selfId: string, namespace: string) => number
 }
 
 const nextTurn = () => new Promise<void>(resolve => setImmediate(resolve))
@@ -27,6 +31,8 @@ const nextTurn = () => new Promise<void>(resolve => setImmediate(resolve))
 export const createNetwork = (): FakeNetwork => {
   const peers = new Map<string, Peer>()
   const links = new Set<string>()
+  const unloadHooks = new Map<string, () => void>()
+  const sendCounts = new Map<string, number>()
   const linked = (from: string, to: string) => links.has(`${from}>${to}`)
   const linkedPeers = (selfId: string) => [...peers.keys()].filter(id => linked(selfId, id))
 
@@ -40,6 +46,8 @@ export const createNetwork = (): FakeNetwork => {
   const makeAction = (selfId: string, handlers: Map<string, Handler>) => (namespace: string) => {
     const action: MessageAction<string> = {
       send: async (data, options) => {
+        const key = `${selfId}:${namespace}`
+        sendCounts.set(key, (sendCounts.get(key) ?? 0) + 1)
         const target = options?.target
         const targets = target ? [target].flat() : linkedPeers(selfId)
         targets.forEach(to => deliver(selfId, to, namespace, data))
@@ -85,7 +93,14 @@ export const createNetwork = (): FakeNetwork => {
   }
 
   return {
-    transport: selfId => ({selfId, join: () => join(selfId)}),
+    transport: selfId => ({
+      selfId,
+      join: () => join(selfId),
+      onUnload: callback => {
+        unloadHooks.set(selfId, callback)
+        return () => unloadHooks.delete(selfId)
+      }
+    }),
     connect: (first, second) => {
       links.add(`${first}>${second}`).add(`${second}>${first}`)
       peers.get(first)?.room.onPeerJoin?.(second)
@@ -96,6 +111,8 @@ export const createNetwork = (): FakeNetwork => {
       links.delete(`${second}>${first}`)
     },
     notice: (observer, peer) => peers.get(observer)?.room.onPeerLeave?.(peer),
+    unload: selfId => unloadHooks.get(selfId)?.(),
+    sends: (selfId, namespace) => sendCounts.get(`${selfId}:${namespace}`) ?? 0,
     settle: async () => {
       for (let round = 0; round < 20; round++) {
         await nextTurn()

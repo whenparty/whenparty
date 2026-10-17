@@ -55,13 +55,21 @@ export interface Transport {
   onUnload?: (callback: () => void) => () => void
 }
 
+// Mobile browsers often skip beforeunload (iOS Safari always does), but fire pagehide
+const unloadEvents = ['beforeunload', 'pagehide']
+
+// Calls back on every unload event of the page, until the returned function stops it
+export const onPageUnload =
+  (page: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>) =>
+  (callback: () => void): (() => void) => {
+    unloadEvents.forEach(event => page.addEventListener(event, callback))
+    return () => unloadEvents.forEach(event => page.removeEventListener(event, callback))
+  }
+
 const trystero: Transport = {
   selfId,
   join: (appId, code) => joinRoom({appId, relayConfig: {urls: [signalingUrlFor(location.hostname)]}}, code),
-  onUnload: callback => {
-    addEventListener('beforeunload', callback)
-    return () => removeEventListener('beforeunload', callback)
-  }
+  onUnload: onPageUnload(globalThis)
 }
 
 const defaultTakeoverDelayMs = 2500
@@ -310,11 +318,18 @@ export const startSession = <State, Move>(
   options: SessionOptions<State, Move>,
   transport: Transport = trystero
 ): Session<Move> => {
-  // Hooked before joining, so the goodbye goes out ahead of Trystero's own leave message
+  // Hooked before joining, so the goodbye goes out ahead of Trystero's own leave message. It goes
+  // out once, whichever of the unload events and leave() comes first.
+  let saidGoodbye = false
   let sayGoodbye = () => {}
   const stopUnload = transport.onUnload?.(() => sayGoodbye())
   const context = createContext(options, transport)
-  sayGoodbye = () => void sayBye(context)
+  sayGoodbye = () => {
+    if (!saidGoodbye) {
+      saidGoodbye = true
+      void sayBye(context)
+    }
+  }
 
   context.snapshots.onMessage = (data, {peerId}) => receiveSnapshot(context, data, peerId)
   context.intents.onMessage = (data, {peerId}) => receiveIntent(context, data, peerId)

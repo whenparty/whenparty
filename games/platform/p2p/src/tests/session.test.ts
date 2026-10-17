@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import {setTimeout as sleep} from 'node:timers/promises'
 import {describe, it} from 'node:test'
 import type {GameRules} from '../room-state.ts'
-import {startSession, type SessionView} from '../session.ts'
+import {onPageUnload, startSession, type SessionView} from '../session.ts'
 import {createNetwork} from './fake-network.ts'
 
 // Three seats that move in turn, so every move shows up in the state
@@ -36,6 +36,7 @@ const startRoom = async () => {
       network.transport(selfId)
     )
   const sessions = {a: start('a', true), b: start('b', false), c: start('c', false)}
+  const seatsOf = (selfId: string) => views.get(selfId)?.room?.seats
 
   network.connect('a', 'b')
   network.connect('a', 'c')
@@ -47,7 +48,7 @@ const startRoom = async () => {
   const handledOf = (selfId: string, sender: string) => views.get(selfId)?.room?.handled[sender]
   const membersOf = (selfId: string) => views.get(selfId)?.room?.members
 
-  return {network, sessions, views, hostOf, movesOf, handledOf, membersOf}
+  return {network, sessions, views, start, hostOf, movesOf, handledOf, membersOf, seatsOf}
 }
 
 const go = {type: 'move', move: 'go'} as const
@@ -197,5 +198,63 @@ describe('startSession', () => {
 
     assert.deepEqual(membersOf('a'), ['a', 'b'])
     assert.equal(views.get('a')?.room?.seats.C, null)
+  })
+
+  it('seats a reloaded player once the old one is dropped, without a goodbye', async () => {
+    const {network, sessions, start, movesOf, seatsOf} = await startRoom()
+
+    // c's tab reloads without saying goodbye: its old ID just goes quiet, and c2 joins
+    network.cut('a', 'c')
+    network.cut('b', 'c')
+    network.notice('a', 'c')
+    network.notice('b', 'c')
+    const c2 = start('c2', false)
+    network.connect('a', 'c2')
+    network.connect('b', 'c2')
+    await network.settle()
+
+    assert.equal(seatsOf('a')?.C, 'c')
+
+    await sleep(takeoverDelayMs * 4)
+    await network.settle()
+
+    assert.equal(seatsOf('a')?.C, 'c2')
+
+    sessions.a.send(go)
+    await network.settle()
+    sessions.b.send(go)
+    await network.settle()
+    c2.send(go)
+    await network.settle()
+
+    assert.deepEqual(movesOf('c2'), ['A', 'B', 'C'])
+  })
+
+  it('says goodbye once, whatever unloads the page and leaves', async () => {
+    const {network, sessions, membersOf} = await startRoom()
+
+    network.unload('c')
+    network.unload('c')
+    await sessions.c.leave()
+    await network.settle()
+
+    assert.equal(network.sends('c', 'bye'), 1)
+    assert.deepEqual(membersOf('a'), ['a', 'b'])
+  })
+})
+
+describe('onPageUnload', () => {
+  it('calls back on pagehide and on beforeunload, until it is stopped', () => {
+    const page = new EventTarget()
+    let calls = 0
+    const stop = onPageUnload(page)(() => calls++)
+
+    page.dispatchEvent(new Event('pagehide'))
+    page.dispatchEvent(new Event('beforeunload'))
+    stop()
+    page.dispatchEvent(new Event('pagehide'))
+    page.dispatchEvent(new Event('beforeunload'))
+
+    assert.equal(calls, 2)
   })
 })

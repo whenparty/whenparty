@@ -37,12 +37,24 @@ describe('promote', () => {
     assert.equal(promoted.term, 1)
   })
 
-  it("frees the old host's seat and keeps the game", () => {
+  it("gives the old host's seat to the first member without one and keeps the game", () => {
+    const promoted = promote(race, room, 'host', 'guest')
+
+    assert.deepEqual(promoted.seats, {A: 'spectator', B: 'guest'})
+    assert.equal(promoted.game, room.game)
+  })
+
+  it("leaves the old host's seat free when everyone else has one", () => {
+    const pair = addPeer(createRoomState(race, 'host'), 'guest')
+
+    assert.deepEqual(promote(race, pair, 'host', 'guest').seats, {A: null, B: 'guest'})
+  })
+
+  it('moves the new host to the front even when it had no seat', () => {
     const promoted = promote(race, room, 'host', 'spectator')
 
     assert.deepEqual(promoted.members, ['spectator', 'guest'])
-    assert.deepEqual(promoted.seats, {A: null, B: 'guest'})
-    assert.equal(promoted.game, room.game)
+    assert.deepEqual(promoted.seats, {A: 'spectator', B: 'guest'})
   })
 
   it('lets the game react to the old host leaving its seat', () => {
