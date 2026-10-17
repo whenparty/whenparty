@@ -92,6 +92,7 @@ Deployment is automated via GitHub Actions:
   2. Runs `docker compose up -d` to update containers
   3. Generates `cloudflare_real_ip.conf` if it is missing or still a placeholder
   4. Reloads nginx configuration
+  5. Installs the hourly cron job that refreshes `cloudflare_real_ip.conf`
 
 ## Network Architecture
 
@@ -176,7 +177,7 @@ The `temp-sites.conf` file shipped in `whenparty-temp-sites/nginx-config/` defin
 
 1. `/opt/services/whenparty/infra/nginx/conf.d/temp-sites.conf` matches the latest commit in `whenparty-temp-sites`.
 2. The `traefik-tempsites` container (defined in `whenparty-temp-sites/traefik/docker-compose.yml`) is healthy and attached to `wp_tempsites`.
-3. `scripts/update-cloudflare-real-ip.sh` is scheduled on the VPS so the Cloudflare allow list stays fresh for both `default.conf` and `temp-sites.conf`.
+3. `scripts/update-cloudflare-real-ip.sh` is in the deploy user's crontab (`crontab -l`) so the Cloudflare allow list stays fresh for both `default.conf` and `temp-sites.conf`.
 
 ### Service Decommissioning
 
@@ -194,7 +195,7 @@ When removing a service:
 
 ## Cloudflare Real IP Automation
 
-Use `scripts/update-cloudflare-real-ip.sh` to refresh `/opt/services/whenparty/infra/nginx/conf.d/cloudflare_real_ip.conf` with the latest ranges from Cloudflare. Schedule it with cron so the allow list stays current:
+Use `scripts/update-cloudflare-real-ip.sh` to refresh `/opt/services/whenparty/infra/nginx/conf.d/cloudflare_real_ip.conf` with the latest ranges from Cloudflare:
 
 ```bash
 /opt/services/whenparty/infra/scripts/update-cloudflare-real-ip.sh
@@ -204,16 +205,17 @@ When the allow list changes the script validates the nginx configuration and rel
 
 The file is not tracked in git, so infra deploys never overwrite it. The deploy workflow only runs the script when the file is missing or has no `set_real_ip_from` entries (e.g. on a fresh VPS).
 
-### Cron example
+### Cron
 
-Add a cron job for the deploy user:
+Every deploy installs an hourly cron job for the deploy user, so the allow list stays current and nginx reloads when the ranges change:
 
-```bash
-crontab -e
+```
 0 * * * * /opt/services/whenparty/infra/scripts/update-cloudflare-real-ip.sh >/tmp/update-cloudflare-real-ip.log 2>&1
 ```
 
-This ensures the allow list is refreshed regularly and nginx reloads when the ranges change.
+The deploy replaces any existing crontab line that runs this script (whatever its schedule or log path) with the line above and keeps all other lines. Check it with `crontab -l`; the last run's output is in `/tmp/update-cloudflare-real-ip.log`.
+
+To install it by hand (e.g. before the first deploy), run `crontab -e` as the deploy user and add the same line.
 
 ## Troubleshooting
 
