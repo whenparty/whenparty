@@ -8,5 +8,8 @@ keys/
 
 docker-compose.override.yml
 
+# Generated on the VPS by scripts/update-cloudflare-real-ip.sh
+nginx/conf.d/cloudflare_real_ip.conf
+
 .vscode/
 

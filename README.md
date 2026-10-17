@@ -88,9 +88,10 @@ Deployment is automated via GitHub Actions:
 
 - **Trigger**: Push to `main` branch with changes to `docker-compose.yml` or `nginx/**`
 - **Process**:
-  1. Copies `docker-compose.yml` and `nginx/conf.d` to VPS
+  1. Copies `docker-compose.yml`, `nginx/conf.d` and `scripts` to VPS
   2. Runs `docker compose up -d` to update containers
-  3. Reloads nginx configuration
+  3. Generates `cloudflare_real_ip.conf` if it is missing or still a placeholder
+  4. Reloads nginx configuration
 
 ## Network Architecture
 
@@ -130,7 +131,7 @@ This infrastructure uses a **service-owned configuration** pattern:
 - **Shared includes** (referenced by service configs):
 
   - `nginx/conf.d/includes/security-headers.conf` — baseline response headers
-  - `nginx/conf.d/cloudflare_real_ip.conf` — Cloudflare IP allow list placeholder (overwritten by automation)
+  - `nginx/conf.d/cloudflare_real_ip.conf` — Cloudflare IP allow list, generated on the VPS by `scripts/update-cloudflare-real-ip.sh` (not tracked in git)
 
 - **Service-specific configs** - maintained in service repos:
   - Each service maintains its own nginx config with all its routing rules
@@ -200,6 +201,8 @@ Use `scripts/update-cloudflare-real-ip.sh` to refresh `/opt/services/whenparty/i
 ```
 
 When the allow list changes the script validates the nginx configuration and reloads the proxy automatically.
+
+The file is not tracked in git, so infra deploys never overwrite it. The deploy workflow only runs the script when the file is missing or has no `set_real_ip_from` entries (e.g. on a fresh VPS).
 
 ### Cron example
 
