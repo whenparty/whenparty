@@ -22,7 +22,7 @@ const room = joinRoom(
 
 - `appId`: use one per game, so rooms with the same code in different games never meet.
 - `roomCode`: the room ID or short code the players share.
-- Bundle Trystero into the game (`@trystero-p2p/ws-relay`, the same version as this server) instead of loading it from a CDN. The temp-sites CSP (`infra/nginx/conf.d/temp-sites.conf`) allows scripts only from the site itself, and WebSocket connections only to the site itself and `wss://signaling.when.party`.
+- Bundle Trystero into the game (`@trystero-p2p/ws-relay`, the same version as this server) instead of loading it from a CDN. The `*.when.party` CSP (`infra/nginx/conf.d/temp-sites.conf`) allows scripts only from the site itself, and WebSocket connections only to the site itself and `wss://signaling.when.party`.
 - State lives only in the open tabs. When the last player leaves, it is gone unless the game saves it itself (for example in `localStorage`).
 - There is no TURN server yet. Players behind strict NAT (some mobile and corporate networks) may not be able to connect to each other.
 
@@ -35,19 +35,29 @@ const room = joinRoom(
 
 ## Local Development
 
+From `games/`, the workspace root:
+
 ```bash
 npm install
-npm test
-docker build -t signaling:dev .
+npm test --workspace platform/signaling
+npm start --workspace platform/signaling
+```
+
+Or the production image, built from the `games/` context like every image in the workspace:
+
+```bash
+docker build -f platform/signaling/Dockerfile -t signaling:dev .
 docker run --rm -p 8080:8080 signaling:dev
 ```
 
 A game served from `http://localhost:<port>` can then use `relayConfig: {urls: ['ws://localhost:8080']}`.
 
+The image installs only this package's dependencies from the workspace lockfile (`npm ci --omit=dev --workspace platform/signaling`).
+
 ## Updating Trystero
 
-Change the exact version of `@trystero-p2p/ws-relay` in `package.json`, run `npm install` and `npm test`, and move the games to the same version.
+Change the exact version of `@trystero-p2p/ws-relay` in `package.json`, run `npm install` and `npm test` in `games/`, and move the games to the same version.
 
 ## Deployment
 
-Like every temp site: a push to `main` that changes this folder builds `ghcr.io/whenparty/signaling` and restarts the container (see [../../README.md](../../README.md)).
+A push to `main` that changes this folder or the workspace lockfile builds `ghcr.io/whenparty/signaling` and restarts the container (see [../../README.md](../../README.md)). Players already in a game stay connected while it restarts: only new joins wait for it.

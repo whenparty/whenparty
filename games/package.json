@@ -1,0 +1,17 @@
+{
+  "name": "games",
+  "private": true,
+  "description": "Peer-to-peer browser games on *.when.party and the platform they share",
+  "type": "module",
+  "workspaces": [
+    "platform/*",
+    "titles/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "npm test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

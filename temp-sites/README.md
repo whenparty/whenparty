@@ -20,11 +20,11 @@ temp-sites/
 
 The wildcard nginx config for `*.when.party` lives with the other nginx configs in `infra/nginx/conf.d/temp-sites.conf`. Adding a project never touches nginx.
 
-`projects/signaling/` is the shared Trystero signaling server (`wss://signaling.when.party`) for the peer-to-peer games. See [its README](projects/signaling/README.md) for how a game connects to it.
+The peer-to-peer games and their signaling server live in [`games/`](../games/README.md) at the top of the repo. They are routed by this Traefik and the same nginx config.
 
 ## Deployment
 
-On a push that changes `temp-sites/projects/**` (Markdown excluded), `.github/workflows/temp-sites.yml`:
+On a push that changes `temp-sites/projects/**` (Markdown excluded), `.github/workflows/temp-sites.yml` (with the reusable `deploy-project.yml`):
 
 1. finds which project folders changed
 2. for each one, builds and pushes `ghcr.io/whenparty/<project>` (`latest` + `sha-<commit>`) if it has a `Dockerfile`

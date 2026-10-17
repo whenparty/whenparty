@@ -1,11 +1,11 @@
 # WhenParty
 
-Everything that runs on the WhenParty VPS behind Cloudflare: the nginx proxy that terminates TLS, the When Party site on `www.when.party`, the `www.nii.au` site, and temporary sites on `*.when.party`.
+Everything that runs on the WhenParty VPS behind Cloudflare: the nginx proxy that terminates TLS, the When Party site on `www.when.party`, the `www.nii.au` site, temporary sites on `*.when.party`, and the peer-to-peer games on `*.when.party`.
 
 ```
 Internet → Cloudflare → nginx (TLS, this repo) ─┬→ www container   (www.when.party)
                                                ├→ nii-au container (www.nii.au)
-                                               └→ Traefik → project containers (*.when.party)
+                                               └→ Traefik → temp site and game containers (*.when.party)
 ```
 
 ## Layout
@@ -19,8 +19,11 @@ Each part deploys only when its own files change. Markdown-only changes don't de
 | `nii-au/` | `.github/workflows/nii-au.yml` | nii.au site (`nii-au` image and container) |
 | `temp-sites/projects/` | `.github/workflows/temp-sites.yml` | changed temp projects only |
 | `temp-sites/traefik/` | `.github/workflows/traefik.yml` | Traefik router |
+| `games/` | `.github/workflows/games.yml` | changed games and game services only (signaling server) |
 
 `www.yml` and `nii-au.yml` both call `.github/workflows/site.yml`: build the folder's `Dockerfile`, stop on critical Trivy findings, push `ghcr.io/whenparty/<folder>:latest`, then run the folder's `docker-compose.yml` in `/opt/services/whenparty/<folder>`. A change to `site.yml` redeploys both sites.
+
+`temp-sites.yml` and `games.yml` find the changed projects and call `.github/workflows/deploy-project.yml` for each one: build and push its image (`latest` + `sha-<commit>`), copy the project folder to the same path under `/opt/services/whenparty/` and run its `compose.yml`, or take it down when the folder is gone.
 
 `.github/workflows/image-scan.yml` runs every Monday (or manually) and scans every image the VPS runs with Trivy. That includes the nginx proxy and Traefik, which no deploy scans. It reads the image list from the compose files, uploads the results to GitHub Security, and turns red on a critical finding. That means the image needs a bump.
 
@@ -35,7 +38,7 @@ All nginx configs live in `infra/nginx/conf.d/` and ship together with the nginx
 - `default.conf` holds the settings shared by every site: rate limits, Cloudflare real IP, security headers, proxy headers (including WebSocket), the Docker DNS resolver, plus the port 80 catch-all that redirects to HTTPS and serves `/health`.
 - `www.conf` serves `www.when.party` and redirects `when.party` to it. These exact names win over the wildcard in `temp-sites.conf`.
 - `nii-au.conf` serves `www.nii.au` and redirects `nii.au` to it.
-- `temp-sites.conf` terminates TLS for every other `*.when.party` host and passes the request to Traefik. Its CSP also allows `wss://signaling.when.party`, the Trystero signaling server for peer-to-peer games (`temp-sites/projects/signaling/`).
+- `temp-sites.conf` terminates TLS for every other `*.when.party` host and passes the request to Traefik. Its CSP also allows `wss://signaling.when.party`, the Trystero signaling server for peer-to-peer games (`games/platform/signaling/`).
 - `cloudflare_real_ip.conf` is the Cloudflare IP allow list. It is generated on the VPS and not tracked in git (see below).
 - `cloudflare-origin-pull-ca.pem` is Cloudflare's public Authenticated Origin Pulls CA (valid until 2029-11-01). With `ssl_verify_client on` in `default.conf`, port 443 accepts only connections that present Cloudflare's client certificate, so nobody can bypass Cloudflare by hitting the server IP directly (they get a 400). Port 80 (redirects and `/health`) is unaffected.
 
@@ -52,6 +55,15 @@ To add a site, add its config to `infra/nginx/conf.d/` and attach the nginx cont
 - Traefik (`temp-sites/traefik/`) runs continuously on the `wp_tempsites` network, listens on port 8000 and discovers project containers through their labels.
 
 See [temp-sites/README.md](temp-sites/README.md) for adding a project.
+
+## Games
+
+- Peer-to-peer browser games: players find each other by a room code, and the game state goes directly between their browsers over WebRTC. Nothing about a game is stored on the server.
+- `games/` is one npm workspace. `games/platform/` holds what the games share, such as the `signaling` server at `signaling.when.party`. `games/titles/<name>/` holds one game each.
+- On push, `games.yml` tests the whole workspace, then deploys only the projects a change reaches. A change in a shared platform library redeploys every title.
+- Games run behind the temp-sites Traefik router and the `*.when.party` nginx config, so they get the same CSP as temp sites.
+
+See [games/README.md](games/README.md).
 
 ## Prerequisites
 

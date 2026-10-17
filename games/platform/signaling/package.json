@@ -1,11 +1,8 @@
 {
-  "name": "signaling",
+  "name": "@whenparty/signaling",
   "private": true,
-  "description": "Trystero WebSocket signaling server for P2P games on *.when.party",
+  "description": "Trystero WebSocket signaling server for the P2P games on *.when.party",
   "type": "module",
-  "engines": {
-    "node": ">=24"
-  },
   "scripts": {
     "start": "node src/main.mjs",
     "test": "node --test"

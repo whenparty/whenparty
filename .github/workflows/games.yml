@@ -1,0 +1,118 @@
+name: Deploy Games
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'games/**'
+      - '!games/**/*.md'
+      - '.github/workflows/games.yml'
+      - '.github/workflows/deploy-project.yml'
+
+jobs:
+  # The whole workspace is tested together, because a change in games/platform reaches every game
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The same Node image as the Dockerfiles in games/
+      - name: Test and typecheck
+        run: |
+          docker run --rm -v "$PWD/games:/games" -w /games node:24.22.0-alpine3.24 \
+            sh -c 'npm ci && npm test && npm run typecheck'
+
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.changes.outputs.projects }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # A project is games/<group>/<name> with a compose.yml. What a changed file deploys:
+      # - in a project: that project
+      # - in a platform library without compose.yml (games/platform/p2p): every title
+      # - at the top of games/ (package.json, package-lock.json): every project
+      - name: Detect project changes
+        id: changes
+        env:
+          HEAD_SHA: ${{ github.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          BASE_SHA="$BEFORE_SHA"
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            # The monorepo has several root commits, so diff against the empty tree instead
+            BASE_SHA=$(git hash-object -t tree /dev/null)
+          fi
+
+          # A project before or after the push. A deleted one is still listed, so it is taken down.
+          is_project() {
+            git cat-file -e "$HEAD_SHA:$1/compose.yml" 2>/dev/null ||
+              git cat-file -e "$BASE_SHA:$1/compose.yml" 2>/dev/null
+          }
+
+          projects_after_push() {
+            git ls-tree -r --name-only "$HEAD_SHA" -- games |
+              { grep -E '^games/[^/]+/[^/]+/compose\.yml$' || true; } |
+              sed 's#/compose\.yml$##'
+          }
+
+          # Images, containers and routers are named after the project folder, in one namespace
+          # with temp-sites/projects, so a name may be used only once
+          names=$(projects_after_push | sed 's#.*/##' | sort)
+          taken=$(
+            echo "$names" | uniq -d
+            for name in $names; do
+              if git cat-file -e "$HEAD_SHA:temp-sites/projects/$name" 2>/dev/null; then
+                echo "$name"
+              fi
+            done
+          )
+          if [ -n "$taken" ]; then
+            echo "::error::Project names used twice in games/ or also in temp-sites/projects/: $taken"
+            exit 1
+          fi
+
+          changed_files=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- games/ ':!*.md')
+
+          changed_projects=$(
+            while read -r file; do
+              [ -n "$file" ] || continue
+              project=$(echo "$file" | cut -d/ -f1-3)
+
+              if [ "$(echo "$file" | awk -F/ '{print NF}')" -le 3 ]; then
+                projects_after_push
+              elif is_project "$project"; then
+                echo "$project"
+              elif [ "$(echo "$file" | cut -d/ -f2)" = platform ]; then
+                projects_after_push | { grep '^games/titles/' || true; }
+              fi
+            done <<< "$changed_files"
+          )
+
+          # games/titles/tictactoe → ghcr.io/<owner>/tictactoe
+          projects=$(echo "$changed_projects" | sort -u |
+            jq -R 'select(length > 0) | {path: ., image: (split("/") | last)}' | jq -sc .)
+          echo "projects=$projects" >> "$GITHUB_OUTPUT"
+          echo "Changed projects: $projects"
+
+  deploy:
+    needs: [check, detect-changes]
+    if: needs.detect-changes.outputs.projects != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJson(needs.detect-changes.outputs.projects) }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/deploy-project.yml
+    with:
+      path: ${{ matrix.project.path }}
+      image: ${{ matrix.project.image }}
+      context: games
+    secrets: inherit

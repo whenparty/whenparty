@@ -1,4 +1,4 @@
-name: tempsite-signaling
+name: games-signaling
 
 services:
   app:

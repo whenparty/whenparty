@@ -1,0 +1,5 @@
+# Build context of every image in games/ (see README.md)
+**/node_modules
+**/dist
+**/tests
+**/*.md
