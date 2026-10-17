@@ -9,10 +9,12 @@ entryPoints:
     forwardedHeaders:
       trustedIPs:
         - 172.16.0.0/12 # All Docker networks
+  # Dashboard and ping. Published on the VPS loopback only (see docker-compose.yml).
+  traefik:
+    address: ":8080"
 
 api:
   dashboard: true
-  insecure: false
 
 ping: {}
 

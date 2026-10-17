@@ -6,6 +6,11 @@ services:
     container_name: traefik-tempsites
     restart: unless-stopped
 
+    # Dashboard on the VPS loopback only. Reach it through an SSH tunnel:
+    #   ssh -L 8080:127.0.0.1:18080 <user>@<vps>  →  http://localhost:8080/dashboard/
+    ports:
+      - "127.0.0.1:18080:8080"
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/traefik.yml:ro
@@ -14,17 +19,12 @@ services:
       - wp_tempsites
 
     labels:
-      # Enable dashboard on traefik.when.party
       - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.when.party`)"
+      - "traefik.http.routers.dashboard.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+      - "traefik.http.routers.dashboard.entrypoints=traefik"
       - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=web"
-      # Chain both middlewares
-      - "traefik.http.routers.dashboard.middlewares=dashboard-ipallowlist,dashboard-auth"
-      # IP whitelist - increase depth to read through Cloudflare + Nginx
-      - "traefik.http.middlewares.dashboard-ipallowlist.ipallowlist.sourcerange=${TRAEFIK_DASHBOARD_IP_WHITELIST:-}"
-      - "traefik.http.middlewares.dashboard-ipallowlist.ipallowlist.ipstrategy.depth=2"
-      # Basic auth middleware (credentials from environment variable)
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
+      # user:hash from the deploy workflow (written to .env on the VPS)
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH:-}"
 
     healthcheck:
