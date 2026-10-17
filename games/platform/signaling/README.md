@@ -11,6 +11,8 @@ Trystero calls this kind of server a "ws-relay" (`@trystero-p2p/ws-relay`). Here
 
 ## Using It in a Game
 
+The games use it through [`@whenparty/p2p`](../p2p/README.md), which does this for them:
+
 ```js
 import {joinRoom} from '@trystero-p2p/ws-relay'
 
@@ -22,7 +24,7 @@ const room = joinRoom(
 
 - `appId`: use one per game, so rooms with the same code in different games never meet.
 - `roomCode`: the room ID or short code the players share.
-- Bundle Trystero into the game (`@trystero-p2p/ws-relay`, the same version as this server) instead of loading it from a CDN. The `*.when.party` CSP (`infra/nginx/conf.d/temp-sites.conf`) allows scripts only from the site itself, and WebSocket connections only to the site itself and `wss://signaling.when.party`.
+- Bundle Trystero into the game (`@trystero-p2p/ws-relay`, the same version as this server: a test in `platform/p2p` checks it) instead of loading it from a CDN. The `*.when.party` CSP (`infra/nginx/conf.d/temp-sites.conf`) allows scripts only from the site itself, and WebSocket connections only to the site itself and `wss://signaling.when.party`.
 - State lives only in the open tabs. When the last player leaves, it is gone unless the game saves it itself (for example in `localStorage`).
 - There is no TURN server yet. Players behind strict NAT (some mobile and corporate networks) may not be able to connect to each other.
 

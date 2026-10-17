@@ -1,0 +1,17 @@
+{
+  "name": "@whenparty/p2p",
+  "private": true,
+  "description": "Shared client platform for the P2P games: room codes, host-authoritative rooms, Trystero sessions",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./dev-headers": "./src/dev-headers.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@trystero-p2p/ws-relay": "0.26.0"
+  }
+}

@@ -11,11 +11,16 @@ game state:  browser ⇄ WebRTC data channel ⇄ browser
 
 ```
 games/
-  package.json, package-lock.json   # one npm workspace, one lockfile
+  package.json, package-lock.json   # one npm workspace, one lockfile: vite, typescript, Trystero
+  tsconfig.base.json
   platform/                         # what the games share
+    p2p/                            # client library: room codes, host-authoritative rooms, Trystero sessions
     signaling/                      # Trystero signaling server, signaling.when.party
   titles/                           # one folder per game
+    tictactoe/                      # tictactoe.when.party
 ```
+
+See [platform/p2p/README.md](platform/p2p/README.md) for how a game connects and syncs its state.
 
 A folder in `platform/` or `titles/` with a `compose.yml` is a deployed project. It runs from `/opt/services/whenparty/games/<group>/<name>` on the VPS. Like a temp site, its image (`ghcr.io/whenparty/<name>`), container and Traefik router are named after the folder, and only its compose project gets a prefix (`games-<name>`). Those names share one namespace with `temp-sites/projects/`, so `games.yml` stops if a name is used twice.
 
@@ -42,3 +47,15 @@ npm install
 npm test
 npm run typecheck
 ```
+
+To play locally, run the signaling server (`npm start --workspace platform/signaling`) and a title (`npm run dev --workspace titles/tictactoe`), then open the page in two tabs. Pages on `localhost` connect to `ws://localhost:8080`.
+
+## Adding a Game
+
+1. Copy `titles/tictactoe/` to `titles/<game>/`, without `node_modules` and `dist`.
+2. Rename: `name` in `package.json`, every `tictactoe` in `compose.yml` and `Dockerfile` (the compose project keeps its `games-` prefix), the host, and the `appId` in `src/main.ts`. The name must not be taken by another game or a temp site.
+3. Replace `src/tictactoe.ts` and its tests with your rules, a `GameRules<State, Move>` from `@whenparty/p2p`.
+4. Rewrite `index.html`, `src/main.ts` and `src/style.css` for your game.
+5. Run `npm install` in `games/` so the lockfile knows the new workspace.
+
+The first push deploys it as `ghcr.io/whenparty/<game>`.

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tic-tac-toe · When Party</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <main>
+      <h1>Tic-tac-toe</h1>
+
+      <section id="lobby">
+        <button id="create" type="button">Create a room</button>
+        <form id="join">
+          <label for="code">Or join one with its code</label>
+          <div class="row">
+            <input id="code" name="code" placeholder="K7MXQ" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" required />
+            <button type="submit">Join</button>
+          </div>
+          <p id="join-error" class="error" role="alert"></p>
+        </form>
+      </section>
+
+      <section id="game" hidden>
+        <p class="room">
+          Room <strong id="room-code"></strong>
+          <button id="copy-link" type="button">Copy invite link</button>
+        </p>
+        <p id="status" aria-live="polite"></p>
+        <div id="board"></div>
+        <div class="row">
+          <button id="restart" type="button" hidden>Play again</button>
+          <button id="leave" type="button">Leave room</button>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

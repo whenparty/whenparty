@@ -1,0 +1,18 @@
+name: games-tictactoe
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/whenparty/tictactoe:latest}
+    container_name: tictactoe
+    restart: unless-stopped
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.tictactoe.rule=Host(`tictactoe.when.party`)'
+      - 'traefik.http.routers.tictactoe.entrypoints=web'
+      - 'traefik.http.services.tictactoe.loadbalancer.server.port=80'
+    networks:
+      - wp_tempsites
+
+networks:
+  wp_tempsites:
+    external: true

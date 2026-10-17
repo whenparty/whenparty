@@ -1,0 +1,103 @@
+:root {
+  --bg: #f6f5fb;
+  --fg: #1d1b26;
+  --muted: #6b6880;
+  --accent: #7c5cff;
+  --cell: #ffffff;
+  --line: #ffd84d;
+  --error: #c62828;
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15141c;
+    --fg: #ecebf3;
+    --muted: #9c99b0;
+    --cell: #24222f;
+    --line: #6b5a12;
+    --error: #ff8a80;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+main {
+  max-width: 22rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+button,
+input {
+  font: inherit;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--muted);
+}
+
+button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  background: var(--cell);
+  color: var(--fg);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+label,
+#status {
+  display: block;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.room strong {
+  letter-spacing: 0.2em;
+  margin-right: 0.5rem;
+}
+
+.error {
+  color: var(--error);
+  min-height: 1.5em;
+}
+
+#board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+#board button {
+  aspect-ratio: 1;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--cell);
+  border-color: var(--cell);
+  color: var(--fg);
+}
+
+#board button.win {
+  background: var(--line);
+}
