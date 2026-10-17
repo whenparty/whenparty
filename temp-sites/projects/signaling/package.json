@@ -1,7 +1,7 @@
 {
-  "name": "relay",
+  "name": "signaling",
   "private": true,
-  "description": "Trystero WebSocket signaling relay for P2P games on *.when.party",
+  "description": "Trystero WebSocket signaling server for P2P games on *.when.party",
   "type": "module",
   "engines": {
     "node": ">=24"

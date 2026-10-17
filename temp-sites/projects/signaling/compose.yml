@@ -1,0 +1,23 @@
+name: tempsite-signaling
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/whenparty/signaling:latest}
+    container_name: signaling
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.signaling.rule=Host(`signaling.when.party`)'
+      - 'traefik.http.routers.signaling.entrypoints=web'
+      - 'traefik.http.services.signaling.loadbalancer.server.port=8080'
+    networks:
+      - wp_tempsites
+
+networks:
+  wp_tempsites:
+    external: true

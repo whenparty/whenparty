@@ -20,7 +20,7 @@ temp-sites/
 
 The wildcard nginx config for `*.when.party` lives with the other nginx configs in `infra/nginx/conf.d/temp-sites.conf`. Adding a project never touches nginx.
 
-`projects/relay/` is the shared Trystero signaling relay (`wss://relay.when.party`) for the peer-to-peer games. See [its README](projects/relay/README.md) for how a game connects to it.
+`projects/signaling/` is the shared Trystero signaling server (`wss://signaling.when.party`) for the peer-to-peer games. See [its README](projects/signaling/README.md) for how a game connects to it.
 
 ## Deployment
 

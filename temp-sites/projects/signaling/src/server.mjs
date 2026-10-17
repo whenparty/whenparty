@@ -6,7 +6,7 @@ import {isAllowedOrigin} from './origin.mjs'
 // Well below nginx's 90 s proxy_read_timeout and Cloudflare's ~100 s WebSocket idle timeout
 const defaultHeartbeatMs = 30_000
 
-const logError = error => console.error(`relay error: ${error.message}`)
+const logError = error => console.error(`signaling error: ${error.message}`)
 
 const handleHttp = (request, response) => {
   if (request.method === 'GET' && request.url === '/health') {
@@ -41,21 +41,21 @@ const startHeartbeat = (wss, intervalMs) => {
   return () => clearInterval(timer)
 }
 
-export const startRelay = async ({port, heartbeatMs = defaultHeartbeatMs} = {}) => {
+export const startSignalingServer = async ({port, heartbeatMs = defaultHeartbeatMs} = {}) => {
   const server = createServer(handleHttp)
-  const relay = createWsRelayServer({
+  const wsRelay = createWsRelayServer({
     server,
     onError: logError,
     verifyClient: ({origin}, done) => done(isAllowedOrigin(origin), 403)
   })
-  const stopHeartbeat = startHeartbeat(relay.wss, heartbeatMs)
+  const stopHeartbeat = startHeartbeat(wsRelay.wss, heartbeatMs)
 
   server.listen(port)
   await once(server, 'listening')
 
   const close = async () => {
     stopHeartbeat()
-    await relay.close()
+    await wsRelay.close()
     server.close()
     await once(server, 'close')
   }

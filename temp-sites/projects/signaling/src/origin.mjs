@@ -1,6 +1,6 @@
-// Pages that may use the relay: the games on when.party and its subdomains, plus localhost
-// for local development. Non-browser clients can fake Origin, so this only stops other
-// websites from using the relay through their visitors' browsers.
+// Pages that may use the signaling server: the games on when.party and its subdomains,
+// plus localhost for local development. Non-browser clients can fake Origin, so this only
+// stops other websites from using the server through their visitors' browsers.
 const gameHost = /^([a-z0-9-]+\.)*when\.party$/
 const localHosts = new Set(['localhost', '127.0.0.1'])
 

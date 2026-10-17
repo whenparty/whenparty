@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import {once} from 'node:events'
 import {after, before, describe, it} from 'node:test'
 import WebSocket from 'ws'
-import {startRelay} from '../relay.mjs'
+import {startSignalingServer} from '../server.mjs'
 
 const gameOrigin = 'https://chess.when.party'
 
@@ -22,33 +22,33 @@ const nextMessage = async socket => {
   return JSON.parse(data.toString())
 }
 
-describe('relay', () => {
-  let relay
+describe('signaling server', () => {
+  let server
 
   before(async () => {
-    relay = await startRelay({port: 0})
+    server = await startSignalingServer({port: 0})
   })
 
-  after(() => relay.close())
+  after(() => server.close())
 
   it('answers /health with 200 OK', async () => {
-    const response = await fetch(`http://127.0.0.1:${relay.port}/health`)
+    const response = await fetch(`http://127.0.0.1:${server.port}/health`)
 
     assert.equal(response.status, 200)
     assert.equal(await response.text(), 'OK')
   })
 
   it('answers other paths with 404', async () => {
-    const response = await fetch(`http://127.0.0.1:${relay.port}/`)
+    const response = await fetch(`http://127.0.0.1:${server.port}/`)
 
     assert.equal(response.status, 404)
   })
 
   it('delivers a published message to the subscribers of its topic', async () => {
-    const subscriber = await openSocket(relay.port)
-    const publisher = await openSocket(relay.port)
+    const subscriber = await openSocket(server.port)
+    const publisher = await openSocket(server.port)
 
-    // The relay echoes to every subscriber, so this echo proves the subscription is in place
+    // The server echoes to every subscriber, so this echo proves the subscription is in place
     send(subscriber, {type: 'subscribe', topic: 'room-1'})
     send(subscriber, {type: 'publish', topic: 'room-1', payload: 'ready'})
     await nextMessage(subscriber)
@@ -62,27 +62,27 @@ describe('relay', () => {
   })
 
   it('rejects a connection from another site with 403', async () => {
-    const socket = connect(relay.port, {origin: 'https://evil.example'})
+    const socket = connect(server.port, {origin: 'https://evil.example'})
     const [error] = await once(socket, 'error')
 
     assert.match(error.message, /403/)
   })
 
   it('rejects a connection without an Origin header with 403', async () => {
-    const socket = new WebSocket(`ws://127.0.0.1:${relay.port}`)
+    const socket = new WebSocket(`ws://127.0.0.1:${server.port}`)
     const [error] = await once(socket, 'error')
 
     assert.match(error.message, /403/)
   })
 })
 
-describe('relay heartbeat', () => {
+describe('signaling server heartbeat', () => {
   it('terminates clients that stop answering pings and keeps the others', async t => {
-    const relay = await startRelay({port: 0, heartbeatMs: 50})
-    t.after(() => relay.close())
+    const server = await startSignalingServer({port: 0, heartbeatMs: 50})
+    t.after(() => server.close())
 
-    const silent = await openSocket(relay.port, {autoPong: false})
-    const healthy = await openSocket(relay.port)
+    const silent = await openSocket(server.port, {autoPong: false})
+    const healthy = await openSocket(server.port)
     const [code] = await once(silent, 'close')
 
     assert.equal(code, 1006)
