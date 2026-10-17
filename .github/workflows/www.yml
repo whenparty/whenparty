@@ -95,7 +95,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: "www/docker-compose.yml,www/nginx-config.conf"
+          source: "www/docker-compose.yml"
           target: "/opt/services/whenparty/www/"
           strip_components: 1
 
@@ -108,13 +108,6 @@ jobs:
           script: |
             set -euo pipefail
 
-            # Deploy service
             cd /opt/services/whenparty/www
             docker compose pull
             docker compose up -d
-
-            # Copy nginx config to infra
-            cp nginx-config.conf /opt/services/whenparty/infra/nginx/conf.d/www.conf
-
-            # Validate and reload nginx
-            docker exec nginx nginx -t && docker exec nginx nginx -s reload

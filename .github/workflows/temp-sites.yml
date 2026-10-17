@@ -5,7 +5,6 @@ on:
     branches: [main]
     paths:
       - 'temp-sites/projects/**'
-      - 'temp-sites/nginx-config/**'
       - '!temp-sites/**/*.md'
       - '.github/workflows/temp-sites.yml'
 
@@ -20,7 +19,6 @@ jobs:
     outputs:
       projects: ${{ steps.changes.outputs.projects }}
       has_project_changes: ${{ steps.changes.outputs.has_project_changes }}
-      config_changed: ${{ steps.changes.outputs.config_changed }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -38,26 +36,21 @@ jobs:
           fi
 
           changed_files=$(git diff --name-only "$BASE_SHA" "${{ github.sha }}" -- temp-sites/projects/ ':!*.md' || true)
-          config_files=$(git diff --name-only "$BASE_SHA" "${{ github.sha }}" -- temp-sites/nginx-config/ ':!*.md' || true)
-
-          if [ -n "$config_files" ]; then
-            echo "config_changed=true" >> "$GITHUB_OUTPUT"
-            echo "Changed nginx config files:"
-            echo "$config_files"
-          else
-            echo "config_changed=false" >> "$GITHUB_OUTPUT"
-          fi
 
           if [ -z "$changed_files" ]; then
-            echo "projects=[]" >> "$GITHUB_OUTPUT"
-            echo "has_project_changes=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "projects=[]"
+              echo "has_project_changes=false"
+            } >> "$GITHUB_OUTPUT"
             echo "No project changes detected"
             exit 0
           fi
 
           projects=$(echo "$changed_files" | awk -F/ '{if ($1 == "temp-sites" && $2 == "projects" && $3 != "") print $3}' | sort -u | jq -R . | jq -s -c .)
-          echo "projects=$projects" >> "$GITHUB_OUTPUT"
-          echo "has_project_changes=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "projects=$projects"
+            echo "has_project_changes=true"
+          } >> "$GITHUB_OUTPUT"
           echo "Changed projects: $projects"
 
   build-and-deploy:
@@ -102,9 +95,11 @@ jobs:
         id: image
         run: |
           image_base="${{ env.REGISTRY }}/${{ env.GITHUB_ORG }}/${{ matrix.project }}"
-          echo "base=$image_base" >> "$GITHUB_OUTPUT"
-          echo "sha=${image_base}:sha-${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          echo "latest=${image_base}:latest" >> "$GITHUB_OUTPUT"
+          {
+            echo "base=$image_base"
+            echo "sha=${image_base}:sha-${{ github.sha }}"
+            echo "latest=${image_base}:latest"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         if: steps.dockerfile.outputs.exists == 'true'
@@ -174,16 +169,6 @@ jobs:
             echo "value=" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Copy nginx config to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: "temp-sites/nginx-config/temp-sites.conf"
-          target: "${{ env.DEPLOY_DIR }}/"
-          strip_components: 1
-
       - name: Copy project files to VPS
         if: steps.project_dir.outputs.exists == 'true'
         uses: appleboy/scp-action@v0.1.7
@@ -205,7 +190,6 @@ jobs:
             set -euo pipefail
 
             DEPLOY_DIR="${{ env.DEPLOY_DIR }}"
-            INFRA_DIR="/opt/services/whenparty/infra"
             PROJECT="${{ matrix.project }}"
             PROJECT_EXISTS="${{ steps.project_dir.outputs.exists }}"
             IMAGE_OVERRIDE="${{ steps.deploy_image.outputs.value }}"
@@ -213,15 +197,6 @@ jobs:
             mkdir -p "$DEPLOY_DIR"
 
             cd "$DEPLOY_DIR"
-
-            TEMP_CONF="$DEPLOY_DIR/nginx-config/temp-sites.conf"
-            INFRA_CONF="$INFRA_DIR/nginx/conf.d/temp-sites.conf"
-            NGINX_SHOULD_RELOAD=0
-
-            if [ ! -f "$INFRA_CONF" ] || ! cmp -s "$TEMP_CONF" "$INFRA_CONF"; then
-              cp "$TEMP_CONF" "$INFRA_CONF"
-              NGINX_SHOULD_RELOAD=1
-            fi
 
             docker network inspect wp_tempsites >/dev/null 2>&1 || docker network create wp_tempsites
 
@@ -252,64 +227,4 @@ jobs:
               fi
             fi
 
-            if [ "$NGINX_SHOULD_RELOAD" -eq 1 ]; then
-              docker exec nginx nginx -t
-              docker exec nginx nginx -s reload
-            fi
-
             docker image prune -f
-
-  deploy-config-only:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.config_changed == 'true' && needs.detect-changes.outputs.has_project_changes != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Copy nginx config to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: "temp-sites/nginx-config/temp-sites.conf"
-          target: "${{ env.DEPLOY_DIR }}/"
-          strip_components: 1
-
-      - name: Sync nginx config on VPS
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_DEPLOY_KEY }}
-          script: |
-            set -euo pipefail
-
-            DEPLOY_DIR="${{ env.DEPLOY_DIR }}"
-            INFRA_DIR="/opt/services/whenparty/infra"
-
-            mkdir -p "$DEPLOY_DIR"
-
-            cd "$DEPLOY_DIR"
-
-            TEMP_CONF="$DEPLOY_DIR/nginx-config/temp-sites.conf"
-            INFRA_CONF="$INFRA_DIR/nginx/conf.d/temp-sites.conf"
-
-            if [ ! -f "$TEMP_CONF" ]; then
-              echo "Error: nginx config temp file missing at $TEMP_CONF"
-              exit 1
-            fi
-
-            NGINX_SHOULD_RELOAD=0
-
-            if [ ! -f "$INFRA_CONF" ] || ! cmp -s "$TEMP_CONF" "$INFRA_CONF"; then
-              cp "$TEMP_CONF" "$INFRA_CONF"
-              NGINX_SHOULD_RELOAD=1
-            else
-              echo "Nginx config already up to date"
-            fi
-
-            if [ "$NGINX_SHOULD_RELOAD" -eq 1 ]; then
-              docker exec nginx nginx -t
-              docker exec nginx nginx -s reload
-            fi
