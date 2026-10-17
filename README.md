@@ -1,4 +1,4 @@
-# WhenParty Infrastructure
+# WhenParty
 
 Everything that runs on the WhenParty VPS behind Cloudflare: the nginx proxy that terminates TLS, the When Party site on `www.when.party`, the `www.nii.au` site, and temporary sites on `*.when.party`.
 
@@ -26,7 +26,7 @@ Each part deploys only when its own files change. Markdown-only changes don't de
 
 Every third-party action is pinned to a full commit SHA, with its version in a comment (`uses: owner/action@<sha> # v1.2.3`). A tag can be moved to different code, but a SHA can't. This matters because the deploy jobs hold the VPS SSH key. To update an action, look up the commit of the new release tag and replace both the SHA and the comment.
 
-`temp-sites/` and the nii.au site (then in `www/`) were separate repos (`whenparty/temp-sites`, `whenparty/www`, now archived) and were imported with full history.
+`temp-sites/` and the nii.au site (then in `www/`) were separate repos (`whenparty/temp-sites`, `whenparty/www`, now archived) and were imported with full history. This repo itself was named `whenparty/infra` until October 2026, and GitHub redirects the old name.
 
 ## Nginx Configuration
 
@@ -91,7 +91,7 @@ chmod 600 /opt/services/whenparty/infra/nginx/certs/*.key
 | `VPS_HOST`, `VPS_USER`, `VPS_DEPLOY_KEY` | all deploys (SSH) |
 | `TRAEFIK_DASHBOARD_USER`, `TRAEFIK_DASHBOARD_PASSWORD` | `traefik.yml` |
 
-The `infra` repo also needs **Write** access to the GHCR packages it pushes (`www`, `nii-au`, and each temp project), under Package settings → Manage Actions access. A package first pushed from this repo gets that access automatically. The VPS pulls without logging in, so every package must be **public**.
+This repo (`whenparty/whenparty`) also needs **Write** access to the GHCR packages it pushes (`www`, `nii-au`, and each temp project), under Package settings → Manage Actions access. A package first pushed from this repo gets that access automatically. The VPS pulls without logging in, so every package must be **public**.
 
 ## Nginx Deploy
 

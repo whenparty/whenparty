@@ -31,7 +31,7 @@ On a push that changes `temp-sites/projects/**` (Markdown excluded), `.github/wo
 
 Unchanged projects are never rebuilt or restarted.
 
-The first push of a new image creates its GHCR package. Make it public and make sure the `infra` repo has Write access under Package settings → Manage Actions access.
+The first push of a new image creates its GHCR package. Make it public and make sure this repo (`whenparty/whenparty`) has Write access under Package settings → Manage Actions access.
 
 ## Adding a Project
 
