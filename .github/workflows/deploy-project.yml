@@ -1,0 +1,190 @@
+name: Deploy Compose Project
+
+# Reusable: deploys one project folder that has a compose.yml (temp sites, games).
+# - Builds <path>/Dockerfile, if there is one, from <context> and pushes
+#   ghcr.io/<owner>/<image> (latest + sha-<commit>).
+# - Copies <path> to /opt/services/whenparty/<path> on the VPS and runs its compose.yml
+#   with the sha-<commit> image.
+# - If <path> is gone from the repo, takes the project down on the VPS and removes its folder.
+# Callers grant contents: read and packages: write.
+on:
+  workflow_call:
+    inputs:
+      path:
+        description: Project folder in this repo, mirrored under /opt/services/whenparty on the VPS
+        required: true
+        type: string
+      image:
+        description: GHCR image name
+        required: true
+        type: string
+      context:
+        description: Docker build context (default the project folder)
+        required: false
+        type: string
+        default: ''
+
+env:
+  SERVICES_DIR: /opt/services/whenparty
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check project directory
+        id: project_dir
+        run: |
+          if [ -d "${{ inputs.path }}" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for Dockerfile
+        id: dockerfile
+        run: |
+          if [ -d "${{ inputs.path }}" ]; then
+            if [ -f "${{ inputs.path }}/Dockerfile" ]; then
+              echo "exists=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "exists=false" >> "$GITHUB_OUTPUT"
+              echo "Warning: No Dockerfile in ${{ inputs.path }}/"
+            fi
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Project directory ${{ inputs.path }} not found (likely removed)"
+          fi
+
+      - name: Compute image references
+        id: image
+        run: |
+          image_base="ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}"
+          {
+            echo "base=$image_base"
+            echo "sha=${image_base}:sha-${{ github.sha }}"
+            echo "latest=${image_base}:latest"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Login to GHCR
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
+        with:
+          context: ${{ inputs.context || inputs.path }}
+          file: ${{ inputs.path }}/Dockerfile
+          push: true
+          load: true  # Load locally for scanning
+          tags: |
+            ${{ steps.image.outputs.latest }}
+            ${{ steps.image.outputs.sha }}
+          # One cache per image, so projects built in parallel don't evict each other
+          cache-from: type=gha,scope=${{ inputs.image }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.image }}
+
+      - name: Scan image for vulnerabilities
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.image.outputs.latest }}
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'  # Don't fail the deploy, the weekly image scan reports these
+
+      - name: Make image public
+        if: steps.dockerfile.outputs.exists == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          OWNER_TYPE: ${{ github.event.repository.owner.type }}
+          PACKAGE: ${{ inputs.image }}
+        run: |
+          set -euo pipefail
+
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            gh api \
+              --method PUT \
+              -H "Accept: application/vnd.github+json" \
+              "/orgs/$OWNER/packages/container/$PACKAGE/visibility" \
+              -f visibility=public
+          else
+            gh api \
+              --method PUT \
+              -H "Accept: application/vnd.github+json" \
+              "/user/packages/container/$PACKAGE/visibility" \
+              -f visibility=public
+          fi
+
+      - name: Determine deploy image
+        id: deploy_image
+        run: |
+          if [ "${{ steps.dockerfile.outputs.exists }}" = "true" ]; then
+            echo "value=${{ steps.image.outputs.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Keeps the repo path: <path> lands in /opt/services/whenparty/<path>
+      - name: Copy project files to VPS
+        if: steps.project_dir.outputs.exists == 'true'
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          source: "${{ inputs.path }}"
+          target: "${{ env.SERVICES_DIR }}/"
+
+      - name: Deploy project
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            set -euo pipefail
+
+            PROJECT_DIR="${{ env.SERVICES_DIR }}/${{ inputs.path }}"
+            PROJECT_EXISTS="${{ steps.project_dir.outputs.exists }}"
+            IMAGE_OVERRIDE="${{ steps.deploy_image.outputs.value }}"
+
+            # Every project is routed by the temp-sites Traefik on this network
+            docker network inspect wp_tempsites >/dev/null 2>&1 || docker network create wp_tempsites
+
+            if [ "$PROJECT_EXISTS" = "true" ]; then
+              if [ ! -d "$PROJECT_DIR" ]; then
+                echo "Error: $PROJECT_DIR missing on server after sync"
+                exit 1
+              fi
+
+              cd "$PROJECT_DIR"
+
+              if [ -n "$IMAGE_OVERRIDE" ]; then
+                IMAGE="$IMAGE_OVERRIDE" docker compose up -d --remove-orphans
+              else
+                docker compose up -d --remove-orphans
+              fi
+            elif [ -d "$PROJECT_DIR" ]; then
+              cd "$PROJECT_DIR"
+              docker compose down --remove-orphans || true
+              cd /
+              rm -rf "$PROJECT_DIR"
+              echo "Removed $PROJECT_DIR from server"
+            else
+              echo "$PROJECT_DIR already absent on server"
+            fi
+
+            docker image prune -f
