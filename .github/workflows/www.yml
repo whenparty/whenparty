@@ -29,12 +29,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/build-push-action@v5
+      # Build locally only: latest is pushed after the vulnerability gate below
+      - name: Build image
+        uses: docker/build-push-action@v5
         with:
           context: www
-          push: true
+          push: false
+          load: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          load: true  # Load image locally for scanning
 
       - name: Scan image for vulnerabilities
         uses: aquasecurity/trivy-action@master
@@ -57,6 +59,9 @@ jobs:
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL'
+
+      - name: Push image
+        run: docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
 
       - name: Make package public
         continue-on-error: true
