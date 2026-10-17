@@ -4,9 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      - "nii/**"
-      - "!nii/**/*.md"
-      - ".github/workflows/nii.yml"
+      - "nii-au/**"
+      - "!nii-au/**/*.md"
+      - ".github/workflows/nii-au.yml"
       - ".github/workflows/site.yml"
 
 permissions:
@@ -18,5 +18,5 @@ jobs:
   site:
     uses: ./.github/workflows/site.yml
     with:
-      site: nii
+      site: nii-au
     secrets: inherit

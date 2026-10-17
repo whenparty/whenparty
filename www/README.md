@@ -1,6 +1,6 @@
 # When Party Site (www)
 
-The site at `https://www.when.party` (`when.party` redirects to it). For now it is a one-page landing: the name and a contact address. The nii.au site lives in `../nii/`.
+The site at `https://www.when.party` (`when.party` redirects to it). For now it is a one-page landing: the name and a contact address. The nii.au site lives in `../nii-au/`.
 
 It follows the **Pencil & Gouache** design system: graphite pencil lines on off-white paper, Golos Text, and color only on what matters, here a denim gouache band under the contact address. The colors in `html/styles.css` are the system's tokens, light and dark. The pencil and wash effects are inline SVG filters in `html/index.html`.
 

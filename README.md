@@ -4,7 +4,7 @@ Everything that runs on the WhenParty VPS behind Cloudflare: the nginx proxy tha
 
 ```
 Internet → Cloudflare → nginx (TLS, this repo) ─┬→ www container   (www.when.party)
-                                               ├→ nii container   (www.nii.au)
+                                               ├→ nii-au container (www.nii.au)
                                                └→ Traefik → project containers (*.when.party)
 ```
 
@@ -16,11 +16,11 @@ Each part deploys only when its own files change. Markdown-only changes don't de
 | --- | --- | --- |
 | `docker-compose.yml`, `nginx/`, `scripts/` | `.github/workflows/deploy.yml` | nginx proxy and all nginx configs |
 | `www/` | `.github/workflows/www.yml` | When Party site (`www` image and container) |
-| `nii/` | `.github/workflows/nii.yml` | nii.au site (`nii` image and container) |
+| `nii-au/` | `.github/workflows/nii-au.yml` | nii.au site (`nii-au` image and container) |
 | `temp-sites/projects/` | `.github/workflows/temp-sites.yml` | changed temp projects only |
 | `temp-sites/traefik/` | `.github/workflows/traefik.yml` | Traefik router |
 
-`www.yml` and `nii.yml` both call `.github/workflows/site.yml`: build the folder's `Dockerfile`, stop on critical Trivy findings, push `ghcr.io/whenparty/<folder>:latest`, then run the folder's `docker-compose.yml` in `/opt/services/whenparty/<folder>`. A change to `site.yml` redeploys both sites.
+`www.yml` and `nii-au.yml` both call `.github/workflows/site.yml`: build the folder's `Dockerfile`, stop on critical Trivy findings, push `ghcr.io/whenparty/<folder>:latest`, then run the folder's `docker-compose.yml` in `/opt/services/whenparty/<folder>`. A change to `site.yml` redeploys both sites.
 
 `temp-sites/` and the nii.au site (then in `www/`) were separate repos (`whenparty/temp-sites`, `whenparty/www`, now archived) and were imported with full history.
 
@@ -30,7 +30,7 @@ All nginx configs live in `nginx/conf.d/` and ship together with the nginx deplo
 
 - `default.conf` holds the settings shared by every site: rate limits, Cloudflare real IP, security headers, proxy headers (including WebSocket), the Docker DNS resolver, plus the port 80 catch-all that redirects to HTTPS and serves `/health`.
 - `www.conf` serves `www.when.party` and redirects `when.party` to it. These exact names win over the wildcard in `temp-sites.conf`.
-- `nii.conf` serves `www.nii.au` and redirects `nii.au` to it.
+- `nii-au.conf` serves `www.nii.au` and redirects `nii.au` to it.
 - `temp-sites.conf` terminates TLS for every other `*.when.party` host and passes the request to Traefik.
 - `cloudflare_real_ip.conf` is the Cloudflare IP allow list. It is generated on the VPS and not tracked in git (see below).
 
@@ -85,7 +85,7 @@ chmod 600 /opt/services/whenparty/infra/nginx/certs/*.key
 | `VPS_HOST`, `VPS_USER`, `VPS_DEPLOY_KEY` | all deploys (SSH) |
 | `TRAEFIK_DASHBOARD_USER`, `TRAEFIK_DASHBOARD_PASSWORD` | `traefik.yml` |
 
-The `infra` repo also needs **Write** access to the GHCR packages it pushes (`www`, `nii`, and each temp project), under Package settings → Manage Actions access. A package first pushed from this repo gets that access automatically. The VPS pulls without logging in, so every package must be **public**.
+The `infra` repo also needs **Write** access to the GHCR packages it pushes (`www`, `nii-au`, and each temp project), under Package settings → Manage Actions access. A package first pushed from this repo gets that access automatically. The VPS pulls without logging in, so every package must be **public**.
 
 ## Nginx Deploy
 
