@@ -33,7 +33,7 @@ jobs:
           echo "hash=$escaped" >> "$GITHUB_OUTPUT"
 
       - name: Create deployment directory
-        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -52,7 +52,7 @@ jobs:
           strip_components: 2
 
       - name: Deploy Traefik to VPS
-        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
           DASHBOARD_AUTH_HASH: ${{ steps.auth.outputs.hash }}
         with:
