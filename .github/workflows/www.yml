@@ -1,0 +1,22 @@
+name: Deploy When Party Site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "www/**"
+      - "!www/**/*.md"
+      - ".github/workflows/www.yml"
+      - ".github/workflows/site.yml"
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+jobs:
+  site:
+    uses: ./.github/workflows/site.yml
+    with:
+      site: www
+    secrets: inherit

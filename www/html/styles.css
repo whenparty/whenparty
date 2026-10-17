@@ -1,0 +1,89 @@
+/* Tokens from the Pencil & Gouache design system (light theme first, dark below). */
+:root {
+  --paper: #f7f7f4;
+  --ink: #23262a;
+  --ink-muted: #565a60;
+  --graphite: #5e6268;
+  --graphite-faint: #cdd0d3;
+  --denim: #8faacb;
+  --denim-wash: #c9d8ea;
+  --focus-ring: 0 0 0 2px #f7f7f4, 0 0 0 4px #2d5a85;
+  --font-sans: "Golos Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --space-2: 8px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1b1d20;
+    --ink: #ecede9;
+    --ink-muted: #a8acb1;
+    --graphite: #a9adb2;
+    --graphite-faint: #3a3e43;
+    --denim: #5f80a8;
+    --denim-wash: #2e4560;
+    --focus-ring: 0 0 0 2px #1b1d20, 0 0 0 4px #9dbfe3;
+  }
+}
+
+html { height: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  width: min(100% - 2 * var(--space-6), 560px);
+  padding: var(--space-12) 0;
+}
+
+.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* Pencil: graphite outlines at 1.8px, a lighter second pass, a few hatch strokes. */
+.pencil { fill: none; stroke: var(--graphite); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.pencil-second { stroke-width: 1.2; opacity: .35; }
+.hatch { fill: none; stroke: var(--graphite-faint); stroke-width: 1.2; stroke-linecap: round; }
+
+.garland { display: block; width: 100%; max-width: 360px; height: auto; margin-bottom: var(--space-8); }
+.rule { display: block; width: 100%; height: 12px; margin: var(--space-6) 0 var(--space-8); }
+
+/* display */
+h1 { margin: 0; font-size: 44px; line-height: 48px; font-weight: 600; letter-spacing: -0.015em; }
+
+/* caption */
+.label { margin: 0 0 var(--space-2); font-size: 14px; line-height: 21px; color: var(--ink-muted); }
+
+/* The one highlight: ink text in a heavier weight over a denim gouache band. */
+.pg-sketch { border-radius: 14px 7px 13px 6px / 7px 13px 6px 14px; }
+
+.email {
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
+  padding: 2px 4px;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* The band sits under the lower half of the text, like a brush stroke laid first. */
+.band { position: absolute; z-index: -1; left: -6px; bottom: 1px; width: calc(100% + 12px); height: 17px; }
+.band-fill { fill: var(--denim-wash); transition: fill .3s; }
+.email:hover .band-fill { fill: var(--denim); }
+.email:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+@media (prefers-reduced-motion: reduce) {
+  .band-fill { transition: none; }
+}

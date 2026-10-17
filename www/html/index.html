@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>When Party</title>
+  <meta name="description" content="When Party. Contact: whenparty@nii.au">
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Pencil & Gouache: pencil everywhere, color only where you look (the contact). -->
+  <svg class="defs" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- Slightly uneven pencil line -->
+      <filter id="pencil" x="-5%" y="-30%" width="110%" height="160%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="grain"/>
+        <feDisplacementMap in="SourceGraphic" in2="grain" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <!-- Gouache wash: bleeding edges and uneven pigment -->
+      <filter id="wash" x="-10%" y="-40%" width="120%" height="180%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="4" result="flow"/>
+        <feDisplacementMap in="SourceGraphic" in2="flow" scale="7" xChannelSelector="R" yChannelSelector="G" result="bleed"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="9" result="pigment"/>
+        <feColorMatrix in="pigment" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1 0 0 0 1.35" result="pigmentMask"/>
+        <feComposite in="bleed" in2="pigmentMask" operator="in"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <main>
+    <svg class="garland" viewBox="0 0 360 64" aria-hidden="true" focusable="false">
+      <g filter="url(#pencil)">
+        <path class="pencil" d="M6 10 C 90 34, 270 34, 354 10"/>
+        <path class="pencil" d="M36 16.9 L48 46.8 L60 20.7 M100 24.9 L112 53.7 L124 26.5 M164 27.9 L176 55.9 L188 28.0 M228 26.9 L240 54.2 L252 25.5 M292 21.7 L304 48.0 L316 18.3"/>
+        <path class="pencil pencil-second" d="M7 11 C 91 35, 271 35, 353 11"/>
+        <path class="hatch" d="M45 38.8 L51 32.8 M109 45.7 L115 39.7 M173 47.9 L179 41.9 M237 46.2 L243 40.2 M301 40.0 L307 34.0"/>
+      </g>
+    </svg>
+
+    <h1>When Party</h1>
+
+    <svg class="rule" viewBox="0 0 560 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <g filter="url(#pencil)">
+        <path class="pencil" d="M2 7 C 140 4, 300 9, 558 5"/>
+        <path class="pencil pencil-second" d="M3 8 C 141 5, 301 10, 557 6"/>
+      </g>
+    </svg>
+
+    <p class="label">Contact</p>
+    <a class="email pg-sketch" href="mailto:whenparty@nii.au">
+      <svg class="band" viewBox="0 0 200 16" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <rect class="band-fill" x="3" y="1" width="194" height="14" rx="6" filter="url(#wash)"/>
+      </svg>
+      <span>whenparty@nii.au</span>
+    </a>
+  </main>
+</body>
+</html>
