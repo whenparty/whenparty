@@ -7,10 +7,7 @@ on:
       - "www/**"
       - "!www/**/*.md"
       - ".github/workflows/www.yml"
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: whenparty/www
+      - ".github/workflows/site.yml"
 
 permissions:
   contents: read
@@ -18,101 +15,8 @@ permissions:
   security-events: write
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Build locally only: latest is pushed after the vulnerability gate below
-      - name: Build image
-        uses: docker/build-push-action@v5
-        with:
-          context: www
-          push: false
-          load: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-
-      - name: Scan image for vulnerabilities
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: Fail on critical vulnerabilities
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL'
-
-      - name: Push image
-        run: docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-
-      - name: Make package public
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OWNER: ${{ github.repository_owner }}
-          OWNER_TYPE: ${{ github.event.repository.owner.type }}
-          PACKAGE: www
-        run: |
-          set -euo pipefail
-
-          if [ "$OWNER_TYPE" = "Organization" ]; then
-            gh api \
-              --method PUT \
-              -H "Accept: application/vnd.github+json" \
-              "/orgs/$OWNER/packages/container/$PACKAGE/visibility" \
-              -f visibility=public
-          else
-            gh api \
-              --method PUT \
-              -H "Accept: application/vnd.github+json" \
-              "/user/packages/container/$PACKAGE/visibility" \
-              -f visibility=public
-          fi
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v7
-
-      - name: Copy service files to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: "www/docker-compose.yml"
-          target: "/opt/services/whenparty/www/"
-          strip_components: 1
-
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_DEPLOY_KEY }}
-          script: |
-            set -euo pipefail
-
-            cd /opt/services/whenparty/www
-            docker compose pull
-            docker compose up -d
+  site:
+    uses: ./.github/workflows/site.yml
+    with:
+      site: www
+    secrets: inherit

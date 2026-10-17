@@ -1,0 +1,116 @@
+name: Deploy Site
+
+# Reusable: builds <site>/Dockerfile, gates it on Trivy, pushes ghcr.io/<owner>/<site>:latest
+# and runs <site>/docker-compose.yml in /opt/services/whenparty/<site> on the VPS.
+# Callers grant contents: read, packages: write, security-events: write.
+on:
+  workflow_call:
+    inputs:
+      site:
+        description: Folder in this repo, GHCR image name and VPS folder
+        required: true
+        type: string
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.site }}:latest
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build locally only: latest is pushed after the vulnerability gate below
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ inputs.site }}
+          push: false
+          load: true
+          tags: ${{ env.IMAGE }}
+
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: trivy-${{ inputs.site }}
+
+      - name: Fail on critical vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
+
+      - name: Push image
+        run: docker push "$IMAGE"
+
+      - name: Make package public
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          OWNER_TYPE: ${{ github.event.repository.owner.type }}
+          PACKAGE: ${{ inputs.site }}
+        run: |
+          set -euo pipefail
+
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            gh api \
+              --method PUT \
+              -H "Accept: application/vnd.github+json" \
+              "/orgs/$OWNER/packages/container/$PACKAGE/visibility" \
+              -f visibility=public
+          else
+            gh api \
+              --method PUT \
+              -H "Accept: application/vnd.github+json" \
+              "/user/packages/container/$PACKAGE/visibility" \
+              -f visibility=public
+          fi
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Copy service files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          source: "${{ inputs.site }}/docker-compose.yml"
+          target: "/opt/services/whenparty/${{ inputs.site }}/"
+          strip_components: 1
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            set -euo pipefail
+
+            cd "/opt/services/whenparty/${{ inputs.site }}"
+            docker compose pull
+            docker compose up -d
