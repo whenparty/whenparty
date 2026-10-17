@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Generate dashboard auth hash
         id: auth
@@ -33,7 +33,7 @@ jobs:
           echo "hash=$escaped" >> "$GITHUB_OUTPUT"
 
       - name: Create deployment directory
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -41,7 +41,7 @@ jobs:
           script: mkdir -p "${{ env.TRAEFIK_DIR }}"
 
       - name: Copy Traefik files to VPS
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -52,7 +52,7 @@ jobs:
           strip_components: 2
 
       - name: Deploy Traefik to VPS
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         env:
           DASHBOARD_AUTH_HASH: ${{ steps.auth.outputs.hash }}
         with:

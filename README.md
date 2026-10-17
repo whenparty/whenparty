@@ -24,6 +24,8 @@ Each part deploys only when its own files change. Markdown-only changes don't de
 
 `.github/workflows/image-scan.yml` runs every Monday (or manually) and scans every image the VPS runs with Trivy. That includes the nginx proxy and Traefik, which no deploy scans. It reads the image list from the compose files, uploads the results to GitHub Security, and turns red on a critical finding. That means the image needs a bump.
 
+Every third-party action is pinned to a full commit SHA, with its version in a comment (`uses: owner/action@<sha> # v1.2.3`). A tag can be moved to different code, but a SHA can't. This matters because the deploy jobs hold the VPS SSH key. To update an action, look up the commit of the new release tag and replace both the SHA and the comment.
+
 `temp-sites/` and the nii.au site (then in `www/`) were separate repos (`whenparty/temp-sites`, `whenparty/www`, now archived) and were imported with full history.
 
 ## Nginx Configuration
