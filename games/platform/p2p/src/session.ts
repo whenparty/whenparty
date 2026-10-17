@@ -1,18 +1,23 @@
-// Connects a game to its room over Trystero. The host runs the rules and broadcasts every
-// new room state. Guests send their intents to the host and show what it broadcasts.
-// Nothing is stored on a server: the signaling server only helps browsers find each other.
-import {joinRoom, selfId, type Room} from '@trystero-p2p/ws-relay'
+// Connects a game to its room over Trystero. The host runs the rules and broadcasts every new
+// room state. Guests send their intents to the host and show what it broadcasts. When the host
+// leaves, the next member takes over (see succession.ts). Nothing is stored on a server: the
+// signaling server only helps browsers find each other.
+import {joinRoom, selfId, type MessageAction, type Room} from '@trystero-p2p/ws-relay'
 import {decodeIntent, decodeSnapshot, encode} from './protocol.ts'
-import {signalingUrlFor} from './signaling-url.ts'
 import {addPeer, applyIntent, createRoomState, removePeer} from './room-state.ts'
-import type {GameRules, Intent, RoomState} from './room-state.ts'
+import type {GameRules, Intent, NumberedIntent, RoomState} from './room-state.ts'
+import {signalingUrlFor} from './signaling-url.ts'
+import {acceptsSnapshot, promote, successorOf} from './succession.ts'
 
 export interface SessionView<State> {
   selfId: string
+  // This tab hosts the room right now. That changes when a host leaves.
   isHost: boolean
-  // The latest room state, or null until a guest hears from the host
+  // The latest room state, or null until a guest hears from a host
   room: RoomState<State> | null
-  // The host is gone, and with it the game. The session has left the room.
+  // The host is gone and the next member takes over after a pause
+  switchingHost: boolean
+  // The host is gone and nobody can take over. The session has left the room.
   hostLeft: boolean
 }
 
@@ -23,6 +28,9 @@ export interface SessionOptions<State, Move> {
   isHost: boolean
   rules: GameRules<State, Move>
   onChange: (view: SessionView<State>) => void
+  // How long the next member waits before it takes over from a host whose link dropped.
+  // A host that comes back within it keeps the room.
+  takeoverDelayMs?: number
 }
 
 export interface Session<Move> {
@@ -30,78 +38,198 @@ export interface Session<Move> {
   leave: () => Promise<void>
 }
 
-type Update<State> = (patch: Partial<SessionView<State>>) => void
-type Send<Move> = (intent: Intent<Move>) => void
+const defaultTakeoverDelayMs = 2500
+
+// Everything a session tracks. The functions below change it in place.
+interface Context<State, Move> {
+  room: Room
+  rules: GameRules<State, Move>
+  snapshots: MessageAction<string>
+  intents: MessageAction<string>
+  onChange: (view: SessionView<State>) => void
+  takeoverDelayMs: number
+  state: RoomState<State> | null
+  // Peers whose link dropped and that have not come back
+  departed: string[]
+  // The last intent this guest sent, until a snapshot shows the host handled it
+  pending: NumberedIntent<Move> | null
+  nextIntentId: number
+  takeover: ReturnType<typeof setTimeout> | undefined
+  hostLeft: boolean
+}
 
 const logError = (error: unknown) => console.warn('p2p:', error)
 
-const runHost = <State, Move>(room: Room, rules: GameRules<State, Move>, update: Update<State>): Send<Move> => {
-  const snapshots = room.makeAction<string>('snapshot')
-  let state = createRoomState(rules, selfId)
+const hostOf = <State, Move>(context: Context<State, Move>) => context.state?.members[0] ?? null
 
-  // Broadcast even when nothing changed: it puts a guest with a stale view right again
-  const commit = (next: RoomState<State>) => {
-    state = next
-    snapshots.send(encode(state)).catch(logError)
-    update({room: state})
-  }
+const publish = <State, Move>(context: Context<State, Move>) => {
+  const host = hostOf(context)
 
-  room.makeAction<string>('intent', {
-    onMessage: (data, {peerId}) => {
-      const intent = decodeIntent(rules, data)
-
-      if (intent) {
-        commit(applyIntent(rules, state, peerId, intent))
-      }
-    }
+  context.onChange({
+    selfId,
+    isHost: host === selfId,
+    room: context.state,
+    switchingHost: host !== null && context.departed.includes(host),
+    hostLeft: context.hostLeft
   })
-  room.onPeerJoin = peerId => commit(addPeer(state, peerId))
-  room.onPeerLeave = peerId => commit(removePeer(state, peerId))
-  update({room: state})
-
-  return intent => commit(applyIntent(rules, state, selfId, intent))
 }
 
-const runGuest = <State, Move>(room: Room, rules: GameRules<State, Move>, update: Update<State>): Send<Move> => {
-  const intents = room.makeAction<string>('intent')
-  // The first peer that sends a valid snapshot is the host. Only the host sends them.
-  let hostId: string | null = null
+// The host broadcasts every new state, even when nothing changed: it puts a guest with a stale view right again
+const commit = <State, Move>(context: Context<State, Move>, next: RoomState<State>) => {
+  context.state = next
+  context.snapshots.send(encode(next)).catch(logError)
+  publish(context)
+}
 
-  room.makeAction<string>('snapshot', {
-    onMessage: (data, {peerId}) => {
-      const snapshot = hostId === null || peerId === hostId ? decodeSnapshot(rules, data) : null
+const sendToHost = <State, Move>(context: Context<State, Move>, intent: NumberedIntent<Move>) => {
+  const host = hostOf(context)
 
-      if (snapshot) {
-        hostId = peerId
-        update({room: snapshot})
-      }
-    }
-  })
-  room.onPeerLeave = peerId => {
-    if (peerId === hostId) {
-      update({hostLeft: true})
-      room.leave().catch(logError)
-    }
+  if (host && host !== selfId) {
+    context.intents.send(encode(intent), {target: host}).catch(logError)
+  }
+}
+
+// A guest's last intent may have died with the old host. A new host that has not handled it gets it once more.
+const settlePending = <State, Move>(context: Context<State, Move>, hostChanged: boolean) => {
+  const {pending, state} = context
+
+  if (!pending || !state) {
+    return
   }
 
-  return intent => {
-    if (hostId) {
-      intents.send(encode(intent), {target: hostId}).catch(logError)
-    }
+  if ((state.handled[selfId] ?? 0) >= pending.id) {
+    context.pending = null
+  } else if (hostChanged) {
+    sendToHost(context, pending)
   }
+}
+
+const receiveSnapshot = <State, Move>(context: Context<State, Move>, data: unknown, sender: string) => {
+  const snapshot = decodeSnapshot(context.rules, data)
+  const source = {selfId, departed: context.departed, sender}
+
+  if (!snapshot || !acceptsSnapshot(context.state, snapshot, source)) {
+    return
+  }
+
+  const hostChanged = context.state !== null && hostOf(context) !== sender
+  clearTimeout(context.takeover)
+  context.state = snapshot
+  settlePending(context, hostChanged)
+  publish(context)
+}
+
+const receiveIntent = <State, Move>(context: Context<State, Move>, data: unknown, sender: string) => {
+  const {state} = context
+  const intent = state?.members[0] === selfId ? decodeIntent(context.rules, data) : null
+
+  if (state && intent) {
+    commit(context, applyIntent(context.rules, state, sender, intent))
+  }
+}
+
+// The new host starts from the last snapshot: without the old host and the members that left
+// meanwhile, with the peers it is connected to, and with its own unhandled intent applied
+const takeOver = <State, Move>(context: Context<State, Move>) => {
+  const {state, rules, departed} = context
+  const host = hostOf(context)
+
+  if (!state || !host || !departed.includes(host) || successorOf(state, departed) !== selfId) {
+    return
+  }
+
+  let next = departed.reduce((room, peerId) => removePeer(rules, room, peerId), promote(rules, state, host, selfId))
+  next = Object.keys(context.room.getPeers()).reduce((room, peerId) => addPeer(room, peerId), next)
+  next = context.pending ? applyIntent(rules, next, selfId, context.pending) : next
+  context.pending = null
+  commit(context, next)
+}
+
+// When the host is gone, the next member that is still here takes over after a pause. Everyone
+// else waits for that member's snapshot.
+const scheduleTakeover = <State, Move>(context: Context<State, Move>) => {
+  const {state, departed} = context
+  const host = hostOf(context)
+
+  if (!state || !host || !departed.includes(host)) {
+    return
+  }
+
+  const successor = successorOf(state, departed)
+
+  if (successor === null) {
+    context.hostLeft = true
+    context.room.leave().catch(logError)
+  } else if (successor === selfId) {
+    clearTimeout(context.takeover)
+    context.takeover = setTimeout(() => takeOver(context), context.takeoverDelayMs)
+  }
+}
+
+const peerJoined = <State, Move>(context: Context<State, Move>, peerId: string) => {
+  context.departed = context.departed.filter(id => id !== peerId)
+
+  if (context.state && hostOf(context) === selfId) {
+    commit(context, addPeer(context.state, peerId))
+  } else {
+    publish(context)
+  }
+}
+
+// Trystero reports a dropped link, which is not always a peer leaving the room
+const peerLeft = <State, Move>(context: Context<State, Move>, peerId: string) => {
+  context.departed = [...context.departed.filter(id => id !== peerId), peerId]
+
+  if (context.state && hostOf(context) === selfId) {
+    commit(context, removePeer(context.rules, context.state, peerId))
+    return
+  }
+
+  scheduleTakeover(context)
+  publish(context)
+}
+
+const send = <State, Move>(context: Context<State, Move>, intent: Intent<Move>) => {
+  const numbered = {...intent, id: context.nextIntentId++}
+
+  if (context.state && hostOf(context) === selfId) {
+    commit(context, applyIntent(context.rules, context.state, selfId, numbered))
+    return
+  }
+
+  context.pending = numbered
+  sendToHost(context, numbered)
 }
 
 export const startSession = <State, Move>(options: SessionOptions<State, Move>): Session<Move> => {
-  const {appId, code, isHost, rules, onChange} = options
+  const {appId, code, isHost, rules, onChange, takeoverDelayMs = defaultTakeoverDelayMs} = options
   const room = joinRoom({appId, relayConfig: {urls: [signalingUrlFor(location.hostname)]}}, code)
-  let view: SessionView<State> = {selfId, isHost, room: null, hostLeft: false}
-
-  const update: Update<State> = patch => {
-    view = {...view, ...patch}
-    onChange(view)
+  const context: Context<State, Move> = {
+    room,
+    rules,
+    snapshots: room.makeAction<string>('snapshot'),
+    intents: room.makeAction<string>('intent'),
+    onChange,
+    takeoverDelayMs,
+    state: isHost ? createRoomState(rules, selfId) : null,
+    departed: [],
+    pending: null,
+    nextIntentId: 1,
+    takeover: undefined,
+    hostLeft: false
   }
 
-  const send = isHost ? runHost(room, rules, update) : runGuest(room, rules, update)
+  context.snapshots.onMessage = (data, {peerId}) => receiveSnapshot(context, data, peerId)
+  context.intents.onMessage = (data, {peerId}) => receiveIntent(context, data, peerId)
+  room.onPeerJoin = peerId => peerJoined(context, peerId)
+  room.onPeerLeave = peerId => peerLeft(context, peerId)
+  publish(context)
 
-  return {send, leave: () => room.leave()}
+  return {
+    send: intent => send(context, intent),
+    leave: () => {
+      clearTimeout(context.takeover)
+      return room.leave()
+    }
+  }
 }
