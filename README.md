@@ -86,7 +86,7 @@ docker exec nginx nginx -s reload
 
 Deployment is automated via GitHub Actions:
 
-- **Trigger**: Push to `main` branch with changes to `docker-compose.yml` or `nginx/**`
+- **Trigger**: Push to `main` branch with changes to `docker-compose.yml`, `nginx/**`, `scripts/**` or the workflow itself
 - **Process**:
   1. Copies `docker-compose.yml`, `nginx/conf.d` and `scripts` to VPS
   2. Runs `docker compose up -d` to update containers

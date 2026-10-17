@@ -3,8 +3,11 @@ name: Deploy Infrastructure
 on:
   push:
     branches: [main]
-    paths-ignore: 
-      - "*.md"
+    paths:
+      - "docker-compose.yml"
+      - "nginx/**"
+      - "scripts/**"
+      - ".github/workflows/deploy.yml"
 
 jobs:
   deploy:
