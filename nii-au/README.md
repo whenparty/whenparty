@@ -8,8 +8,10 @@ The site is "little by little.", a one-page scroll journey: a 10-second illustra
 
 - `html/` - the site content (`index.html`, `styles.css`, `script.js`, `favicon.svg`)
 - `html/media/` - the journey videos, their posters and the paper texture
+- `nginx.conf` - the container's server block: gzip, IPv6 and cache headers
+- `scripts/fingerprint.sh` - runs in the image build and gives media, CSS and JS content-hashed names
 - `scripts/encode-media.sh` - regenerates the videos and posters from the master video
-- `Dockerfile` - nginx image that serves `html/` with gzip enabled
+- `Dockerfile` - nginx image that serves `html/`
 - `docker-compose.yml` - the `nii-au` container on the `wp_www` network (no published ports)
 
 The public-facing nginx config for this site, including its Content-Security-Policy, is in `infra/nginx/conf.d/nii-au.conf`. It ships with the nginx deploy, not with this folder. Keep CSS and JS in their own files: the policy blocks inline `<style>` and `<script>`.
@@ -33,6 +35,9 @@ nii-au/scripts/encode-media.sh path/to/master.mp4
 
 If you change the mobile crop in that script, update the crop constants in `script.js` too.
 
+## Caching
+
+The image build renames every file in `media/`, plus `styles.css` and `script.js`, to `name.<hash>.ext` and rewrites the references to them. Those files are served with `Cache-Control: public, max-age=31536000, immutable`; `index.html` and `favicon.svg` are served with `no-cache`, so a deploy shows up on the next visit. Reference assets by their plain names (`/media/poster-desktop.webp`, `/styles.css`) in the source; the build fails if a file in `media/` is not referenced anywhere.
 
 ## Deployment
 
