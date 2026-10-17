@@ -4,7 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      - 'traefik/**'
+      - 'temp-sites/traefik/**'
+      - '!temp-sites/traefik/**/*.md'
+      - '.github/workflows/traefik.yml'
   workflow_dispatch:
     inputs:
       ip_whitelist:
@@ -22,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
      
       - name: Generate dashboard auth hash
         id: auth
@@ -57,10 +59,10 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: "traefik/docker-compose.yml,traefik/traefik.yml"
+          source: "temp-sites/traefik/docker-compose.yml,temp-sites/traefik/traefik.yml"
           target: ${{ env.TRAEFIK_DIR }}
           overwrite: true
-          strip_components: 1
+          strip_components: 2
 
       - name: Deploy Traefik to VPS
         uses: appleboy/ssh-action@v1.2.0

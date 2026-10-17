@@ -29,7 +29,7 @@ www container (wp_www network, internal only)
 - `Dockerfile` - Builds nginx:alpine container with static HTML
 - `docker-compose.yml` - Production service definition (no exposed ports)
 - `nginx-config.conf` - Service-specific nginx routing (copied to infra during deploy)
-- `.github/workflows/build-and-deploy.yml` - CI/CD pipeline
+- `../.github/workflows/www.yml` - CI/CD pipeline (in the monorepo root)
 - `html/` - Static website files
 
 ## Development
@@ -76,7 +76,7 @@ Ensure these GitHub secrets are configured:
 
 ### Automatic Deployment
 
-Push to `main` branch triggers automatic deployment:
+A push to `main` that changes files under `www/` (Markdown excluded) triggers automatic deployment:
 
 1. Builds Docker image
 2. Pushes to `ghcr.io/whenparty/www:latest`
@@ -84,13 +84,6 @@ Push to `main` branch triggers automatic deployment:
 4. Deploys service at `/opt/services/whenparty/www`
 5. Registers with nginx proxy (copies config to infra)
 6. Validates and reloads nginx
-
-### Manual Deployment
-
-```bash
-# Trigger workflow manually
-gh workflow run build-and-deploy.yml
-```
 
 ## Security Features
 

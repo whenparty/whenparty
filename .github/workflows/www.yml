@@ -3,6 +3,10 @@ name: Deploy Website
 on:
   push:
     branches: [main]
+    paths:
+      - "www/**"
+      - "!www/**/*.md"
+      - ".github/workflows/www.yml"
 
 env:
   REGISTRY: ghcr.io
@@ -17,7 +21,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: docker/login-action@v3
         with:
@@ -27,7 +31,7 @@ jobs:
 
       - uses: docker/build-push-action@v5
         with:
-          context: .
+          context: www
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           load: true  # Load image locally for scanning
@@ -83,16 +87,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Copy service files to VPS
-        uses: appleboy/scp-action@v0.1.5
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: "docker-compose.yml,nginx-config.conf"
+          source: "www/docker-compose.yml,www/nginx-config.conf"
           target: "/opt/services/whenparty/www/"
+          strip_components: 1
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.0

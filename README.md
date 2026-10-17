@@ -2,6 +2,19 @@
 
 Nginx reverse proxy infrastructure for the WhenParty project using Cloudflare Origin Certificates.
 
+## Monorepo Layout
+
+This repo now also holds the former `whenparty/www` and `whenparty/temp-sites` repos, imported with full history. Each part deploys only when its own files change:
+
+| Path | Workflow | Deploys |
+| --- | --- | --- |
+| `docker-compose.yml`, `nginx/`, `scripts/` | `.github/workflows/deploy.yml` | nginx proxy |
+| `www/` | `.github/workflows/www.yml` | www image and container |
+| `temp-sites/projects/`, `temp-sites/nginx-config/` | `.github/workflows/temp-sites.yml` | changed temp projects and the wildcard nginx config |
+| `temp-sites/traefik/` | `.github/workflows/traefik.yml` | Traefik router |
+
+Markdown-only changes don't deploy anything. The sections below still describe the multi-repo deploy mechanics, which stay in place until the nginx configs are consolidated.
+
 ## Architecture
 
 - **Purpose**: Nginx reverse proxy only (no application services)
