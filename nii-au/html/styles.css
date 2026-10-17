@@ -289,7 +289,8 @@ html {scroll-behavior: auto;}
  .scroll-story .eyebrow {font-size:9px;margin-bottom:18px;}
  .scroll-story .hero-description {font-size:14px;line-height:1.58;max-width:340px;margin-bottom:19px;}
  .scroll-story .primary-button {min-height:46px;font-size:12px;padding:10px 16px;}
- .scroll-story .hero-actions {gap:16px;flex-direction:row;}
+ /* align-items too: the 400px rule above top-aligns the stacked buttons of the old hero. */
+ .scroll-story .hero-actions {gap:16px;flex-direction:row;align-items:center;}
  .scroll-story .text-link {font-size:12px;}
  .entry-veil {background:linear-gradient(180deg,rgba(252,252,249,.995) 0%,rgba(252,252,249,.995) 22%,rgba(252,252,249,.96) 35%,rgba(252,252,249,.82) 44%,rgba(252,252,249,.08) 67%,transparent 74%);}
  .journey-end {left:24px;right:24px;bottom:115px;text-align:center;}
