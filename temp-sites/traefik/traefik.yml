@@ -16,9 +16,6 @@ api:
 
 ping: {}
 
+# Logs go to stdout (docker logs). nginx already logs every request, so no access log here.
 log:
   level: INFO
-  filePath: /var/log/traefik/traefik.log
-
-accessLog:
-  filePath: /var/log/traefik/access.log
