@@ -37,11 +37,16 @@ fetch_ips() {
   echo "" >>"$TMP_FILE"
 }
 
+# The timestamp differs on every run, so leave it out of the change check.
+strip_timestamp() {
+  grep -v '^# Generated at:' "$1"
+}
+
 fetch_ips "v4"
 fetch_ips "v6"
 
 changed=1
-if [ -f "$TARGET_FILE" ] && cmp -s "$TMP_FILE" "$TARGET_FILE"; then
+if [ -f "$TARGET_FILE" ] && cmp -s <(strip_timestamp "$TMP_FILE") <(strip_timestamp "$TARGET_FILE"); then
   echo "Cloudflare IP list unchanged."
   changed=0
 else
