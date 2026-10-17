@@ -1,15 +1,13 @@
 .env
 
 certs/
-nginx/certs/
 keys/
 *.crt
 *.key
 
 docker-compose.override.yml
 
-# Generated on the VPS by scripts/update-cloudflare-real-ip.sh
-nginx/conf.d/cloudflare_real_ip.conf
+# Generated on the VPS by infra/scripts/update-cloudflare-real-ip.sh
+infra/nginx/conf.d/cloudflare_real_ip.conf
 
 .vscode/
-

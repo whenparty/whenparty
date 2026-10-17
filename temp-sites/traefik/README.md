@@ -6,7 +6,7 @@ Traefik routes every `*.when.party` request to the right project container, base
 Internet → Cloudflare → nginx (TLS) → Traefik (HTTP :8000) → project containers
 ```
 
-- nginx (`nginx/conf.d/temp-sites.conf`) terminates TLS and proxies to `traefik-tempsites:8000`.
+- nginx (`infra/nginx/conf.d/temp-sites.conf`) terminates TLS and proxies to `traefik-tempsites:8000`.
 - Traefik watches Docker and only routes containers on `wp_tempsites` that set `traefik.enable=true`.
 - Port 8000 is not published. Only nginx reaches it over the Docker network.
 
@@ -15,7 +15,7 @@ Internet → Cloudflare → nginx (TLS) → Traefik (HTTP :8000) → project con
 `.github/workflows/traefik.yml` runs on pushes that change `temp-sites/traefik/**` (Markdown excluded), or manually from the Actions tab. It:
 
 1. builds the dashboard credentials from the `TRAEFIK_DASHBOARD_USER` and `TRAEFIK_DASHBOARD_PASSWORD` secrets and writes them to `.env` on the VPS
-2. copies `docker-compose.yml` and `traefik.yml` to `/opt/services/whenparty/tempsites/traefik`
+2. copies `docker-compose.yml` and `traefik.yml` to `/opt/services/whenparty/temp-sites/traefik`
 3. pulls the image and recreates the container (so changes to `traefik.yml` take effect)
 4. checks that the dashboard answers on the VPS loopback and asks for credentials (HTTP 401)
 

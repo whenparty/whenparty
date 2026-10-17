@@ -14,7 +14,7 @@ Each part deploys only when its own files change. Markdown-only changes don't de
 
 | Path | Workflow | Deploys |
 | --- | --- | --- |
-| `docker-compose.yml`, `nginx/`, `scripts/` | `.github/workflows/deploy.yml` | nginx proxy and all nginx configs |
+| `infra/` | `.github/workflows/infra.yml` | nginx proxy (`docker-compose.yml`), all nginx configs (`nginx/conf.d/`) and scripts |
 | `www/` | `.github/workflows/www.yml` | When Party site (`www` image and container) |
 | `nii-au/` | `.github/workflows/nii-au.yml` | nii.au site (`nii-au` image and container) |
 | `temp-sites/projects/` | `.github/workflows/temp-sites.yml` | changed temp projects only |
@@ -28,7 +28,7 @@ Each part deploys only when its own files change. Markdown-only changes don't de
 
 ## Nginx Configuration
 
-All nginx configs live in `nginx/conf.d/` and ship together with the nginx deploy:
+All nginx configs live in `infra/nginx/conf.d/` and ship together with the nginx deploy:
 
 - `default.conf` holds the settings shared by every site: rate limits, Cloudflare real IP, security headers, proxy headers (including WebSocket), the Docker DNS resolver, plus the port 80 catch-all that redirects to HTTPS and serves `/health`.
 - `www.conf` serves `www.when.party` and redirects `when.party` to it. These exact names win over the wildcard in `temp-sites.conf`.
@@ -38,9 +38,9 @@ All nginx configs live in `nginx/conf.d/` and ship together with the nginx deplo
 
 A site config only adds what differs: its certificate, its `Content-Security-Policy`, and its upstream. Shared headers still apply because `default.conf` sets `add_header_inherit merge` (nginx 1.29.3+). Upstreams use `resolve`, so nginx starts and reloads even when a backend container is down.
 
-Before deploying, CI runs `nginx -t` on the whole `conf.d` with throwaway certificates, using the image from `docker-compose.yml`.
+Before deploying, CI runs `nginx -t` on the whole `conf.d` with throwaway certificates, using the image from `infra/docker-compose.yml`.
 
-To add a site, add its config to `nginx/conf.d/` and attach the nginx container to the site's Docker network in `docker-compose.yml`.
+To add a site, add its config to `infra/nginx/conf.d/` and attach the nginx container to the site's Docker network in `infra/docker-compose.yml`.
 
 ## Temp Sites
 
@@ -91,20 +91,20 @@ The `infra` repo also needs **Write** access to the GHCR packages it pushes (`ww
 
 ## Nginx Deploy
 
-On a push that touches `docker-compose.yml`, `nginx/**`, `scripts/**` or the workflow, `deploy.yml`:
+On a push that touches `infra/**` (Markdown excluded) or the workflow, `infra.yml`:
 
 1. validates the config with `nginx -t`
-2. copies `docker-compose.yml`, `nginx/conf.d` and `scripts` to `/opt/services/whenparty/infra/`
+2. copies `infra/` (`docker-compose.yml`, `nginx/conf.d`, `scripts`) to `/opt/services/whenparty/infra/`, the same layout
 3. runs `docker compose pull` and `docker compose up -d`
 4. generates `cloudflare_real_ip.conf` if it is missing or has no entries
 5. runs `nginx -t` on the server and reloads nginx
 6. installs the hourly cron job that refreshes the Cloudflare IP list
 
-The copy never deletes files on the server. When you remove a config from `nginx/conf.d/`, delete it on the VPS too.
+The copy never deletes files on the server. When you remove a config from `infra/nginx/conf.d/`, delete it on the VPS too.
 
 ## Cloudflare Real IP Automation
 
-`scripts/update-cloudflare-real-ip.sh` writes the latest Cloudflare ranges to `/opt/services/whenparty/infra/nginx/conf.d/cloudflare_real_ip.conf`. When the list changes it validates the config and reloads nginx. When it doesn't change, nothing happens.
+`infra/scripts/update-cloudflare-real-ip.sh` writes the latest Cloudflare ranges to `/opt/services/whenparty/infra/nginx/conf.d/cloudflare_real_ip.conf`. When the list changes it validates the config and reloads nginx. When it doesn't change, nothing happens.
 
 Every deploy installs this cron line for the deploy user, replacing any older line that runs the script and keeping all other lines:
 
@@ -118,7 +118,7 @@ Check it with `crontab -l`. The last run's output is in `/tmp/update-cloudflare-
 
 ```bash
 docker run --rm \
-  -v "$PWD/nginx/conf.d:/etc/nginx/conf.d:ro" \
+  -v "$PWD/infra/nginx/conf.d:/etc/nginx/conf.d:ro" \
   -v /path/to/test/certs:/etc/nginx/certs:ro \
   nginx:1.31.7-alpine nginx -t
 ```

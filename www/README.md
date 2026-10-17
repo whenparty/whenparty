@@ -10,7 +10,7 @@ It follows the **Pencil & Gouache** design system: graphite pencil lines on off-
 - `Dockerfile` - nginx image that serves `html/`
 - `docker-compose.yml` - the `www` container on the `wp_www` network (no published ports)
 
-The public nginx config for this site is `nginx/conf.d/www.conf` in the repo root. It ships with the nginx deploy.
+The public nginx config for this site is `infra/nginx/conf.d/www.conf`. It ships with the nginx deploy.
 
 ## Deployment
 

@@ -11,7 +11,7 @@ on:
 env:
   REGISTRY: ghcr.io
   GITHUB_ORG: ${{ github.repository_owner }}
-  DEPLOY_DIR: /opt/services/whenparty/tempsites
+  DEPLOY_DIR: /opt/services/whenparty/temp-sites
 
 jobs:
   detect-changes:

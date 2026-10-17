@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  TRAEFIK_DIR: /opt/services/whenparty/tempsites/traefik
+  TRAEFIK_DIR: /opt/services/whenparty/temp-sites/traefik
 
 jobs:
   deploy:

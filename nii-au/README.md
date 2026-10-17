@@ -8,7 +8,7 @@ The static site at `https://www.nii.au` (`nii.au` redirects to it). It deploys o
 - `Dockerfile` - nginx image that serves `html/` with gzip enabled
 - `docker-compose.yml` - the `nii-au` container on the `wp_www` network (no published ports)
 
-The public-facing nginx config for this site is in `nginx/conf.d/` in the repo root. It ships with the nginx deploy, not with this folder.
+The public-facing nginx config for this site is in `infra/nginx/conf.d/`. It ships with the nginx deploy, not with this folder.
 
 ## Deployment
 

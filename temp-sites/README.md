@@ -3,7 +3,7 @@
 Disposable web apps on `*.when.party`. Each project builds into a container image and runs behind the shared Traefik router, which sits behind the nginx proxy from this repo.
 
 ```
-Internet → Cloudflare → nginx (TLS, nginx/conf.d/temp-sites.conf) → Traefik (HTTP :8000) → project container
+Internet → Cloudflare → nginx (TLS, infra/nginx/conf.d/temp-sites.conf) → Traefik (HTTP :8000) → project container
 ```
 
 ## Layout
@@ -18,7 +18,7 @@ temp-sites/
       README.md             # Project notes
 ```
 
-The wildcard nginx config for `*.when.party` lives with the other nginx configs in `nginx/conf.d/temp-sites.conf`. Adding a project never touches nginx.
+The wildcard nginx config for `*.when.party` lives with the other nginx configs in `infra/nginx/conf.d/temp-sites.conf`. Adding a project never touches nginx.
 
 ## Deployment
 
@@ -26,7 +26,7 @@ On a push that changes `temp-sites/projects/**` (Markdown excluded), `.github/wo
 
 1. finds which project folders changed
 2. for each one, builds and pushes `ghcr.io/whenparty/<project>` (`latest` + `sha-<commit>`) if it has a `Dockerfile`
-3. copies the project folder to `/opt/services/whenparty/tempsites/projects/<project>` and runs `docker compose up -d --remove-orphans` with the `sha-<commit>` image
+3. copies the project folder to `/opt/services/whenparty/temp-sites/projects/<project>` and runs `docker compose up -d --remove-orphans` with the `sha-<commit>` image
 4. if the folder was deleted, runs `docker compose down` and removes it from the VPS
 
 Unchanged projects are never rebuilt or restarted.
@@ -86,5 +86,5 @@ docker compose down -v
 ## Troubleshooting
 
 - Check the GitHub Actions logs first.
-- On the VPS: `docker compose ps` and `docker compose logs -f` inside `/opt/services/whenparty/tempsites/projects/<name>`.
+- On the VPS: `docker compose ps` and `docker compose logs -f` inside `/opt/services/whenparty/temp-sites/projects/<name>`.
 - `docker logs traefik-tempsites` shows whether Traefik picked up the container's labels.

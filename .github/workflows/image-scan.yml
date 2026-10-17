@@ -25,7 +25,7 @@ jobs:
         id: list
         run: |
           set -euo pipefail
-          list=$(for f in docker-compose.yml */docker-compose.yml temp-sites/traefik/docker-compose.yml temp-sites/projects/*/compose.yml; do
+          list=$(for f in */docker-compose.yml temp-sites/traefik/docker-compose.yml temp-sites/projects/*/compose.yml; do
             docker compose -f "$f" config --images
           done | sort -u | jq -R . | jq -sc .)
           echo "list=$list" >> "$GITHUB_OUTPUT"
