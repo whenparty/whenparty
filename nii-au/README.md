@@ -2,15 +2,18 @@
 
 The static site at `https://www.nii.au` (`nii.au` redirects to it). It deploys only to the nii.au domain. The When Party site lives in `../www/`.
 
-The site is "little by little.", a one-page scroll journey: a 10-second illustrated video is scrubbed by the page scroll, with a static poster shown until the video is ready.
+The site is "little by little.", a one-page scroll journey: a 10-second illustrated video is scrubbed by the page scroll, with a static poster shown until the video is ready. It is an installable PWA and works offline after the first visit.
 
 ## Files
 
 - `html/` - the site content (`index.html`, `styles.css`, `script.js`, `favicon.svg`)
 - `html/media/` - the journey videos, their posters and the paper texture
-- `nginx.conf` - the container's server block: gzip, IPv6 and cache headers
-- `scripts/fingerprint.sh` - runs in the image build and gives media, CSS and JS content-hashed names
+- `html/sw.js`, `html/manifest.webmanifest`, `html/icons/` - the service worker, the web app manifest and the app icons
+- `icons/` - SVG sources of the app icons
+- `nginx.conf` - the container's server block: gzip, IPv6, cache headers and the manifest's MIME type
+- `scripts/fingerprint.sh` - runs in the image build, gives media, CSS and JS content-hashed names and lists them in `sw.js`
 - `scripts/encode-media.sh` - regenerates the videos and posters from the master video
+- `scripts/make-icons.sh` - renders `html/icons/` from `icons/` (needs `rsvg-convert`, or Docker)
 - `Dockerfile` - nginx image that serves `html/`
 - `docker-compose.yml` - the `nii-au` container on the `wp_www` network (no published ports)
 
@@ -37,7 +40,20 @@ If you change the mobile crop in that script, update the crop constants in `scri
 
 ## Caching
 
-The image build renames every file in `media/`, plus `styles.css` and `script.js`, to `name.<hash>.ext` and rewrites the references to them. Those files are served with `Cache-Control: public, max-age=31536000, immutable`; `index.html` and `favicon.svg` are served with `no-cache`, so a deploy shows up on the next visit. Reference assets by their plain names (`/media/poster-desktop.webp`, `/styles.css`) in the source; the build fails if a file in `media/` is not referenced anywhere.
+The image build renames every file in `media/`, plus `styles.css` and `script.js`, to `name.<hash>.ext` and rewrites the references to them. Those files are served with `Cache-Control: public, max-age=31536000, immutable`. Everything else (`index.html`, `sw.js`, the manifest, the icons) is served with `no-cache`, so a deploy shows up on the next visit. Reference assets by their plain names (`/media/poster-desktop.webp`, `/styles.css`) in the source; the build fails if a file in `media/` is not referenced anywhere.
+
+## Offline
+
+`script.js` registers `sw.js` after the page loads. The build writes this build's hashed files into its `ASSETS` list, so every deploy that changes an asset changes `sw.js`, and browsers install the new worker on the next visit. The worker then drops files from earlier builds.
+
+- The page itself is network-first: a fresh copy when the network answers within 3 s, the cached one otherwise.
+- At install, the worker caches what the first screen needs: the page, CSS, JS, both posters, the texture, the favicon, the manifest and the 192 px icon. Most of these come straight from the HTTP cache.
+- Videos are cached the first time the page loads one, so each device keeps only its own video (0.8-2.5 MB). When the page decoded a video before the worker took control of it, it sends the path with `postMessage` and the worker caches it then.
+- Range requests (the plain `<video src>` fallback) always go to the network.
+
+So a visitor gets the full scroll journey offline once one visit has loaded the video. On a slow connection the video only loads on scroll, so a visitor who left before scrolling sees the poster offline. Safari deletes the cache of a site that has not been opened for 7 days, unless it was added to the Home Screen.
+
+To test offline locally, open the site at `http://localhost`, scroll once, stop the container and reload. The built-in browser pane of the Claude desktop app cannot register service workers, so use Chrome.
 
 ## Deployment
 

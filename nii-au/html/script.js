@@ -180,10 +180,16 @@
     cueState=next;
     cue.innerHTML=cues[next];
   }
+  // Ask the service worker to keep the video this page decoded, for offline visits.
+  function keepOffline(path) {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.ready.then(registration => registration.active.postMessage({cache:path}));
+  }
   function showVideo() {
     video.classList.add('is-ready');
     ready=true;
     updateCue();
+    if (objectUrl) keepOffline(file);
   }
   function synchronize() {
     raf=0;
@@ -290,4 +296,11 @@
     loaded:sourceLoaded,readyState:video.readyState,seeking:video.seeking,visible:ready
   });
   measureScene();update();
+})();
+
+
+// Offline support and installing as an app; see sw.js.
+(() => {
+  if (!('serviceWorker' in navigator)) return;
+  window.addEventListener('load',() => {navigator.serviceWorker.register('/sw.js').catch(() => {});},{once:true});
 })();

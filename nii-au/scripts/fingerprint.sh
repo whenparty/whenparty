@@ -1,6 +1,7 @@
 #!/bin/sh
 # Renames assets to name.<hash>.ext and rewrites their references, so nginx.conf
-# can serve them as immutable. Runs in the Docker build on the copied html/.
+# can serve them as immutable, then lists them in sw.js for offline caching.
+# Runs in the Docker build on the copied html/.
 # Usage: fingerprint.sh <html dir>
 set -eu
 cd "$1"
@@ -27,3 +28,14 @@ for asset in media/*; do
 done
 fingerprint styles.css index.html
 fingerprint script.js index.html
+
+# Tell the service worker which files belong to this build.
+assets=""
+for file in media/* styles.*.css script.*.js; do
+  assets="$assets${assets:+,}\"/$file\""
+done
+sed -i "s#^const ASSETS = \[\];#const ASSETS = [$assets];#" sw.js
+if ! grep -q '^const ASSETS = \["/' sw.js; then
+  echo "fingerprint.sh: could not fill ASSETS in sw.js" >&2
+  exit 1
+fi
