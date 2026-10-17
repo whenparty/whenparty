@@ -1,0 +1,11 @@
+services:
+  www:
+    image: ghcr.io/whenparty/www:latest
+    container_name: www
+    restart: unless-stopped
+    networks:
+      - wp_www
+
+networks:
+  wp_www:
+    external: true
