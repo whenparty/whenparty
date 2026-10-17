@@ -1,5 +1,5 @@
 import './style.css'
-import {ROOM_CODE_LENGTH, createRoomCode, isFull, normalizeRoomCode, seatOf, startSession} from '@whenparty/p2p'
+import {ROOM_CODE_LENGTH, createRoomCode, isFull, normalizeRoomCode, roomCodeFromHash, seatOf, startSession} from '@whenparty/p2p'
 import type {Session, SessionView} from '@whenparty/p2p'
 import {ticTacToe, type TicTacToe} from './tictactoe.ts'
 
@@ -174,9 +174,22 @@ copyLink.addEventListener('click', () => {
 restartButton.addEventListener('click', () => visit?.session?.send({type: 'restart'}))
 find('#leave').addEventListener('click', leaveRoom)
 
-// An invite link (https://tictactoe.when.party/#K7MXQ) joins straight away
-const linkedCode = normalizeRoomCode(location.hash.slice(1))
+// An invite link (https://tictactoe.when.party/#K7MXQ) joins straight away. Opened in a tab that
+// already shows the game, only the hash changes and the page does not reload, so listen for that too.
+// enterRoom and leaveRoom set the hash with replaceState, which fires no hashchange.
+const joinLinkedRoom = () => {
+  const code = roomCodeFromHash(location.hash)
 
-if (linkedCode) {
-  enterRoom(linkedCode, false)
+  if (!code || code === visit?.code) {
+    return
+  }
+
+  if (visit) {
+    leaveRoom()
+  }
+
+  enterRoom(code, false)
 }
+
+addEventListener('hashchange', joinLinkedRoom)
+joinLinkedRoom()

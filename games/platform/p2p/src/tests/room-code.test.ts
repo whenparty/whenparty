@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
-import {ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, createRoomCode, normalizeRoomCode} from '../room-code.ts'
+import {ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, createRoomCode, normalizeRoomCode, roomCodeFromHash} from '../room-code.ts'
 
 describe('createRoomCode', () => {
   it('makes codes of the room code length from the alphabet', () => {
@@ -35,6 +35,19 @@ describe('normalizeRoomCode', () => {
   it('rejects codes of the wrong length or with other characters', () => {
     for (const input of ['', 'K7MX', 'K7MXQQ', 'K7MX0', 'K7MXO', 'K7MX!']) {
       assert.equal(normalizeRoomCode(input), null, input)
+    }
+  })
+})
+
+describe('roomCodeFromHash', () => {
+  it('reads the code from an invite link hash', () => {
+    assert.equal(roomCodeFromHash('#K7MXQ'), 'K7MXQ')
+    assert.equal(roomCodeFromHash('#k7mxq'), 'K7MXQ')
+  })
+
+  it('is null for an empty hash or one that is not a room code', () => {
+    for (const hash of ['', '#', '#K7MX', '#hello', '#K7MXQ#K7MXQ']) {
+      assert.equal(roomCodeFromHash(hash), null, hash)
     }
   })
 })

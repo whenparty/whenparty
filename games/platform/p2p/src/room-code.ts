@@ -15,3 +15,6 @@ export const normalizeRoomCode = (input: string): string | null => {
 
   return isValid ? code : null
 }
+
+// The code in an invite link's hash (https://tictactoe.when.party/#K7MXQ), or null
+export const roomCodeFromHash = (hash: string): string | null => normalizeRoomCode(hash.replace(/^#/, ''))

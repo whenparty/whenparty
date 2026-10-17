@@ -34,7 +34,7 @@ await session.leave()
 
 ## Room Codes
 
-`src/room-code.ts` makes 5-character codes from `23456789BCDFGHJKMNPQRSTVWXYZ`. The alphabet has no `0`/`O`, `1`/`I`/`L` and no vowels, so codes are hard to misread and never spell words. That gives about 17 million codes. `normalizeRoomCode` accepts any case, spaces and dashes. The code is the Trystero `roomId`.
+`src/room-code.ts` makes 5-character codes from `23456789BCDFGHJKMNPQRSTVWXYZ`. The alphabet has no `0`/`O`, `1`/`I`/`L` and no vowels, so codes are hard to misread and never spell words. That gives about 17 million codes. `normalizeRoomCode` accepts any case, spaces and dashes, and `roomCodeFromHash` reads the code from an invite link (`#K7MXQ`). The code is the Trystero `roomId`.
 
 ## Sync Model: the Host Decides
 
