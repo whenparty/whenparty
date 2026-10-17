@@ -46,7 +46,7 @@ const startRoom = async () => {
   const movesOf = (selfId: string) => views.get(selfId)?.room?.game.moves
   const handledOf = (selfId: string, sender: string) => views.get(selfId)?.room?.handled[sender]
 
-  return {network, sessions, hostOf, movesOf, handledOf}
+  return {network, sessions, views, hostOf, movesOf, handledOf}
 }
 
 const go = {type: 'move', move: 'go'} as const
@@ -82,7 +82,7 @@ describe('startSession', () => {
     assert.equal(hostOf('c'), 'a')
   })
 
-  it('follows a new host heard from before the old one was noticed gone, and resends', async () => {
+  it('follows a new host before noticing the old one gone, and resends', async () => {
     const {network, sessions, hostOf, movesOf, handledOf} = await startRoom()
 
     sessions.a.send(go)
@@ -98,17 +98,63 @@ describe('startSession', () => {
     await sleep(takeoverDelayMs * 4)
     await network.settle()
 
+    // c's move went to a and was lost. c follows b right away and sends it again, and b handles it
+    // (as a rejected move: a's seat is free now, so the room is not full).
     assert.equal(hostOf('b'), 'b')
-    assert.equal(hostOf('c'), 'a')
-
-    network.notice('c', 'a')
-    await network.settle()
-
-    // c's move went to a and was lost. c sent it again to b, which handled it (as a rejected
-    // move: a's seat is free now, so the room is not full).
     assert.equal(hostOf('c'), 'b')
     assert.equal(handledOf('b', 'c'), 1)
     assert.equal(handledOf('c', 'c'), 1)
     assert.deepEqual(movesOf('c'), ['A', 'B'])
   })
+
+  it('moves everyone to the new host after a short blip at the old one', async () => {
+    const {network, sessions, views, hostOf, movesOf} = await startRoom()
+
+    sessions.a.send(go)
+    await network.settle()
+
+    // Only the a-b link drops, and only b notices. c never loses a.
+    network.cut('a', 'b')
+    network.notice('b', 'a')
+    await sleep(takeoverDelayMs * 4)
+    await network.settle()
+    network.connect('a', 'b')
+    await network.settle()
+
+    for (const selfId of ['a', 'b', 'c']) {
+      assert.equal(hostOf(selfId), 'b', selfId)
+      assert.equal(views.get(selfId)?.room?.term, 1, selfId)
+      assert.equal(views.get(selfId)?.isHost, selfId === 'b', selfId)
+    }
+
+    // a is back in its old seat, so the room is full and c's move counts
+    sessions.b.send(go)
+    await network.settle()
+    sessions.c.send(go)
+    await network.settle()
+
+    assert.deepEqual(movesOf('b'), ['A', 'B', 'C'])
+    assert.deepEqual(movesOf('c'), ['A', 'B', 'C'])
+  })
+  // Known gap: when a also notices b gone before b takes over, a drops b from the members, so to c
+  // b is no longer next in line. a later steps down to b, and c is left following a.
+  it(
+    'moves everyone to the new host when the old one noticed the blip first',
+    {todo: 'c needs another way to learn about the new host'},
+    async () => {
+      const {network, sessions, hostOf} = await startRoom()
+
+      sessions.a.send(go)
+      await network.settle()
+      network.cut('a', 'b')
+      network.notice('a', 'b')
+      network.notice('b', 'a')
+      await sleep(takeoverDelayMs * 4)
+      await network.settle()
+      network.connect('a', 'b')
+      await network.settle()
+
+      assert.equal(hostOf('c'), 'b')
+    }
+  )
 })

@@ -7,7 +7,7 @@ import {decodeIntent, decodeSnapshot, encode} from './protocol.ts'
 import {addPeer, applyIntent, createRoomState, removePeer} from './room-state.ts'
 import type {GameRules, Intent, NumberedIntent, RoomState} from './room-state.ts'
 import {signalingUrlFor} from './signaling-url.ts'
-import {acceptsSnapshot, earlyAfterJoin, keepEarly, promote, successorOf, type EarlySnapshot} from './succession.ts'
+import {acceptsSnapshot, promote, successorOf} from './succession.ts'
 
 export interface SessionView<State> {
   selfId: string
@@ -75,8 +75,6 @@ interface Context<State, Move> {
   // The last intent this guest sent, until a snapshot shows the host handled it
   pending: NumberedIntent<Move> | null
   nextIntentId: number
-  // A new host's snapshot heard before this guest noticed the old host leave (see keepEarly)
-  early: EarlySnapshot<State> | null
   takeover: ReturnType<typeof setTimeout> | undefined
   hostLeft: boolean
 }
@@ -131,7 +129,6 @@ const applySnapshot = <State, Move>(context: Context<State, Move>, snapshot: Roo
   const hostChanged = context.state !== null && hostOf(context) !== sender
   clearTimeout(context.takeover)
   context.state = snapshot
-  context.early = null
   settlePending(context, hostChanged)
   publish(context)
 }
@@ -140,28 +137,9 @@ const receiveSnapshot = <State, Move>(context: Context<State, Move>, data: unkno
   const snapshot = decodeSnapshot(context.rules, data)
   const source = {selfId: context.selfId, departed: context.departed, sender}
 
-  if (!snapshot) {
-    return
-  }
-
-  if (acceptsSnapshot(context.state, snapshot, source)) {
+  if (snapshot && acceptsSnapshot(context.state, snapshot, source)) {
     applySnapshot(context, snapshot, sender)
-  } else {
-    context.early = keepEarly(context.early, context.state, snapshot, source)
   }
-}
-
-// Once the host is noticed gone, a snapshot the new host sent earlier is taken after all
-const takeEarly = <State, Move>(context: Context<State, Move>): boolean => {
-  const {early, state} = context
-  context.early = null
-
-  if (!early || !acceptsSnapshot(state, early.snapshot, {...early, selfId: context.selfId, departed: context.departed})) {
-    return false
-  }
-
-  applySnapshot(context, early.snapshot, early.sender)
-  return true
 }
 
 const receiveIntent = <State, Move>(context: Context<State, Move>, data: unknown, sender: string) => {
@@ -213,7 +191,6 @@ const scheduleTakeover = <State, Move>(context: Context<State, Move>) => {
 
 const peerJoined = <State, Move>(context: Context<State, Move>, peerId: string) => {
   context.departed = context.departed.filter(id => id !== peerId)
-  context.early = earlyAfterJoin(context.early, context.state, peerId)
 
   if (context.state && hostOf(context) === context.selfId) {
     commit(context, addPeer(context.state, peerId))
@@ -228,10 +205,6 @@ const peerLeft = <State, Move>(context: Context<State, Move>, peerId: string) =>
 
   if (context.state && hostOf(context) === context.selfId) {
     commit(context, removePeer(context.rules, context.state, peerId))
-    return
-  }
-
-  if (peerId === hostOf(context) && takeEarly(context)) {
     return
   }
 
@@ -269,7 +242,6 @@ export const startSession = <State, Move>(
     departed: [],
     pending: null,
     nextIntentId: 1,
-    early: null,
     takeover: undefined,
     hostLeft: false
   }
@@ -284,7 +256,6 @@ export const startSession = <State, Move>(
     send: intent => send(context, intent),
     leave: () => {
       clearTimeout(context.takeover)
-      context.early = null
       return room.leave()
     }
   }
