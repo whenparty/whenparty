@@ -312,6 +312,16 @@ html {scroll-behavior: auto;}
  .journey-bottom {gap:9px;}
  .journey-skip {font-size:8px;}
 }
+/* Landscape phones: the pin is one short screen, so the copy has to fit between the header and the timeline.
+   Sizes follow the height; svh keeps them inside the pin when the browser bars show. */
+@media (max-height:500px) and (orientation:landscape) {
+ .scroll-story .hero-copy {top:clamp(76px,22vh,96px);top:clamp(76px,22svh,96px);}
+ .scroll-story .eyebrow {margin-bottom:12px;}
+ .scroll-story .hero-copy h1 {font-size:clamp(34px,10.5vh,52px);font-size:clamp(34px,10.5svh,52px);margin-bottom:16px;}
+ .scroll-story .hero-description {display:none;}
+ /* Text sits on the left as on wider screens, so the 700px rule's top-down veil would leave it over the village. */
+ .entry-veil {background:linear-gradient(90deg,rgba(252,252,249,.995),rgba(252,252,249,.94) 23%,rgba(252,252,249,.7) 39%,rgba(252,252,249,.05) 70%);}
+}
 @media (prefers-reduced-motion:reduce) {
  .scroll-story {height:100svh;}
  .journey-bottom {display:none;}
