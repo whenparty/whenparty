@@ -1,7 +1,7 @@
 services:
-  www:
-    image: ghcr.io/whenparty/www:latest
-    container_name: www
+  nii:
+    image: ghcr.io/whenparty/nii:latest
+    container_name: nii
     restart: unless-stopped
     networks:
       - wp_www
