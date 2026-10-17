@@ -1,0 +1,23 @@
+name: tempsite-relay
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/whenparty/relay:latest}
+    container_name: relay
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.relay.rule=Host(`relay.when.party`)'
+      - 'traefik.http.routers.relay.entrypoints=web'
+      - 'traefik.http.services.relay.loadbalancer.server.port=8080'
+    networks:
+      - wp_tempsites
+
+networks:
+  wp_tempsites:
+    external: true
