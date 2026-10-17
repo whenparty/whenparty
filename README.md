@@ -22,6 +22,8 @@ Each part deploys only when its own files change. Markdown-only changes don't de
 
 `www.yml` and `nii-au.yml` both call `.github/workflows/site.yml`: build the folder's `Dockerfile`, stop on critical Trivy findings, push `ghcr.io/whenparty/<folder>:latest`, then run the folder's `docker-compose.yml` in `/opt/services/whenparty/<folder>`. A change to `site.yml` redeploys both sites.
 
+`.github/workflows/image-scan.yml` runs every Monday (or manually) and scans every image the VPS runs with Trivy. That includes the nginx proxy and Traefik, which no deploy scans. It reads the image list from the compose files, uploads the results to GitHub Security, and turns red on a critical finding. That means the image needs a bump.
+
 `temp-sites/` and the nii.au site (then in `www/`) were separate repos (`whenparty/temp-sites`, `whenparty/www`, now archived) and were imported with full history.
 
 ## Nginx Configuration

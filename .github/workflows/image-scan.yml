@@ -1,0 +1,63 @@
+name: Scan Images
+
+# Weekly Trivy scan of every image the VPS runs, including ones no deploy
+# scans (the nginx proxy, Traefik). New CVEs appear after deploy time, so a
+# red run here means "bump that image". Results go to GitHub Security.
+on:
+  schedule:
+    - cron: "0 3 * * 1" # Mondays 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # Read the images from the compose files so versions live in one place
+      - name: List images
+        id: list
+        run: |
+          set -euo pipefail
+          list=$(for f in docker-compose.yml */docker-compose.yml temp-sites/traefik/docker-compose.yml temp-sites/projects/*/compose.yml; do
+            docker compose -f "$f" config --images
+          done | sort -u | jq -R . | jq -sc .)
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+          echo "Images: $list"
+
+  scan:
+    needs: images
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJson(needs.images.outputs.list) }}
+    steps:
+      - name: Scan image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ matrix.image }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: image-${{ matrix.image }}
+
+      - name: Fail on critical vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ matrix.image }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
