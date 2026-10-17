@@ -100,24 +100,8 @@ jobs:
           echo "projects=$projects" >> "$GITHUB_OUTPUT"
           echo "Changed projects: $projects"
 
-  # One-off for the move of signaling out of temp-sites (October 2026). The old compose project
-  # tempsite-signaling still runs a container named signaling, so stop it before games-signaling
-  # starts one with that name. temp-sites.yml removes the old folder in the same push, in either
-  # order. After the first games deploy this does nothing: delete the job.
-  stop-temp-signaling:
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Stop tempsite-signaling
-        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_DEPLOY_KEY }}
-          script: docker compose -p tempsite-signaling down --remove-orphans
-
   deploy:
-    needs: [check, detect-changes, stop-temp-signaling]
+    needs: [check, detect-changes]
     if: needs.detect-changes.outputs.projects != '[]'
     strategy:
       fail-fast: false
