@@ -35,6 +35,7 @@ All nginx configs live in `infra/nginx/conf.d/` and ship together with the nginx
 - `nii-au.conf` serves `www.nii.au` and redirects `nii.au` to it.
 - `temp-sites.conf` terminates TLS for every other `*.when.party` host and passes the request to Traefik.
 - `cloudflare_real_ip.conf` is the Cloudflare IP allow list. It is generated on the VPS and not tracked in git (see below).
+- `cloudflare-origin-pull-ca.pem` is Cloudflare's public Authenticated Origin Pulls CA (valid until 2029-11-01). With `ssl_verify_client on` in `default.conf`, port 443 accepts only connections that present Cloudflare's client certificate, so nobody can bypass Cloudflare by hitting the server IP directly (they get a 400). Port 80 (redirects and `/health`) is unaffected.
 
 A site config only adds what differs: its certificate, its `Content-Security-Policy`, and its upstream. Shared headers still apply because `default.conf` sets `add_header_inherit merge` (nginx 1.29.3+). Upstreams use `resolve`, so nginx starts and reloads even when a backend container is down.
 
@@ -78,7 +79,8 @@ chmod 600 /opt/services/whenparty/infra/nginx/certs/*.key
 
 - SSL/TLS mode: **Full (strict)**
 - Always Use HTTPS: on
-- DNS records point to the VPS and are proxied.
+- SSL/TLS → Origin Server → **Authenticated Origin Pulls: on**, in every zone served here (`nii.au`, `when.party`). Without it, nginx rejects Cloudflare's requests and the sites in that zone return 400.
+- DNS records for the sites point to the VPS and are proxied.
 
 ### GitHub Secrets
 
