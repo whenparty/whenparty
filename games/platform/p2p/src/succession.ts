@@ -61,3 +61,41 @@ export const acceptsSnapshot = <State>(
 
   return sender === host || sender === successor
 }
+
+// A snapshot a guest could not take yet, with who sent it
+export interface EarlySnapshot<State> {
+  snapshot: RoomState<State>
+  sender: string
+}
+
+// Links drop at different times, so a guest can hear from the new host before it notices that the
+// old one is gone: a newer term from the member next in line, while the host still looks present.
+// The new host sends nothing more until something happens, so the guest keeps the newest such
+// snapshot and takes it once it notices the host leave. Returns what to keep.
+export const keepEarly = <State>(
+  kept: EarlySnapshot<State> | null,
+  known: RoomState<State> | null,
+  snapshot: RoomState<State>,
+  {selfId, departed, sender}: SnapshotSource
+): EarlySnapshot<State> | null => {
+  const host = known?.members[0]
+
+  if (!known || !host || host === selfId || departed.includes(host)) {
+    return kept
+  }
+
+  const isEarly = snapshot.members[0] === sender && snapshot.term > known.term && sender === successorOf(known, departed)
+
+  if (!isEarly || (kept && kept.snapshot.term >= snapshot.term)) {
+    return kept
+  }
+
+  return {snapshot, sender}
+}
+
+// The old host is back, so the room did not move on after all
+export const earlyAfterJoin = <State>(
+  kept: EarlySnapshot<State> | null,
+  known: RoomState<State> | null,
+  peerId: string
+): EarlySnapshot<State> | null => (kept && known?.members[0] === peerId ? null : kept)

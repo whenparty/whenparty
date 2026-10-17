@@ -2,12 +2,12 @@
 // room state. Guests send their intents to the host and show what it broadcasts. When the host
 // leaves, the next member takes over (see succession.ts). Nothing is stored on a server: the
 // signaling server only helps browsers find each other.
-import {joinRoom, selfId, type MessageAction, type Room} from '@trystero-p2p/ws-relay'
+import {joinRoom, selfId, type MessageAction} from '@trystero-p2p/ws-relay'
 import {decodeIntent, decodeSnapshot, encode} from './protocol.ts'
 import {addPeer, applyIntent, createRoomState, removePeer} from './room-state.ts'
 import type {GameRules, Intent, NumberedIntent, RoomState} from './room-state.ts'
 import {signalingUrlFor} from './signaling-url.ts'
-import {acceptsSnapshot, promote, successorOf} from './succession.ts'
+import {acceptsSnapshot, earlyAfterJoin, keepEarly, promote, successorOf, type EarlySnapshot} from './succession.ts'
 
 export interface SessionView<State> {
   selfId: string
@@ -38,11 +38,32 @@ export interface Session<Move> {
   leave: () => Promise<void>
 }
 
+// The parts of a Trystero room a session uses
+export interface SessionRoom {
+  makeAction: (namespace: string) => MessageAction<string>
+  onPeerJoin: ((peerId: string) => void) | null
+  onPeerLeave: ((peerId: string) => void) | null
+  getPeers: () => Record<string, unknown>
+  leave: () => Promise<void>
+}
+
+// How a session reaches the other peers. Tests pass an in-memory one.
+export interface Transport {
+  selfId: string
+  join: (appId: string, code: string) => SessionRoom
+}
+
+const trystero: Transport = {
+  selfId,
+  join: (appId, code) => joinRoom({appId, relayConfig: {urls: [signalingUrlFor(location.hostname)]}}, code)
+}
+
 const defaultTakeoverDelayMs = 2500
 
 // Everything a session tracks. The functions below change it in place.
 interface Context<State, Move> {
-  room: Room
+  selfId: string
+  room: SessionRoom
   rules: GameRules<State, Move>
   snapshots: MessageAction<string>
   intents: MessageAction<string>
@@ -54,6 +75,8 @@ interface Context<State, Move> {
   // The last intent this guest sent, until a snapshot shows the host handled it
   pending: NumberedIntent<Move> | null
   nextIntentId: number
+  // A new host's snapshot heard before this guest noticed the old host leave (see keepEarly)
+  early: EarlySnapshot<State> | null
   takeover: ReturnType<typeof setTimeout> | undefined
   hostLeft: boolean
 }
@@ -66,8 +89,8 @@ const publish = <State, Move>(context: Context<State, Move>) => {
   const host = hostOf(context)
 
   context.onChange({
-    selfId,
-    isHost: host === selfId,
+    selfId: context.selfId,
+    isHost: host === context.selfId,
     room: context.state,
     switchingHost: host !== null && context.departed.includes(host),
     hostLeft: context.hostLeft
@@ -84,7 +107,7 @@ const commit = <State, Move>(context: Context<State, Move>, next: RoomState<Stat
 const sendToHost = <State, Move>(context: Context<State, Move>, intent: NumberedIntent<Move>) => {
   const host = hostOf(context)
 
-  if (host && host !== selfId) {
+  if (host && host !== context.selfId) {
     context.intents.send(encode(intent), {target: host}).catch(logError)
   }
 }
@@ -97,31 +120,53 @@ const settlePending = <State, Move>(context: Context<State, Move>, hostChanged: 
     return
   }
 
-  if ((state.handled[selfId] ?? 0) >= pending.id) {
+  if ((state.handled[context.selfId] ?? 0) >= pending.id) {
     context.pending = null
   } else if (hostChanged) {
     sendToHost(context, pending)
   }
 }
 
-const receiveSnapshot = <State, Move>(context: Context<State, Move>, data: unknown, sender: string) => {
-  const snapshot = decodeSnapshot(context.rules, data)
-  const source = {selfId, departed: context.departed, sender}
-
-  if (!snapshot || !acceptsSnapshot(context.state, snapshot, source)) {
-    return
-  }
-
+const applySnapshot = <State, Move>(context: Context<State, Move>, snapshot: RoomState<State>, sender: string) => {
   const hostChanged = context.state !== null && hostOf(context) !== sender
   clearTimeout(context.takeover)
   context.state = snapshot
+  context.early = null
   settlePending(context, hostChanged)
   publish(context)
 }
 
+const receiveSnapshot = <State, Move>(context: Context<State, Move>, data: unknown, sender: string) => {
+  const snapshot = decodeSnapshot(context.rules, data)
+  const source = {selfId: context.selfId, departed: context.departed, sender}
+
+  if (!snapshot) {
+    return
+  }
+
+  if (acceptsSnapshot(context.state, snapshot, source)) {
+    applySnapshot(context, snapshot, sender)
+  } else {
+    context.early = keepEarly(context.early, context.state, snapshot, source)
+  }
+}
+
+// Once the host is noticed gone, a snapshot the new host sent earlier is taken after all
+const takeEarly = <State, Move>(context: Context<State, Move>): boolean => {
+  const {early, state} = context
+  context.early = null
+
+  if (!early || !acceptsSnapshot(state, early.snapshot, {...early, selfId: context.selfId, departed: context.departed})) {
+    return false
+  }
+
+  applySnapshot(context, early.snapshot, early.sender)
+  return true
+}
+
 const receiveIntent = <State, Move>(context: Context<State, Move>, data: unknown, sender: string) => {
   const {state} = context
-  const intent = state?.members[0] === selfId ? decodeIntent(context.rules, data) : null
+  const intent = state?.members[0] === context.selfId ? decodeIntent(context.rules, data) : null
 
   if (state && intent) {
     commit(context, applyIntent(context.rules, state, sender, intent))
@@ -134,13 +179,13 @@ const takeOver = <State, Move>(context: Context<State, Move>) => {
   const {state, rules, departed} = context
   const host = hostOf(context)
 
-  if (!state || !host || !departed.includes(host) || successorOf(state, departed) !== selfId) {
+  if (!state || !host || !departed.includes(host) || successorOf(state, departed) !== context.selfId) {
     return
   }
 
-  let next = departed.reduce((room, peerId) => removePeer(rules, room, peerId), promote(rules, state, host, selfId))
+  let next = departed.reduce((room, peerId) => removePeer(rules, room, peerId), promote(rules, state, host, context.selfId))
   next = Object.keys(context.room.getPeers()).reduce((room, peerId) => addPeer(room, peerId), next)
-  next = context.pending ? applyIntent(rules, next, selfId, context.pending) : next
+  next = context.pending ? applyIntent(rules, next, context.selfId, context.pending) : next
   context.pending = null
   commit(context, next)
 }
@@ -160,7 +205,7 @@ const scheduleTakeover = <State, Move>(context: Context<State, Move>) => {
   if (successor === null) {
     context.hostLeft = true
     context.room.leave().catch(logError)
-  } else if (successor === selfId) {
+  } else if (successor === context.selfId) {
     clearTimeout(context.takeover)
     context.takeover = setTimeout(() => takeOver(context), context.takeoverDelayMs)
   }
@@ -168,8 +213,9 @@ const scheduleTakeover = <State, Move>(context: Context<State, Move>) => {
 
 const peerJoined = <State, Move>(context: Context<State, Move>, peerId: string) => {
   context.departed = context.departed.filter(id => id !== peerId)
+  context.early = earlyAfterJoin(context.early, context.state, peerId)
 
-  if (context.state && hostOf(context) === selfId) {
+  if (context.state && hostOf(context) === context.selfId) {
     commit(context, addPeer(context.state, peerId))
   } else {
     publish(context)
@@ -180,8 +226,12 @@ const peerJoined = <State, Move>(context: Context<State, Move>, peerId: string) 
 const peerLeft = <State, Move>(context: Context<State, Move>, peerId: string) => {
   context.departed = [...context.departed.filter(id => id !== peerId), peerId]
 
-  if (context.state && hostOf(context) === selfId) {
+  if (context.state && hostOf(context) === context.selfId) {
     commit(context, removePeer(context.rules, context.state, peerId))
+    return
+  }
+
+  if (peerId === hostOf(context) && takeEarly(context)) {
     return
   }
 
@@ -192,8 +242,8 @@ const peerLeft = <State, Move>(context: Context<State, Move>, peerId: string) =>
 const send = <State, Move>(context: Context<State, Move>, intent: Intent<Move>) => {
   const numbered = {...intent, id: context.nextIntentId++}
 
-  if (context.state && hostOf(context) === selfId) {
-    commit(context, applyIntent(context.rules, context.state, selfId, numbered))
+  if (context.state && hostOf(context) === context.selfId) {
+    commit(context, applyIntent(context.rules, context.state, context.selfId, numbered))
     return
   }
 
@@ -201,20 +251,25 @@ const send = <State, Move>(context: Context<State, Move>, intent: Intent<Move>) 
   sendToHost(context, numbered)
 }
 
-export const startSession = <State, Move>(options: SessionOptions<State, Move>): Session<Move> => {
+export const startSession = <State, Move>(
+  options: SessionOptions<State, Move>,
+  transport: Transport = trystero
+): Session<Move> => {
   const {appId, code, isHost, rules, onChange, takeoverDelayMs = defaultTakeoverDelayMs} = options
-  const room = joinRoom({appId, relayConfig: {urls: [signalingUrlFor(location.hostname)]}}, code)
+  const room = transport.join(appId, code)
   const context: Context<State, Move> = {
+    selfId: transport.selfId,
     room,
     rules,
-    snapshots: room.makeAction<string>('snapshot'),
-    intents: room.makeAction<string>('intent'),
+    snapshots: room.makeAction('snapshot'),
+    intents: room.makeAction('intent'),
     onChange,
     takeoverDelayMs,
-    state: isHost ? createRoomState(rules, selfId) : null,
+    state: isHost ? createRoomState(rules, transport.selfId) : null,
     departed: [],
     pending: null,
     nextIntentId: 1,
+    early: null,
     takeover: undefined,
     hostLeft: false
   }
@@ -229,6 +284,7 @@ export const startSession = <State, Move>(options: SessionOptions<State, Move>):
     send: intent => send(context, intent),
     leave: () => {
       clearTimeout(context.takeover)
+      context.early = null
       return room.leave()
     }
   }

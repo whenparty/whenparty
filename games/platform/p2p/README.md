@@ -58,6 +58,7 @@ The room goes on with another host. Every snapshot carries what the peers need t
 - **Pause**: Trystero's `onPeerLeave` means "my link to that peer dropped", not "it left the room". So only the successor takes over, and only after `takeoverDelayMs`. If the old host comes back within the pause, nothing changes. The others show "The host left. The next player takes over in a moment…" and wait for the successor's snapshot.
 - **Promotion**: the successor drops the old host from the members, frees its seat (through `onSeatLeft`), moves itself to the front and adds 1 to the **term**. It drops the members it lost too, adds the peers it is connected to, and broadcasts. It is then a host like any other.
 - **Term**: a guest takes snapshots only from the host of its last snapshot, or from the successor once that host is gone, and never from an older term. A host that sees a newer term from another peer steps down and becomes a guest. That covers an old host whose network came back after the room moved on.
+- **Early snapshot**: links drop at different times, so a guest can hear from the new host before it notices the old one is gone. It keeps the newest such snapshot (a newer term from the member next in line) and takes it as soon as it notices the host leave, because the new host sends nothing more until something happens. It drops it if the old host comes back.
 - **Last intent**: every intent has an ID that goes up with each one its sender sends, and the snapshot records the last ID the host handled from each member (`handled`). A guest keeps its last intent until a snapshot shows it handled, and sends it once more to a new host that has not handled it. The host handles each ID once, so a resent move is never applied twice, whatever the game.
 - **Alone**: a guest that is the last member becomes the host of a room of one and waits for others. `hostLeft` is only for a guest that can't take over.
 
@@ -87,10 +88,10 @@ src/
   session.ts         # Trystero: runs the host or a guest, hands over the host role, calls onChange
   signaling-url.ts   # which signaling server to use
   dev-headers.ts     # production headers for the Vite dev servers
-  tests/             # node:test, with a tiny test game (race.ts)
+  tests/             # node:test, with a tiny test game (race.ts) and an in-memory network
 ```
 
-`session.ts` needs WebRTC, so it is covered by browser checks rather than unit tests: three tabs where the host closes its tab, and two tabs where the host reloads (see the title READMEs).
+`session.ts` is tested against `tests/fake-network.ts`, an in-memory stand-in for Trystero where cutting a link and noticing it are separate steps, so handovers with links that drop at different times can be replayed. The real WebRTC path is covered by browser checks: three tabs where the host closes its tab, and two tabs where the host reloads (see the title READMEs).
 
 ## Limits
 

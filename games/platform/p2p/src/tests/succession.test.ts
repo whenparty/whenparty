@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
 import {addPeer, applyIntent, createRoomState, type RoomState} from '../room-state.ts'
-import {acceptsSnapshot, promote, successorOf} from '../succession.ts'
+import {acceptsSnapshot, earlyAfterJoin, keepEarly, promote, successorOf} from '../succession.ts'
 import {race, type Race} from './race.ts'
 
 const forfeit = {...race, onSeatLeft: (state: Race, seat: string): Race => ({...state, winner: seat === 'A' ? 'B' : 'A'})}
@@ -94,5 +94,61 @@ describe('acceptsSnapshot', () => {
 
     assert.equal(acceptsSnapshot(room, promoted, asHost), true)
     assert.equal(acceptsSnapshot(room, {...room, members: ['guest', 'host', 'spectator']}, asHost), false)
+  })
+})
+
+describe('keepEarly', () => {
+  // The spectator still sees the host, but the guest already took over
+  const promoted = promote(race, room, 'host', 'guest')
+  const fromGuest = {selfId: 'spectator', departed: [], sender: 'guest'}
+
+  it('keeps a newer term from the successor while the host still looks present', () => {
+    const early = keepEarly(null, room, promoted, fromGuest)
+
+    assert.deepEqual(early, {snapshot: promoted, sender: 'guest'})
+  })
+
+  it('takes the kept snapshot once the host is gone', () => {
+    const early = keepEarly(null, room, promoted, fromGuest)
+
+    assert.ok(early)
+    assert.equal(acceptsSnapshot(room, early.snapshot, {...fromGuest, departed: ['host'], sender: early.sender}), true)
+  })
+
+  it('does not keep snapshots from members that are not next in line', () => {
+    const withLate = addPeer(room, 'late')
+    const bySpectator = promote(race, withLate, 'host', 'spectator')
+
+    assert.equal(keepEarly(null, withLate, bySpectator, {selfId: 'late', departed: [], sender: 'spectator'}), null)
+  })
+
+  it('does not keep snapshots with an older or the same term', () => {
+    assert.equal(keepEarly(null, room, {...promoted, term: 0}, fromGuest), null)
+    assert.equal(keepEarly(null, {...room, term: 1}, promoted, fromGuest), null)
+  })
+
+  it('keeps nothing for a host, or once the host is gone', () => {
+    assert.equal(keepEarly(null, room, promoted, {selfId: 'host', departed: [], sender: 'guest'}), null)
+    assert.equal(keepEarly(null, room, promoted, {...fromGuest, departed: ['host']}), null)
+  })
+
+  it('keeps the newest early snapshot', () => {
+    const newer = {...promoted, term: 2}
+    const kept = keepEarly(null, room, newer, fromGuest)
+
+    assert.equal(keepEarly(kept, room, promoted, fromGuest), kept)
+    assert.deepEqual(keepEarly(keepEarly(null, room, promoted, fromGuest), room, newer, fromGuest), kept)
+  })
+})
+
+describe('earlyAfterJoin', () => {
+  const early = {snapshot: promote(race, room, 'host', 'guest'), sender: 'guest'}
+
+  it('drops the early snapshot when the old host comes back', () => {
+    assert.equal(earlyAfterJoin(early, room, 'host'), null)
+  })
+
+  it('keeps it when anyone else joins', () => {
+    assert.equal(earlyAfterJoin(early, room, 'late'), early)
   })
 })
