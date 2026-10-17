@@ -2,7 +2,7 @@ name: traefik-tempsites
 
 services:
   traefik:
-    image: traefik:v3.5.4
+    image: traefik:v3.7.15
     container_name: traefik-tempsites
     restart: unless-stopped
 
