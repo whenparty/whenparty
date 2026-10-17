@@ -1,7 +1,7 @@
 #!/bin/bash
 # Encodes the journey videos and posters in html/media from the master video.
 # Usage: scripts/encode-media.sh <master.mp4>
-# Needs ffmpeg (with libx264) and cwebp.
+# Needs ffmpeg (with libx264 and libsvtav1) and cwebp.
 set -euo pipefail
 
 master=$1
@@ -18,11 +18,21 @@ bt709="setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709:range=tv
 
 # A keyframe every 12 frames (0.5 s) keeps scroll seeking cheap. Limiting
 # B-frames and references keeps the stream at level 3.1 for older phones.
-encode_video() {
+encode_h264() {
   local filter=$1 target=$2
   ffmpeg -v error -y -i "$master" -an -vf "$filter,$bt709" \
     -c:v libx264 -preset veryslow -crf 26 -bf 2 -refs 4 \
     -g 12 -keyint_min 12 -sc_threshold 0 -pix_fmt yuv420p \
+    -movflags +faststart "$out/$target"
+}
+
+# AV1 is 25-35% smaller than the H.264 at a slightly higher SSIM, but script.js
+# only picks it where the browser decodes it in hardware. Its decodingInfo()
+# query lists each stream's level and bitrate, so update it when these change.
+encode_av1() {
+  local filter=$1 crf=$2 target=$3
+  SVT_LOG=1 ffmpeg -v error -y -i "$master" -an -vf "$filter,$bt709" \
+    -c:v libsvtav1 -preset 4 -crf "$crf" -g 12 -pix_fmt yuv420p \
     -movflags +faststart "$out/$target"
 }
 
@@ -35,8 +45,10 @@ encode_poster() {
   rm -f "$frame"
 }
 
-encode_video null journey-desktop.mp4
-encode_video "$mobile_crop" journey-mobile.mp4
+encode_h264 null journey-desktop.mp4
+encode_h264 "$mobile_crop" journey-mobile.mp4
+encode_av1 null 38 journey-desktop.av1.mp4
+encode_av1 "$mobile_crop" 36 journey-mobile.av1.mp4
 encode_poster null poster-desktop.webp
 encode_poster "$mobile_crop" poster-mobile.webp
 ls -l "$out"

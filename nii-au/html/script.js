@@ -91,9 +91,13 @@
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   // Keep in sync with the <picture> source and preloads in index.html and with styles.css.
   const mobile = window.matchMedia('(max-width:700px) and (orientation:portrait)');
+  // codecs (profile, level, bit depth) and bitrate describe the AV1 streams for
+  // decodingInfo(); see scripts/encode-media.sh.
   const media = {
-    desktop:'/media/journey-desktop.mp4',
-    mobile:'/media/journey-mobile.mp4'
+    desktop:{h264:'/media/journey-desktop.mp4',av1:'/media/journey-desktop.av1.mp4',
+      codecs:'av01.0.05M.08',width:1280,height:720,bitrate:1300000},
+    mobile:{h264:'/media/journey-mobile.mp4',av1:'/media/journey-mobile.av1.mp4',
+      codecs:'av01.0.04M.08',width:576,height:720,bitrate:620000}
   };
   // The mobile video is a 576x720 slice (x 544-1120) of the 1280x720 master; see scripts/encode-media.sh.
   const MASTER_WIDTH=1280, CROP_LEFT=544, CROP_WIDTH=576, CROP_HEIGHT=720;
@@ -112,6 +116,8 @@
   let ready=false;
   let download=null;
   let objectUrl='';
+  let file='';
+  let av1Failed=false;
   let cueState='';
   let pageLoaded=false;
   const FRAMES=241;
@@ -122,13 +128,28 @@
     video.src=src;
     video.load();
   }
+  // Use AV1 only where it decodes in hardware: every scroll seek decodes up to
+  // 11 frames from the last keyframe, which is too slow in software on phones.
+  function chooseFile(target) {
+    const item=media[target];
+    if (av1Failed || !('mediaCapabilities' in navigator)) return Promise.resolve(item.h264);
+    return navigator.mediaCapabilities.decodingInfo({
+      type:'file',
+      video:{contentType:`video/mp4; codecs="${item.codecs}"`,width:item.width,height:item.height,bitrate:item.bitrate,framerate:FPS}
+    }).then(info => info.supported && info.powerEfficient ? item.av1 : item.h264, () => item.h264);
+  }
   // Download the whole file and play it from memory, so scroll seeks never wait on the network.
   function beginVideo() {
     if (sourceLoaded || reduced.matches) return;
     sourceLoaded=true;
     const target=mode;
-    download=new AbortController();
-    fetch(media[target],{signal:download.signal})
+    const signal=(download=new AbortController()).signal;
+    chooseFile(target)
+      .then(choice => {
+        if (signal.aborted) throw new DOMException('Mode changed','AbortError');
+        file=choice;
+        return fetch(choice,{signal});
+      })
       .then(response => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.blob();
@@ -139,7 +160,9 @@
         useSource(target,objectUrl);
       })
       .catch(error => {
-        if (error.name!=='AbortError') useSource(target,media[target]);
+        if (error.name==='AbortError' || target!==mode) return;
+        file=media[target].h264;
+        useSource(target,file);
       });
   }
   function resetVideo() {
@@ -149,7 +172,7 @@
     video.classList.remove('is-ready');
     video.removeAttribute('src');video.load();
     if (objectUrl) URL.revokeObjectURL(objectUrl);
-    objectUrl='';
+    objectUrl='';file='';
   }
   function updateCue() {
     const next=progress>.01&&!ready?'loading':progress>.12?'moving':'start';
@@ -234,6 +257,13 @@
     if (progress===0 && !ready) showVideo();
     requestSync();
   });
+  // decodingInfo() can promise more than the decoder delivers; start over with H.264.
+  video.addEventListener('error',() => {
+    if (file!==media[mode].av1) return;
+    av1Failed=true;
+    resetVideo();
+    beginVideo();
+  });
   range.addEventListener('input',() => {
     if (reduced.matches) return;
     if (!measure)measureScene();
@@ -255,7 +285,7 @@
   });
   window.addEventListener('load',() => {pageLoaded=true;prefetchVideo();},{once:true});
   window.__sketchPerf=() => ({
-    mode,source:objectUrl?'blob':video.currentSrc,
+    mode,file,source:objectUrl?'blob':video.currentSrc,
     desiredTime:pendingTime,actualTime:video.currentTime,
     loaded:sourceLoaded,readyState:video.readyState,seeking:video.seeking,visible:ready
   });

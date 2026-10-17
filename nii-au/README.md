@@ -20,20 +20,20 @@ The public-facing nginx config for this site, including its Content-Security-Pol
 
 | File | What it is |
 |---|---|
-| `journey-desktop.mp4` | H.264 1280x720, the full frame |
-| `journey-mobile.mp4` | H.264 576x720, a portrait slice of the frame for portrait phones |
+| `journey-desktop.av1.mp4`, `journey-desktop.mp4` | AV1 and H.264 1280x720, the full frame |
+| `journey-mobile.av1.mp4`, `journey-mobile.mp4` | AV1 and H.264 576x720, a portrait slice of the frame for portrait phones |
 | `poster-desktop.webp`, `poster-mobile.webp` | frame 0 of each video |
 | `paper.png` | the tiled page background |
 
-Both videos have a keyframe every 12 frames (0.5 s) so scroll seeking stays cheap. `script.js` downloads the whole video into a Blob before playing it, so seeks never wait on the network (that is why the CSP allows `media-src blob:`). Portrait phones (`max-width: 700px` and portrait) get the mobile files; that media query appears in `index.html`, `styles.css` and `script.js`, so change all three together.
+All videos have a keyframe every 12 frames (0.5 s) so scroll seeking stays cheap. The AV1 files are 25-35% smaller, but every seek decodes up to 11 frames, which software AV1 is too slow for on phones. So `script.js` picks AV1 only when `navigator.mediaCapabilities.decodingInfo()` reports it `supported` and `powerEfficient` (hardware decoding; on Apple devices that means iPhone 15 Pro and M3 Macs or newer) and H.264 everywhere else. It also falls back to H.264 if the AV1 file fails to download or decode. `script.js` downloads the whole video into a Blob before playing it, so seeks never wait on the network (that is why the CSP allows `media-src blob:`). Portrait phones (`max-width: 700px` and portrait) get the mobile files; that media query appears in `index.html`, `styles.css` and `script.js`, so change all three together.
 
-To re-encode from the master video (needs `ffmpeg` and `cwebp`, e.g. `brew install ffmpeg webp`):
+To re-encode from the master video (needs `ffmpeg` with `libx264` and `libsvtav1`, and `cwebp`, e.g. `brew install ffmpeg webp`):
 
 ```bash
 nii-au/scripts/encode-media.sh path/to/master.mp4
 ```
 
-If you change the mobile crop in that script, update the crop constants in `script.js` too.
+If you change the mobile crop in that script, update the crop constants in `script.js` too. If you change the AV1 settings, update the `codecs` level and `bitrate` that `script.js` passes to `decodingInfo()` (`ffprobe` shows both).
 
 ## Caching
 
