@@ -51,11 +51,17 @@ export interface SessionRoom {
 export interface Transport {
   selfId: string
   join: (appId: string, code: string) => SessionRoom
+  // Calls back when the page unloads, and returns how to stop
+  onUnload?: (callback: () => void) => () => void
 }
 
 const trystero: Transport = {
   selfId,
-  join: (appId, code) => joinRoom({appId, relayConfig: {urls: [signalingUrlFor(location.hostname)]}}, code)
+  join: (appId, code) => joinRoom({appId, relayConfig: {urls: [signalingUrlFor(location.hostname)]}}, code),
+  onUnload: callback => {
+    addEventListener('beforeunload', callback)
+    return () => removeEventListener('beforeunload', callback)
+  }
 }
 
 const defaultTakeoverDelayMs = 2500
@@ -67,11 +73,16 @@ interface Context<State, Move> {
   rules: GameRules<State, Move>
   snapshots: MessageAction<string>
   intents: MessageAction<string>
+  byes: MessageAction<string>
   onChange: (view: SessionView<State>) => void
   takeoverDelayMs: number
   state: RoomState<State> | null
   // Peers whose link dropped and that have not come back
   departed: string[]
+  // A host's timers for dropping members whose link dropped (see scheduleRemoval)
+  removals: Map<string, ReturnType<typeof setTimeout>>
+  // Peers that said goodbye before leaving, so a host drops them at once
+  saidBye: Set<string>
   // The last intent this guest sent, until a snapshot shows the host handled it
   pending: NumberedIntent<Move> | null
   nextIntentId: number
@@ -125,9 +136,51 @@ const settlePending = <State, Move>(context: Context<State, Move>, hostChanged: 
   }
 }
 
+const clearRemovals = <State, Move>(context: Context<State, Move>) => {
+  context.removals.forEach(timer => clearTimeout(timer))
+  context.removals.clear()
+}
+
+const dropMember = <State, Move>(context: Context<State, Move>, peerId: string) => {
+  clearTimeout(context.removals.get(peerId))
+  context.removals.delete(peerId)
+
+  if (context.state && hostOf(context) === context.selfId) {
+    commit(context, removePeer(context.rules, context.state, peerId))
+  }
+}
+
+// A host drops a member whose link dropped only after twice the takeover pause. If that member is
+// next in line and takes over meanwhile, its snapshot reaches the others while they still count
+// it as next in line. A member that comes back in time keeps its place and seat. A member that
+// said goodbye is dropped at once, so a reloaded tab finds its seat free.
+const scheduleRemoval = <State, Move>(context: Context<State, Move>, peerId: string) => {
+  if (context.saidBye.has(peerId)) {
+    dropMember(context, peerId)
+    return
+  }
+
+  clearTimeout(context.removals.get(peerId))
+  context.removals.set(
+    peerId,
+    setTimeout(() => dropMember(context, peerId), context.takeoverDelayMs * 2)
+  )
+}
+
+const receiveBye = <State, Move>(context: Context<State, Move>, sender: string) => {
+  context.saidBye.add(sender)
+
+  if (context.removals.has(sender)) {
+    dropMember(context, sender)
+  }
+}
+
+const sayBye = <State, Move>(context: Context<State, Move>) => context.byes.send('').catch(logError)
+
 const applySnapshot = <State, Move>(context: Context<State, Move>, snapshot: RoomState<State>, sender: string) => {
   const hostChanged = context.state !== null && hostOf(context) !== sender
   clearTimeout(context.takeover)
+  clearRemovals(context)
   context.state = snapshot
   settlePending(context, hostChanged)
   publish(context)
@@ -151,8 +204,9 @@ const receiveIntent = <State, Move>(context: Context<State, Move>, data: unknown
   }
 }
 
-// The new host starts from the last snapshot: without the old host and the members that left
-// meanwhile, with the peers it is connected to, and with its own unhandled intent applied
+// The new host starts from the last snapshot: without the old host, with the peers it is
+// connected to, and with its own unhandled intent applied. Members it lost meanwhile are dropped
+// later, like any member whose link dropped.
 const takeOver = <State, Move>(context: Context<State, Move>) => {
   const {state, rules, departed} = context
   const host = hostOf(context)
@@ -161,11 +215,12 @@ const takeOver = <State, Move>(context: Context<State, Move>) => {
     return
   }
 
-  let next = departed.reduce((room, peerId) => removePeer(rules, room, peerId), promote(rules, state, host, context.selfId))
+  let next = promote(rules, state, host, context.selfId)
   next = Object.keys(context.room.getPeers()).reduce((room, peerId) => addPeer(room, peerId), next)
   next = context.pending ? applyIntent(rules, next, context.selfId, context.pending) : next
   context.pending = null
   commit(context, next)
+  departed.filter(peerId => next.members.includes(peerId)).forEach(peerId => scheduleRemoval(context, peerId))
 }
 
 // When the host is gone, the next member that is still here takes over after a pause. Everyone
@@ -191,6 +246,9 @@ const scheduleTakeover = <State, Move>(context: Context<State, Move>) => {
 
 const peerJoined = <State, Move>(context: Context<State, Move>, peerId: string) => {
   context.departed = context.departed.filter(id => id !== peerId)
+  context.saidBye.delete(peerId)
+  clearTimeout(context.removals.get(peerId))
+  context.removals.delete(peerId)
 
   if (context.state && hostOf(context) === context.selfId) {
     commit(context, addPeer(context.state, peerId))
@@ -204,7 +262,7 @@ const peerLeft = <State, Move>(context: Context<State, Move>, peerId: string) =>
   context.departed = [...context.departed.filter(id => id !== peerId), peerId]
 
   if (context.state && hostOf(context) === context.selfId) {
-    commit(context, removePeer(context.rules, context.state, peerId))
+    scheduleRemoval(context, peerId)
     return
   }
 
@@ -224,39 +282,55 @@ const send = <State, Move>(context: Context<State, Move>, intent: Intent<Move>) 
   sendToHost(context, numbered)
 }
 
-export const startSession = <State, Move>(
-  options: SessionOptions<State, Move>,
-  transport: Transport = trystero
-): Session<Move> => {
+const createContext = <State, Move>(options: SessionOptions<State, Move>, transport: Transport): Context<State, Move> => {
   const {appId, code, isHost, rules, onChange, takeoverDelayMs = defaultTakeoverDelayMs} = options
   const room = transport.join(appId, code)
-  const context: Context<State, Move> = {
+
+  return {
     selfId: transport.selfId,
     room,
     rules,
     snapshots: room.makeAction('snapshot'),
     intents: room.makeAction('intent'),
+    byes: room.makeAction('bye'),
     onChange,
     takeoverDelayMs,
     state: isHost ? createRoomState(rules, transport.selfId) : null,
     departed: [],
+    removals: new Map(),
+    saidBye: new Set(),
     pending: null,
     nextIntentId: 1,
     takeover: undefined,
     hostLeft: false
   }
+}
+
+export const startSession = <State, Move>(
+  options: SessionOptions<State, Move>,
+  transport: Transport = trystero
+): Session<Move> => {
+  // Hooked before joining, so the goodbye goes out ahead of Trystero's own leave message
+  let sayGoodbye = () => {}
+  const stopUnload = transport.onUnload?.(() => sayGoodbye())
+  const context = createContext(options, transport)
+  sayGoodbye = () => void sayBye(context)
 
   context.snapshots.onMessage = (data, {peerId}) => receiveSnapshot(context, data, peerId)
   context.intents.onMessage = (data, {peerId}) => receiveIntent(context, data, peerId)
-  room.onPeerJoin = peerId => peerJoined(context, peerId)
-  room.onPeerLeave = peerId => peerLeft(context, peerId)
+  context.byes.onMessage = (_, {peerId}) => receiveBye(context, peerId)
+  context.room.onPeerJoin = peerId => peerJoined(context, peerId)
+  context.room.onPeerLeave = peerId => peerLeft(context, peerId)
   publish(context)
 
   return {
     send: intent => send(context, intent),
     leave: () => {
+      stopUnload?.()
       clearTimeout(context.takeover)
-      return room.leave()
+      clearRemovals(context)
+      sayGoodbye()
+      return context.room.leave()
     }
   }
 }

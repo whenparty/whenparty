@@ -8,6 +8,7 @@ Peer-to-peer tic-tac-toe at `https://tictactoe.when.party`, built on [`@whenpart
 - **Join**: type the code (case, spaces and dashes don't matter), or open the invite link.
 - The creator is the host and plays X. The first to join plays O, and anyone else watches. When a game is over, either player can start a rematch.
 - If the host leaves, the next player in the room takes over after a short pause and the game goes on. The host's seat stays free with the board as it was, and the next person to join takes it.
+- A player whose connection drops keeps their seat for about 5 seconds, in case it comes back. A player who reloads or leaves frees it at once.
 - "you host" next to the room code shows which tab hosts the room right now.
 
 Everyone keeps the code in the URL (`#K7MXQ`), so a reload rejoins the room and takes a free seat, the host's too.

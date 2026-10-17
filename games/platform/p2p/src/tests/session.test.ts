@@ -45,8 +45,9 @@ const startRoom = async () => {
   const hostOf = (selfId: string) => views.get(selfId)?.room?.members[0]
   const movesOf = (selfId: string) => views.get(selfId)?.room?.game.moves
   const handledOf = (selfId: string, sender: string) => views.get(selfId)?.room?.handled[sender]
+  const membersOf = (selfId: string) => views.get(selfId)?.room?.members
 
-  return {network, sessions, views, hostOf, movesOf, handledOf}
+  return {network, sessions, views, hostOf, movesOf, handledOf, membersOf}
 }
 
 const go = {type: 'move', move: 'go'} as const
@@ -136,25 +137,65 @@ describe('startSession', () => {
     assert.deepEqual(movesOf('b'), ['A', 'B', 'C'])
     assert.deepEqual(movesOf('c'), ['A', 'B', 'C'])
   })
-  // Known gap: when a also notices b gone before b takes over, a drops b from the members, so to c
-  // b is no longer next in line. a later steps down to b, and c is left following a.
-  it(
-    'moves everyone to the new host when the old one noticed the blip first',
-    {todo: 'c needs another way to learn about the new host'},
-    async () => {
-      const {network, sessions, hostOf} = await startRoom()
+  it('moves everyone to the new host when the old one noticed the blip first', async () => {
+    const {network, sessions, views, hostOf} = await startRoom()
 
-      sessions.a.send(go)
-      await network.settle()
-      network.cut('a', 'b')
-      network.notice('a', 'b')
-      network.notice('b', 'a')
-      await sleep(takeoverDelayMs * 4)
-      await network.settle()
-      network.connect('a', 'b')
-      await network.settle()
+    sessions.a.send(go)
+    await network.settle()
 
-      assert.equal(hostOf('c'), 'b')
+    // Both ends of the a-b link notice. a keeps b as a member for a while, so c still counts b as
+    // next in line when b's snapshot arrives.
+    network.cut('a', 'b')
+    network.notice('a', 'b')
+    network.notice('b', 'a')
+    await sleep(takeoverDelayMs * 4)
+    await network.settle()
+    network.connect('a', 'b')
+    await network.settle()
+
+    for (const selfId of ['a', 'b', 'c']) {
+      assert.equal(hostOf(selfId), 'b', selfId)
+      assert.equal(views.get(selfId)?.room?.term, 1, selfId)
     }
-  )
+  })
+
+  it('drops a member whose link dropped only after twice the pause', async () => {
+    const {network, membersOf} = await startRoom()
+
+    network.cut('a', 'c')
+    network.notice('a', 'c')
+    await network.settle()
+
+    assert.deepEqual(membersOf('a'), ['a', 'b', 'c'])
+
+    await sleep(takeoverDelayMs * 4)
+    await network.settle()
+
+    assert.deepEqual(membersOf('a'), ['a', 'b'])
+    assert.deepEqual(membersOf('b'), ['a', 'b'])
+  })
+
+  it('keeps the place and seat of a member that comes back in time', async () => {
+    const {network, views, membersOf} = await startRoom()
+
+    // Only a notices, so b doesn't take over. Dropped and added again, b would be last.
+    network.cut('a', 'b')
+    network.notice('a', 'b')
+    network.connect('a', 'b')
+    await sleep(takeoverDelayMs * 4)
+    await network.settle()
+
+    assert.deepEqual(membersOf('a'), ['a', 'b', 'c'])
+    assert.equal(views.get('a')?.room?.seats.B, 'b')
+  })
+
+  it('drops a member that says goodbye at once', async () => {
+    const {network, sessions, views, membersOf} = await startRoom()
+
+    await sessions.c.leave()
+    await network.settle()
+
+    assert.deepEqual(membersOf('a'), ['a', 'b'])
+    assert.equal(views.get('a')?.room?.seats.C, null)
+  })
 })

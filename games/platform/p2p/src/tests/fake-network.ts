@@ -66,8 +66,17 @@ export const createNetwork = (): FakeNetwork => {
       onPeerJoin: null,
       onPeerLeave: null,
       getPeers: () => Object.fromEntries(linkedPeers(selfId).map(id => [id, {}])),
+      // Like Trystero's leave message: the others hear of it after what was sent before it
       leave: async () => {
-        peers.delete(selfId)
+        for (const peerId of linkedPeers(selfId)) {
+          setImmediate(() => {
+            if (linked(selfId, peerId)) {
+              links.delete(`${selfId}>${peerId}`)
+              links.delete(`${peerId}>${selfId}`)
+              peers.get(peerId)?.room.onPeerLeave?.(selfId)
+            }
+          })
+        }
       }
     }
 

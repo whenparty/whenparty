@@ -27,7 +27,7 @@ await session.leave()
 - `appId`: one per game, so the same code in another game is a different room.
 - `rules`: pure functions over plain JSON state and moves. `isState` and `isMove` must reject anything else, because they guard what comes over the wire.
 - `onChange` gets a `SessionView`: this tab's peer ID, whether it hosts the room right now (that changes when a host leaves), the latest room state (members, seats and game, or `null` until a guest hears from a host), whether the host is being replaced (`switchingHost`), and whether nobody could take over (`hostLeft`).
-- `takeoverDelayMs` (default 2500) is how long the next member waits before it takes over from a host whose link dropped.
+- `takeoverDelayMs` (default 2500) is how long the next member waits before it takes over from a host whose link dropped. A host waits twice as long before it drops a member whose link dropped.
 - `rules.onSeatLeft(state, seat)`, optional, runs when a seated player leaves, the host included, for example to skip their turn or end the game. Without it the seat is just freed, and the next peer to join takes it.
 - `seatOf(room, peerId)` and `isFull(room)` help the page decide what to show.
 - `titles/tictactoe/` is the working example.
@@ -56,7 +56,8 @@ The room goes on with another host. Every snapshot carries what the peers need t
 - **Members**: every peer in the room, spectators too, in join order, with the host first. The host role is separate from the seats.
 - **Successor**: the first member after the host whose link has not dropped too. Every peer works it out from the same last snapshot.
 - **Pause**: Trystero's `onPeerLeave` means "my link to that peer dropped", not "it left the room". So only the successor takes over, and only after `takeoverDelayMs`. If the old host comes back within the pause, nothing changes. The others show "The host left. The next player takes over in a moment…" and wait for the successor's snapshot.
-- **Promotion**: the successor drops the old host from the members, frees its seat (through `onSeatLeft`), moves itself to the front and adds 1 to the **term**. It drops the members it lost too, adds the peers it is connected to, and broadcasts. It is then a host like any other.
+- **Promotion**: the successor drops the old host from the members, frees its seat (through `onSeatLeft`), moves itself to the front and adds 1 to the **term**. It adds the peers it is connected to and broadcasts. It is then a host like any other.
+- **Dropping members**: a host drops a member whose link dropped only after twice `takeoverDelayMs` (5 s by default). A member that comes back in time keeps its place and seat. The wait matters when the host and its successor lose each other: the successor's snapshot reaches the other guests while they still count it as next in line. A peer that leaves on purpose (a reload, closing the tab, `session.leave()`) says goodbye first (the `bye` action, sent before Trystero's own leave message), and the host drops it at once, so a reloaded tab finds its seat free.
 - **Term**: a guest takes snapshots from the host of its last snapshot, or a newer term from the member next in line, even while its host still looks present. Links drop at different times: the successor may have lost the host and taken over while this guest still sees it, or never loses it at all in a short blip. A guest never goes back to an older term, and a host that sees a newer term from another peer steps down and becomes a guest. That covers an old host whose network came back after the room moved on.
 - **Last intent**: every intent has an ID that goes up with each one its sender sends, and the snapshot records the last ID the host handled from each member (`handled`). A guest keeps its last intent until a snapshot shows it handled, and sends it once more to a new host that has not handled it. The host handles each ID once, so a resent move is never applied twice, whatever the game.
 - **Alone**: a guest that is the last member becomes the host of a room of one and waits for others. `hostLeft` is only for a guest that can't take over.
@@ -66,7 +67,6 @@ Trust: the member next in line can take the host role whenever it wants, by send
 Limits:
 
 - A guest that lost only its own link to a host that still serves the others stays stuck. Relaying messages through another player is the later fix.
-- In a short blip where the old host also notices its link to the successor drop before the successor takes over, the host drops the successor from the members. To the other guests the successor is then no longer next in line, so they keep following the old host after it steps down. A `todo` test in `tests/session.test.ts` replays this.
 - A tab that closes normally tells the others at once. A crashed tab or a lost network is noticed only when WebRTC gives up on the link, which took about 10 seconds in testing, plus the pause.
 - If peers lose links to each other in different ways, two of them can take over at once. Nothing merges two hosts yet.
 
