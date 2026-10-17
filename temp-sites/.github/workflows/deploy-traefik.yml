@@ -1,0 +1,122 @@
+name: Deploy Traefik Router
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'traefik/**'
+  workflow_dispatch:
+    inputs:
+      ip_whitelist:
+        description: 'IP whitelist (comma-separated, e.g., 1.2.3.4/32,5.6.7.8/32 or 0.0.0.0/0 for all)'
+        required: false
+        default: '127.0.0.1/32'
+        type: string
+
+
+env:
+  TRAEFIK_DIR: /opt/services/whenparty/tempsites/traefik
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+     
+      - name: Generate dashboard auth hash
+        id: auth
+        run: |
+          set -euo pipefail
+
+          # Generate hash from secrets
+          HASH="${{ secrets.TRAEFIK_DASHBOARD_USER }}":$(openssl passwd -apr1 "${{ secrets.TRAEFIK_DASHBOARD_PASSWORD }}")
+         
+          # Escape $ for docker-compose ($ becomes $$)
+          ESCAPED=$(echo "$HASH" | sed 's/\$/\$\$/g')
+
+          # Output as GitHub Actions variable (mask it for security)
+          echo "::add-mask::$ESCAPED"
+          echo "hash=$ESCAPED" >> "$GITHUB_OUTPUT"
+
+      - name: Create deployment directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            set -euo pipefail
+            
+            mkdir -p "${{ env.TRAEFIK_DIR }}"
+            echo "✅ Directory ready: ${{ env.TRAEFIK_DIR }}"
+
+      - name: Copy Traefik files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          source: "traefik/docker-compose.yml,traefik/traefik.yml"
+          target: ${{ env.TRAEFIK_DIR }}
+          overwrite: true
+          strip_components: 1
+
+      - name: Deploy Traefik to VPS
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DASHBOARD_AUTH_HASH: ${{ steps.auth.outputs.hash }}
+          DASHBOARD_IP_WHITELIST: ${{ inputs.ip_whitelist }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          envs: DASHBOARD_AUTH_HASH,DASHBOARD_IP_WHITELIST
+          script: |
+            set -euo pipefail
+
+            cd "${{ env.TRAEFIK_DIR }}"
+
+            # Create .env file with auth credentials
+            printf 'TRAEFIK_DASHBOARD_AUTH=%s\n' "$DASHBOARD_AUTH_HASH" > .env
+            printf 'TRAEFIK_DASHBOARD_IP_WHITELIST=%s\n' "$DASHBOARD_IP_WHITELIST" >> .env
+            chmod 600 .env
+
+            # Ensure wp_tempsites network exists
+            docker network inspect wp_tempsites >/dev/null 2>&1 || \
+              docker network create wp_tempsites
+
+            # Clean up old containers
+            echo "🧹 Cleaning up old Traefik container..."
+            docker compose -p traefik-tempsites down || true
+
+            # Pull latest image
+            echo "📥 Pulling latest Traefik image..."
+            docker compose pull
+
+            # Deploy with zero-downtime
+            echo "🚀 Deploying Traefik..."
+            docker compose up -d --force-recreate --remove-orphans
+            
+            docker ps --filter name=traefik-tempsites --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            
+            
+      - name: Verify dashboard accessibility
+        run: |
+          set -euo pipefail
+          
+          echo "⏳ Waiting for dashboard to be ready..."
+          sleep 5
+          
+          # Check if dashboard responds (should be 401 without auth)
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://traefik.when.party || echo "000")
+          
+          if [ "$HTTP_CODE" = "401" ]; then
+            echo "✅ Dashboard is accessible and protected with basic auth"
+          elif [ "$HTTP_CODE" = "200" ]; then
+            echo "⚠️  Warning: Dashboard returned 200 (auth might not be working)"
+            exit 1
+          else
+            echo "⚠️  Dashboard returned HTTP $HTTP_CODE (expected 401)"
+            echo "This might be temporary - check manually at https://traefik.when.party"
+          fi

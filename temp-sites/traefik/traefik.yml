@@ -1,0 +1,24 @@
+providers:
+  docker:
+    exposedByDefault: false
+    network: wp_tempsites
+
+entryPoints:
+  web:
+    address: ":8000"
+    forwardedHeaders:
+      trustedIPs:
+        - 172.16.0.0/12 # All Docker networks
+
+api:
+  dashboard: true
+  insecure: false
+
+ping: {}
+
+log:
+  level: INFO
+  filePath: /var/log/traefik/traefik.log
+
+accessLog:
+  filePath: /var/log/traefik/access.log

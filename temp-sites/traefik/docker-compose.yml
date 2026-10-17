@@ -1,0 +1,43 @@
+name: traefik-tempsites
+
+services:
+  traefik:
+    image: traefik:v3.5.4
+    container_name: traefik-tempsites
+    restart: unless-stopped
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-logs:/var/log/traefik
+      - ./traefik.yml:/traefik.yml:ro
+
+    networks:
+      - wp_tempsites
+
+    labels:
+      # Enable dashboard on traefik.when.party
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.when.party`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=web"
+      # Chain both middlewares
+      - "traefik.http.routers.dashboard.middlewares=dashboard-ipallowlist,dashboard-auth"
+      # IP whitelist - increase depth to read through Cloudflare + Nginx
+      - "traefik.http.middlewares.dashboard-ipallowlist.ipallowlist.sourcerange=${TRAEFIK_DASHBOARD_IP_WHITELIST:-}"
+      - "traefik.http.middlewares.dashboard-ipallowlist.ipallowlist.ipstrategy.depth=2"
+      # Basic auth middleware (credentials from environment variable)
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH:-}"
+
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  traefik-logs:
+
+networks:
+  wp_tempsites:
+    external: true

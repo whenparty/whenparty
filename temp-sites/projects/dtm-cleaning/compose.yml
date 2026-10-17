@@ -1,0 +1,18 @@
+name: tempsite-dtm-cleaning
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/whenparty/dtm-cleaning:latest}
+    container_name: dtm-cleaning
+    restart: unless-stopped
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.dtm-cleaning.rule=Host(`dtm-cleaning.when.party`)'
+      - 'traefik.http.routers.dtm-cleaning.entrypoints=web'
+      - 'traefik.http.services.dtm-cleaning.loadbalancer.server.port=80'
+    networks:
+      - wp_tempsites
+
+networks:
+  wp_tempsites:
+    external: true

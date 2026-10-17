@@ -1,0 +1,310 @@
+name: Deploy Temp Sites
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'projects/**'
+      - 'nginx-config/**'
+      - '.github/workflows/deploy.yml'
+
+env:
+  REGISTRY: ghcr.io
+  GITHUB_ORG: ${{ github.repository_owner }}
+  DEPLOY_DIR: /opt/services/whenparty/tempsites
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.changes.outputs.projects }}
+      has_project_changes: ${{ steps.changes.outputs.has_project_changes }}
+      config_changed: ${{ steps.changes.outputs.config_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect project changes
+        id: changes
+        run: |
+          set -euo pipefail
+
+          BASE_SHA="${{ github.event.before }}"
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA=$(git rev-list --max-parents=0 "${{ github.sha }}")
+          fi
+
+          changed_files=$(git diff --name-only "$BASE_SHA" "${{ github.sha }}" -- projects/ || true)
+          config_files=$(git diff --name-only "$BASE_SHA" "${{ github.sha }}" -- nginx-config/ || true)
+
+          if [ -n "$config_files" ]; then
+            echo "config_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Changed nginx config files:"
+            echo "$config_files"
+          else
+            echo "config_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -z "$changed_files" ]; then
+            echo "projects=[]" >> "$GITHUB_OUTPUT"
+            echo "has_project_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No project changes detected"
+            exit 0
+          fi
+
+          projects=$(echo "$changed_files" | awk -F/ '{if ($1 == "projects" && $2 != "") print $2}' | sort -u | jq -R . | jq -s -c .)
+          echo "projects=$projects" >> "$GITHUB_OUTPUT"
+          echo "has_project_changes=true" >> "$GITHUB_OUTPUT"
+          echo "Changed projects: $projects"
+
+  build-and-deploy:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_project_changes == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJson(needs.detect-changes.outputs.projects) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check project directory
+        id: project_dir
+        run: |
+          if [ -d "projects/${{ matrix.project }}" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for Dockerfile
+        id: dockerfile
+        run: |
+          if [ -d "projects/${{ matrix.project }}" ]; then
+            if [ -f "projects/${{ matrix.project }}/Dockerfile" ]; then
+              echo "exists=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "exists=false" >> "$GITHUB_OUTPUT"
+              echo "Warning: No Dockerfile in projects/${{ matrix.project }}/"
+            fi
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Project directory projects/${{ matrix.project }} not found (likely removed)"
+          fi
+
+      - name: Compute image references
+        id: image
+        run: |
+          image_base="${{ env.REGISTRY }}/${{ env.GITHUB_ORG }}/${{ matrix.project }}"
+          echo "base=$image_base" >> "$GITHUB_OUTPUT"
+          echo "sha=${image_base}:sha-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "latest=${image_base}:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: projects/${{ matrix.project }}
+          push: true
+          load: true  # Load locally for scanning
+          tags: |
+            ${{ steps.image.outputs.latest }}
+            ${{ steps.image.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan image for vulnerabilities
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.image.outputs.latest }}
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'  # Don't fail build for temp sites
+
+      - name: Make image public
+        if: steps.dockerfile.outputs.exists == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ env.GITHUB_ORG }}
+          OWNER_TYPE: ${{ github.event.repository.owner.type }}
+          PACKAGE: ${{ matrix.project }}
+        run: |
+          set -euo pipefail
+
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            gh api \
+              --method PUT \
+              -H "Accept: application/vnd.github+json" \
+              "/orgs/$OWNER/packages/container/$PACKAGE/visibility" \
+              -f visibility=public
+          else
+            gh api \
+              --method PUT \
+              -H "Accept: application/vnd.github+json" \
+              "/user/packages/container/$PACKAGE/visibility" \
+              -f visibility=public
+          fi
+
+      - name: Determine deploy image
+        id: deploy_image
+        run: |
+          if [ "${{ steps.dockerfile.outputs.exists }}" = "true" ]; then
+            echo "value=${{ steps.image.outputs.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Copy nginx config to VPS
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          source: "nginx-config/temp-sites.conf"
+          target: "${{ env.DEPLOY_DIR }}/"
+
+      - name: Copy project files to VPS
+        if: steps.project_dir.outputs.exists == 'true'
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          source: "projects/${{ matrix.project }}"
+          target: "${{ env.DEPLOY_DIR }}/"
+
+      - name: Deploy project
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            set -euo pipefail
+
+            DEPLOY_DIR="${{ env.DEPLOY_DIR }}"
+            INFRA_DIR="/opt/services/whenparty/infra"
+            PROJECT="${{ matrix.project }}"
+            PROJECT_EXISTS="${{ steps.project_dir.outputs.exists }}"
+            IMAGE_OVERRIDE="${{ steps.deploy_image.outputs.value }}"
+
+            mkdir -p "$DEPLOY_DIR"
+
+            cd "$DEPLOY_DIR"
+
+            TEMP_CONF="$DEPLOY_DIR/nginx-config/temp-sites.conf"
+            INFRA_CONF="$INFRA_DIR/nginx/conf.d/temp-sites.conf"
+            NGINX_SHOULD_RELOAD=0
+
+            if [ ! -f "$INFRA_CONF" ] || ! cmp -s "$TEMP_CONF" "$INFRA_CONF"; then
+              cp "$TEMP_CONF" "$INFRA_CONF"
+              NGINX_SHOULD_RELOAD=1
+            fi
+
+            docker network inspect wp_tempsites >/dev/null 2>&1 || docker network create wp_tempsites
+
+            if [ "$PROJECT_EXISTS" = "true" ]; then
+              if [ ! -d "projects/$PROJECT" ]; then
+                echo "Error: projects/$PROJECT missing on server after sync"
+                exit 1
+              fi
+
+              cd "projects/$PROJECT"
+
+              if [ -n "$IMAGE_OVERRIDE" ]; then
+                IMAGE="$IMAGE_OVERRIDE" docker compose up -d --remove-orphans
+              else
+                docker compose up -d --remove-orphans
+              fi
+
+              cd "$DEPLOY_DIR"
+            else
+              if [ -d "projects/$PROJECT" ]; then
+                cd "projects/$PROJECT"
+                docker compose down --remove-orphans || true
+                cd "$DEPLOY_DIR"
+                rm -rf "projects/$PROJECT"
+                echo "Removed project $PROJECT from server"
+              else
+                echo "Project $PROJECT already absent on server"
+              fi
+            fi
+
+            if [ "$NGINX_SHOULD_RELOAD" -eq 1 ]; then
+              docker exec nginx nginx -t
+              docker exec nginx nginx -s reload
+            fi
+
+            docker image prune -f
+
+  deploy-config-only:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.config_changed == 'true' && needs.detect-changes.outputs.has_project_changes != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy nginx config to VPS
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          source: "nginx-config/temp-sites.conf"
+          target: "${{ env.DEPLOY_DIR }}/"
+
+      - name: Sync nginx config on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            set -euo pipefail
+
+            DEPLOY_DIR="${{ env.DEPLOY_DIR }}"
+            INFRA_DIR="/opt/services/whenparty/infra"
+
+            mkdir -p "$DEPLOY_DIR"
+
+            cd "$DEPLOY_DIR"
+
+            TEMP_CONF="$DEPLOY_DIR/nginx-config/temp-sites.conf"
+            INFRA_CONF="$INFRA_DIR/nginx/conf.d/temp-sites.conf"
+
+            if [ ! -f "$TEMP_CONF" ]; then
+              echo "Error: nginx config temp file missing at $TEMP_CONF"
+              exit 1
+            fi
+
+            NGINX_SHOULD_RELOAD=0
+
+            if [ ! -f "$INFRA_CONF" ] || ! cmp -s "$TEMP_CONF" "$INFRA_CONF"; then
+              cp "$TEMP_CONF" "$INFRA_CONF"
+              NGINX_SHOULD_RELOAD=1
+            else
+              echo "Nginx config already up to date"
+            fi
+
+            if [ "$NGINX_SHOULD_RELOAD" -eq 1 ]; then
+              docker exec nginx nginx -t
+              docker exec nginx nginx -s reload
+            fi
