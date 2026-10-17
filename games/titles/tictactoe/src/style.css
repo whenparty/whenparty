@@ -78,6 +78,11 @@ label,
   margin-right: 0.5rem;
 }
 
+#host-badge {
+  color: var(--muted);
+  margin-right: 0.5rem;
+}
+
 .error {
   color: var(--error);
   min-height: 1.5em;

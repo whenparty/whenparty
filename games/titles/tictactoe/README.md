@@ -7,9 +7,10 @@ Peer-to-peer tic-tac-toe at `https://tictactoe.when.party`, built on [`@whenpart
 - **Create a room**: the page makes a code like `K7MXQ`. Read it out, or send the invite link (`https://tictactoe.when.party/#K7MXQ`).
 - **Join**: type the code (case, spaces and dashes don't matter), or open the invite link.
 - The creator is the host and plays X. The first to join plays O, and anyone else watches. When a game is over, either player can start a rematch.
-- If the host leaves, the game is over. A guest who reloads gets their seat and the board back.
+- If the host leaves, the next player in the room takes over after a short pause and the game goes on. The host's seat stays free with the board as it was, and the next person to join takes it.
+- "you host" next to the room code shows which tab hosts the room right now.
 
-Guests keep the code in the URL (`#K7MXQ`), so a reload rejoins the room. The host doesn't, because a reload ends the host's game.
+Everyone keeps the code in the URL (`#K7MXQ`), so a reload rejoins the room and takes a free seat, the host's too.
 
 ## Code Layout
 
@@ -39,7 +40,7 @@ and the game in another:
 npm run dev --workspace titles/tictactoe
 ```
 
-Open `http://localhost:5173` in two tabs, create a room in one and join it from the other.
+Open `http://localhost:5173` in two tabs, create a room in one and join it from the other. To check the host handover, add a third tab, close the host's tab, and watch the next player take over. Or reload the host's tab with two tabs: the guest takes over, and the reloaded tab comes back in the free seat.
 
 The production image is built from the `games/` context:
 

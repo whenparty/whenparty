@@ -34,6 +34,7 @@ const gameSection = find<HTMLElement>('#game')
 const roomCode = find<HTMLElement>('#room-code')
 const copyLink = find<HTMLButtonElement>('#copy-link')
 const statusText = find<HTMLElement>('#status')
+const hostBadge = find<HTMLElement>('#host-badge')
 const restartButton = find<HTMLButtonElement>('#restart')
 
 const cells = Array.from({length: 9}, (_, index) => {
@@ -48,6 +49,10 @@ const cells = Array.from({length: 9}, (_, index) => {
 const describe = ({code, view, hostIsLate}: Visit): string => {
   if (view?.hostLeft) {
     return 'The host left, so the game is over.'
+  }
+
+  if (view?.switchingHost) {
+    return 'The host left. The next player takes over in a moment…'
   }
 
   if (!view?.room) {
@@ -82,10 +87,11 @@ const render = (current: Visit) => {
   const seat = view && room ? seatOf(room, view.selfId) : null
   const game = room?.game
   // Moves and rematches need the host, a full room and a seat. Otherwise the board is read-only.
-  const isLive = Boolean(room && seat && !view?.hostLeft && isFull(room))
+  const isLive = Boolean(room && seat && !view?.hostLeft && !view?.switchingHost && isFull(room))
   const canMove = isLive && game?.winner === null && game.turn === seat
 
   statusText.textContent = describe(current)
+  hostBadge.hidden = !view?.isHost
   cells.forEach((cell, index) => {
     const mark = game?.board[index] ?? null
     cell.textContent = mark ?? ''
@@ -104,6 +110,8 @@ const enterRoom = (code: string, isHost: boolean) => {
   }
 
   visit = entry
+  // The code stays in the URL, so a reload rejoins the room. It goes on under another host meanwhile.
+  history.replaceState(null, '', `#${code}`)
   entry.session = startSession({
     appId,
     code,
@@ -151,8 +159,6 @@ find('#join').addEventListener('submit', event => {
   }
 
   joinError.textContent = ''
-  // Guests keep the code in the URL, so a reload takes them back to their seat
-  history.replaceState(null, '', `#${code}`)
   enterRoom(code, false)
 })
 
