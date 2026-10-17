@@ -18,6 +18,11 @@
 <script src="/script.js" defer></script>
 </head>
 <body id="top">
+<!-- Icons are inline SVG: Safari draws the Unicode arrows and asterisk with fallback or emoji fonts. -->
+<svg class="icon-sprite" width="0" height="0" aria-hidden="true">
+  <symbol id="icon-arrow" viewBox="0 0 16 16"><path d="M3.6 12.4c2.7-2.8 5.5-5.6 8.4-8.3M6.1 3.9c2-.3 4-.3 6-.1.2 1.9.2 3.9.1 5.9"/></symbol>
+  <symbol id="icon-spark" viewBox="0 0 16 16"><path d="M8.1 2.3c-.2 3.8-.1 7.6.1 11.4M2.4 8.2c3.8-.3 7.5-.2 11.2.1M4.1 4.2c2.6 2.5 5.2 5 7.8 7.7M11.9 4.1c-2.6 2.6-5.2 5.1-7.8 7.8"/></symbol>
+</svg>
 <a class="skip-link" href="#how">Skip illustrated journey</a>
 <main id="main-content">
 <section class="scroll-story" id="journey" aria-labelledby="hero-title" aria-describedby="scene-description" data-story-scene>
@@ -44,7 +49,7 @@
 <a href="#how">The idea</a>
 <a href="#how-it-works">How it works</a>
 <a href="#prompt">A little inspiration</a>
-<a class="nav-cta" href="#prompt">Try a prompt <span aria-hidden="true">↗</span></a>
+<a class="nav-cta" href="#prompt">Try a prompt <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></a>
 </nav>
 </div>
 </header>
@@ -54,8 +59,8 @@
 <h1 id="hero-title">Make a little<br/>something<br/><em>wonderful.</em></h1>
 <p class="hero-description">One gentle creative prompt each week. No big plans, no perfect sketches. Just ten minutes to see where an idea takes you.</p>
 <div class="hero-actions">
-<a class="primary-button" href="#prompt">Find your first prompt <span aria-hidden="true">↗</span></a>
-<a class="text-link" href="#how-it-works">How it works <span aria-hidden="true">↗</span></a>
+<a class="primary-button" href="#prompt">Find your first prompt <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></a>
+<a class="text-link" href="#how-it-works">How it works <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></a>
 </div>
 </div>
   </div>
@@ -65,13 +70,13 @@
     <span class="journey-end-note">Sometimes all it takes is a change of perspective.</span>
   </div>
   <div class="journey-bottom page-width" aria-label="Journey controls">
-    <span class="journey-bottom-cue" data-cue>SCROLL TO TRAVEL <span aria-hidden="true">↓</span></span>
+    <span class="journey-bottom-cue" data-cue>SCROLL TO TRAVEL <svg class="icon icon-down" aria-hidden="true"><use href="#icon-arrow"/></svg></span>
     <div class="journey-timeline">
       <label class="visually-hidden" for="journey-slider">Illustration animation position (frame)</label>
       <input id="journey-slider" type="range" min="0" max="240" step="1" value="0" aria-valuetext="0 seconds of 10 seconds" autocomplete="off">
       <div class="journey-time"><output id="journey-time" for="journey-slider">00:00</output><span aria-hidden="true">/ 00:10</span></div>
     </div>
-    <a class="journey-skip" href="#how">Skip journey <span aria-hidden="true">↗</span></a>
+    <a class="journey-skip" href="#how">Skip journey <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></a>
   </div>
   <p class="visually-hidden" id="scene-description">A pencil-and-watercolor coastal village. As you scroll, the camera passes a seated woman and cat, revealing a blue sea and green mountains.</p>
  </div>
@@ -92,17 +97,17 @@
 </svg>
 <ol class="steps-list">
 <li class="step">
-<span class="step-no">01 <span aria-hidden="true">✳</span></span>
+<span class="step-no">01 <svg class="icon" aria-hidden="true"><use href="#icon-spark"/></svg></span>
 <h3>Take a spark.</h3>
 <p>One thoughtfully small invitation to notice, draw, fold, or imagine.</p>
 </li>
 <li class="step">
-<span class="step-no">02 <span aria-hidden="true">✳</span></span>
+<span class="step-no">02 <svg class="icon" aria-hidden="true"><use href="#icon-spark"/></svg></span>
 <h3>Make a mark.</h3>
 <p>Grab a pen, a scrap of paper, or whatever happens to be nearby.</p>
 </li>
 <li class="step">
-<span class="step-no">03 <span aria-hidden="true">✳</span></span>
+<span class="step-no">03 <svg class="icon" aria-hidden="true"><use href="#icon-spark"/></svg></span>
 <h3>See what grows.</h3>
 <p>Keep your little creation. The joy is in making, not getting it right.</p>
 </li>
@@ -131,7 +136,7 @@
 <svg aria-hidden="true" fill="none" viewbox="0 0 28 27"><path d="M23 11c-1.4-5-5.2-8-10.1-8-5.5 0-9.9 4.2-9.9 10s4.4 10 9.9 10c4.2 0 8.1-2.7 9.7-6.6m-4-5.5 4.9 1.2 2.2-4.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.45"></path></svg>
               Another little idea
             </button>
-<button class="copy-button" id="copy-prompt" type="button">Copy this prompt <span aria-hidden="true">↗</span></button>
+<button class="copy-button" id="copy-prompt" type="button">Copy this prompt <svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
 </div>
 <p aria-live="polite" class="copy-status" id="copy-status" role="status"></p>
 </div>
@@ -150,7 +155,7 @@
 <a href="#how">The idea</a>
 <a href="#how-it-works">How it works</a>
 <a href="#prompt">Try a prompt</a>
-<a href="#top">Back to top ↑</a>
+<a href="#top">Back to top <svg class="icon icon-up" aria-hidden="true"><use href="#icon-arrow"/></svg></a>
 </nav>
 </div>
 <div class="footer-bottom"><span>AN EXPLORATION IN SMALL BEGINNINGS</span><span>© 2026 little by little. · Concept prototype</span></div>

@@ -48,7 +48,6 @@
     promptIndex = (promptIndex + 1) % prompts.length;
     promptText.textContent = prompts[promptIndex];
     copyStatus.textContent = '';
-    copyButton.textContent = 'Copy this prompt ↗';
   });
 
   async function copyText(value) {
@@ -101,10 +100,11 @@
   };
   // The mobile video is a 576x720 slice (x 544-1120) of the 1280x720 master; see scripts/encode-media.sh.
   const MASTER_WIDTH=1280, CROP_LEFT=544, CROP_WIDTH=576, CROP_HEIGHT=720;
+  const arrow=direction => `<svg class="icon icon-${direction}" aria-hidden="true"><use href="#icon-arrow"/></svg>`;
   const cues = {
-    start:'SCROLL TO TRAVEL <span aria-hidden="true">↓</span>',
+    start:`SCROLL TO TRAVEL ${arrow('down')}`,
     loading:'LOADING THE JOURNEY <span aria-hidden="true">·</span>',
-    moving:'A WORLD IN MOTION <span aria-hidden="true">↘</span>'
+    moving:`A WORLD IN MOTION ${arrow('down-right')}`
   };
   let mode=mobile.matches?'mobile':'desktop';
   let progress=0;
