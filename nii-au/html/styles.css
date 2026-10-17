@@ -236,8 +236,8 @@ html {scroll-behavior: auto;}
 .scroll-pin .header-inner {min-height:clamp(78px,11vh,106px);}
 .scroll-pin .wordmark {filter:drop-shadow(0 0 10px rgba(252,252,249,.8));}
 .journey-copy-shell {position:absolute;inset:0;z-index:4;pointer-events:none;}
-.scroll-story .hero-copy {position:absolute;top:clamp(170px,21.5vh,225px);left:0;max-width:630px;width:51%;padding:0;opacity:var(--intro-opacity);transform:translateY(calc((1 - var(--intro-opacity)) * -14px));}
-.scroll-story .hero-copy h1 {font-size:clamp(60px,6.2vw,91px);line-height:.98;}
+.scroll-story .hero-copy {--hero-top:clamp(170px,21.5vh,225px);position:absolute;top:var(--hero-top);left:0;max-width:630px;width:51%;padding:0;opacity:var(--intro-opacity);transform:translateY(calc((1 - var(--intro-opacity)) * -14px));}
+.scroll-story .hero-copy h1 {--hero-h1:clamp(60px,6.2vw,91px);font-size:var(--hero-h1);line-height:.98;}
 .scroll-story .hero-description {color:#4d544f;max-width:415px;}
 .journey-copy-shell .hero-actions {pointer-events:auto;}
 .scroll-story .hero-copy a {pointer-events:auto;}
@@ -268,14 +268,14 @@ html {scroll-behavior: auto;}
 /* The final section still belongs to the same paper page. */
 .story-section {padding-top:100px;}
 @media (max-width:1170px) {
- .scroll-story .hero-copy {width:55%;top:clamp(140px,20vh,210px);}
- .scroll-story .hero-copy h1 {font-size:clamp(60px,6.5vw,82px);}
+ .scroll-story .hero-copy {width:55%;--hero-top:clamp(140px,20vh,210px);}
+ .scroll-story .hero-copy h1 {--hero-h1:clamp(60px,6.5vw,82px);}
  .entry-veil {background:linear-gradient(90deg,rgba(252,252,249,.995),rgba(252,252,249,.94) 23%,rgba(252,252,249,.7) 39%,rgba(252,252,249,.05) 70%);}
  .journey-bottom-cue {min-width:145px;}
 }
 @media (max-width:870px) {
- .scroll-story .hero-copy {width:63%;top:clamp(135px,16vh,190px);}
- .scroll-story .hero-copy h1 {font-size:clamp(56px,8vw,75px);}
+ .scroll-story .hero-copy {width:63%;--hero-top:clamp(135px,16vh,190px);}
+ .scroll-story .hero-copy h1 {--hero-h1:clamp(56px,8vw,75px);}
  .journey-bottom {gap:15px;}
  .journey-bottom-cue {display:none;}
  .journey-bottom .journey-timeline {max-width:none;}
@@ -284,8 +284,8 @@ html {scroll-behavior: auto;}
 @media (max-width:700px) {
  .scroll-story {height:340vh;height:340svh;}
  .scroll-pin .header-inner {min-height:72px;}
- .scroll-story .hero-copy {top:100px;left:0;width:100%;max-width:420px;}
- .scroll-story .hero-copy h1 {font-size:clamp(53px,10.7vw,72px);line-height:.98;margin-bottom:17px;}
+ .scroll-story .hero-copy {--hero-top:100px;left:0;width:100%;max-width:420px;}
+ .scroll-story .hero-copy h1 {--hero-h1:clamp(53px,10.7vw,72px);line-height:.98;margin-bottom:17px;}
  .scroll-story .eyebrow {font-size:9px;margin-bottom:18px;}
  .scroll-story .hero-description {font-size:14px;line-height:1.58;max-width:340px;margin-bottom:19px;}
  .scroll-story .primary-button {min-height:46px;font-size:12px;padding:10px 16px;}
@@ -304,13 +304,26 @@ html {scroll-behavior: auto;}
  .story-section {padding-top:80px;}
 }
 @media (max-width:400px) {
- .scroll-story .hero-copy {top:90px;}
- .scroll-story .hero-copy h1 {font-size:clamp(47px,10.5vw,54px);}
+ .scroll-story .hero-copy {--hero-top:90px;}
+ .scroll-story .hero-copy h1 {--hero-h1:clamp(47px,10.5vw,54px);}
  .scroll-story .hero-description {font-size:13px;}
  .journey-end p {font-size:41px;}
  .scroll-story .hero-actions {gap:13px;}
  .journey-bottom {gap:9px;}
  .journey-skip {font-size:8px;}
+}
+/* Short landscape windows (laptops, desktop browsers): the pin can't scroll, so the width-based hero sizes above
+   would push the CTA row under the timeline. The width rules keep those sizes in --hero-top and --hero-h1,
+   and here each one is capped by a size that follows the height. */
+@media (max-height:780px) and (orientation:landscape) {
+ .scroll-story .hero-copy {top:min(var(--hero-top),17vh);top:min(var(--hero-top),17svh);}
+ .scroll-story .hero-copy h1 {font-size:min(var(--hero-h1),calc(20vh - 64px));font-size:min(var(--hero-h1),calc(20svh - 64px));}
+}
+/* Shorter still, the description no longer fits; without it the h1 can stay larger. */
+@media (max-height:600px) and (orientation:landscape) {
+ .scroll-story .hero-copy {top:min(var(--hero-top),20vh);top:min(var(--hero-top),20svh);}
+ .scroll-story .hero-copy h1 {font-size:min(var(--hero-h1),calc(18vh - 30px));font-size:min(var(--hero-h1),calc(18svh - 30px));}
+ .scroll-story .hero-description {display:none;}
 }
 /* Landscape phones: the pin is one short screen, so the copy has to fit between the header and the timeline.
    Sizes follow the height; svh keeps them inside the pin when the browser bars show. */
