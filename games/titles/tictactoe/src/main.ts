@@ -1,6 +1,6 @@
 import './style.css'
 import {ROOM_CODE_LENGTH, createRoomCode, isFull, normalizeRoomCode, roomCodeFromHash, seatOf, startSession} from '@whenparty/p2p'
-import type {Session, SessionView} from '@whenparty/p2p'
+import type {Session, SessionOptions, SessionView} from '@whenparty/p2p'
 import {canStartRoom, lostRoom, searchOf, type SearchState} from './search.ts'
 import {ticTacToe, type TicTacToe} from './tictactoe.ts'
 
@@ -176,8 +176,11 @@ const startHint = (entry: Visit, refresh: () => void) => {
   }
 }
 
-// rejoinAsHost: this tab hosted the room before it reloaded (see SessionOptions)
-const enterRoom = (code: string, isHost: boolean, rejoinAsHost = false) => {
+type Entry = Pick<SessionOptions<TicTacToe, number>, 'isHost' | 'rejoinAsHost' | 'provisional'>
+
+// rejoinAsHost: this tab hosted the room before it reloaded. provisional: it starts a room under a
+// code someone gave it. See SessionOptions.
+const enterRoom = (code: string, {isHost, rejoinAsHost = false, provisional = false}: Entry) => {
   const entry: Visit = {code, session: null, view: null, hostIsLate: false, stopHint: () => {}}
   const refresh = () => {
     if (visit === entry) {
@@ -193,6 +196,7 @@ const enterRoom = (code: string, isHost: boolean, rejoinAsHost = false) => {
     code,
     isHost,
     rejoinAsHost,
+    provisional,
     rules: ticTacToe,
     onChange: view => {
       if (lostRoom(entry.view, view)) {
@@ -232,7 +236,7 @@ const flash = (button: HTMLButtonElement, text: string) => {
   setTimeout(() => (button.textContent = original), 2000)
 }
 
-find('#create').addEventListener('click', () => enterRoom(createRoomCode(), true))
+find('#create').addEventListener('click', () => enterRoom(createRoomCode(), {isHost: true}))
 
 find('#join').addEventListener('submit', event => {
   event.preventDefault()
@@ -244,7 +248,7 @@ find('#join').addEventListener('submit', event => {
   }
 
   joinError.textContent = ''
-  enterRoom(code, false)
+  enterRoom(code, {isHost: false})
 })
 
 copyLink.addEventListener('click', () => {
@@ -262,7 +266,7 @@ startRoomButton.addEventListener('click', () => {
 
   if (code) {
     leaveRoom()
-    enterRoom(code, true)
+    enterRoom(code, {isHost: true, provisional: true})
   }
 })
 find('#leave').addEventListener('click', leaveRoom)
@@ -281,7 +285,7 @@ const joinLinkedRoom = (rejoinAsHost: boolean) => {
     leaveRoom()
   }
 
-  enterRoom(code, false, rejoinAsHost)
+  enterRoom(code, {isHost: false, rejoinAsHost})
 }
 
 addEventListener('hashchange', () => joinLinkedRoom(false))

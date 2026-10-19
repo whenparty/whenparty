@@ -13,7 +13,7 @@ Peer-to-peer tic-tac-toe at `https://tictactoe.when.party`, built on [`@whenpart
 
 Everyone keeps the code in the URL (`#K7MXQ`), so a reload rejoins the room and takes a free seat, the host's too. A host alone in its room hosts it again after a reload, with a new game: the tab keeps the code it hosts in `sessionStorage`.
 
-A guest that hears from no host within 10 seconds sees why: the code may be wrong, the game server may be out of reach, or the network may block direct connections to the players in the room. When nobody hosts the code, a "Start room K7MXQ" button starts it. It is a button and not automatic, so a mistyped code doesn't silently start an empty room. If the room was there after all and the tab just could not reach it yet, the older room wins when they meet, and the started one folds into it with the game as it was.
+A guest that hears from no host within 10 seconds sees why: the code may be wrong, the game server may be out of reach, or the network may block direct connections to the players in the room. When nobody hosts the code, a "Start room K7MXQ" button starts it. It is a button and not automatic, so a mistyped code doesn't silently start an empty room. If the room was there after all and the tab just could not reach it yet, that room wins when they meet, and the started one folds into it with the game as it was.
 
 ## Code Layout
 

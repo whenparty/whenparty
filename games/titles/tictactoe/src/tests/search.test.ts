@@ -13,7 +13,7 @@ const view = (changes: Partial<SessionView<unknown>> = {}): SessionView<unknown>
   ...changes
 })
 
-const room = {members: ['host', 'self'], term: 0, createdAt: 0, seats: {}, game: {}, handled: {}}
+const room = {members: ['host', 'self'], term: 0, provisional: false, seats: {}, game: {}, handled: {}}
 
 describe('searchOf', () => {
   it('is looking until the hint time has passed', () => {

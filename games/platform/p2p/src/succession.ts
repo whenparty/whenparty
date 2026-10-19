@@ -32,17 +32,12 @@ export const promote = <State, Move>(
 }
 
 // The room as a member that found itself alone hosts it, with the game as it last saw it: everyone
-// else is gone (their seats freed as if they had left). It counts as a room started now, with the
-// same term, so if the room went on elsewhere, that one is older and keeps it when they meet.
-export const hostAlone = <State, Move>(
-  rules: GameRules<State, Move>,
-  room: RoomState<State>,
-  selfId: string,
-  createdAt = Date.now()
-): RoomState<State> => {
+// else is gone (their seats freed as if they had left). It is provisional, with the same term, so
+// if the room went on elsewhere, that one keeps it when they meet.
+export const hostAlone = <State, Move>(rules: GameRules<State, Move>, room: RoomState<State>, selfId: string): RoomState<State> => {
   const alone = room.members.filter(id => id !== selfId).reduce((left, peerId) => removePeer(rules, left, peerId), room)
 
-  return {...alone, members: [selfId], createdAt}
+  return {...alone, members: [selfId], provisional: true}
 }
 
 export interface SnapshotSource {
@@ -83,16 +78,19 @@ export const acceptsSnapshot = <State>(
 }
 
 // Whether this host keeps the room against another host of the same term. That happens when a
-// player starts a room under a code whose room it could not reach yet, or when links drop in
-// different ways and two members take over at once. The older room keeps it, so a room just
-// started never replaces a game in progress. Two halves of one room are the same age, and the
-// lower peer ID keeps it. Both hosts read these from values that don't change, so exactly one of
-// them wins (member counts would not do: each host reads its own as it is now, and the other's as
-// it was sent). The winner starts a newer term, and the other host steps down when that reaches it.
+// player starts a room under a code whose room it could not reach yet, when a member alone hosts
+// the room again, or when links drop in different ways and two members take over at once. A
+// provisional room gives way, so a room just started never replaces the game it stands in for.
+// Between two rooms that are both provisional or both not (two halves of one room), the lower peer
+// ID keeps it. Both hosts read these from values that don't change, so exactly one of them wins.
+// Member counts would not do: each host reads its own as it is now, and the other's as it was
+// sent. Nor would the rooms' creation times: a device whose clock runs behind would make a room
+// just started the older one. The winner starts a newer term, and the other host steps down when
+// that reaches it.
 export const winsTie = <State>(known: RoomState<State>, snapshot: RoomState<State>, {selfId, sender}: SnapshotSource) => {
   if (known.members[0] !== selfId || snapshot.members[0] !== sender || snapshot.term !== known.term) {
     return false
   }
 
-  return known.createdAt !== snapshot.createdAt ? known.createdAt < snapshot.createdAt : selfId < sender
+  return known.provisional !== snapshot.provisional ? snapshot.provisional : selfId < sender
 }

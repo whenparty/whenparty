@@ -35,6 +35,9 @@ export interface SessionOptions<State, Move> {
   // meets a peer within twice takeoverDelayMs, it hosts the room again, with a new game. A room
   // that went on under another host has a newer term, so this tab steps down when it gets there.
   rejoinAsHost?: boolean
+  // For a host: this tab starts the room under a code it was given, whose room it could not reach
+  // yet. A provisional room gives way to the room it stands in for when they meet (see winsTie).
+  provisional?: boolean
   rules: GameRules<State, Move>
   onChange: (view: SessionView<State>) => void
   // How long the next member waits before it takes over from a host whose link dropped.
@@ -583,7 +586,7 @@ const connect = <State, Move>(
 }
 
 // A tab that finds nobody hosts the room again: with the game as it last saw it, or a new one
-// after a reload. Either counts as a room started now, so it gives way to a room that went on
+// after a reload. Either is provisional, so it gives way to a room that went on
 // elsewhere when they meet. Its pending intent goes in, as with a takeover.
 const reclaimRoom = <State, Move>(context: Context<State, Move>) => {
   const {rules, selfId, lastRoom} = context
@@ -592,7 +595,7 @@ const reclaimRoom = <State, Move>(context: Context<State, Move>) => {
     return
   }
 
-  commit(context, withPending(context, lastRoom ? hostAlone(rules, lastRoom, selfId) : createRoomState(rules, selfId)))
+  commit(context, withPending(context, lastRoom ? hostAlone(rules, lastRoom, selfId) : createRoomState(rules, selfId, true)))
 }
 
 // The goodbye goes out once, whichever of beforeunload, pagehide and leave() comes first.
@@ -633,6 +636,7 @@ export const startSession = <State, Move>(
     code,
     isHost,
     rejoinAsHost,
+    provisional = false,
     rules,
     onChange,
     takeoverDelayMs = defaultTakeoverDelayMs,
@@ -650,7 +654,7 @@ export const startSession = <State, Move>(
     onChange,
     takeoverDelayMs,
     awayHoldMs,
-    state: isHost ? createRoomState(rules, transport.selfId) : null,
+    state: isHost ? createRoomState(rules, transport.selfId, provisional) : null,
     departed: [],
     away: new Set(),
     selfAway: false,

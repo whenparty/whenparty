@@ -11,10 +11,10 @@ describe('snapshots', () => {
     assert.deepEqual(decodeSnapshot(race, encode(room)), room)
   })
 
-  it('take a snapshot without createdAt, from a page loaded before it, as the oldest room', () => {
-    const {createdAt: _, ...older} = room
+  it('take a snapshot without provisional, from a page loaded before it, as a room that is not', () => {
+    const {provisional: _, ...older} = {...room, provisional: true}
 
-    assert.deepEqual(decodeSnapshot(race, encode(older)), {...room, createdAt: 0})
+    assert.deepEqual(decodeSnapshot(race, encode(older)), {...room, provisional: false})
   })
 
   it('reject anything that is not a room of this game', () => {
@@ -43,8 +43,8 @@ describe('snapshots', () => {
       {...room, term: -1},
       {...room, term: 1.5},
       {...room, term: '1'},
-      {...room, createdAt: -1},
-      {...room, createdAt: 'yesterday'},
+      {...room, provisional: 1},
+      {...room, provisional: 'yes'},
       {...room, handled: []},
       {...room, handled: {host: 0}},
       {...room, handled: {host: 'one'}}

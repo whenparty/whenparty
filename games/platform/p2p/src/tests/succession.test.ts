@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
 import {addPeer, applyIntent, createRoomState, type RoomState} from '../room-state.ts'
-import {acceptsSnapshot, promote, successorOf, winsTie} from '../succession.ts'
+import {acceptsSnapshot, hostAlone, promote, successorOf, winsTie} from '../succession.ts'
 import {race, type Race} from './race.ts'
 
 const forfeit = {...race, onSeatLeft: (state: Race, seat: string): Race => ({...state, winner: seat === 'A' ? 'B' : 'A'})}
@@ -72,6 +72,18 @@ describe('promote', () => {
 
   it('does nothing for a new host that is not a member', () => {
     assert.equal(promote(race, room, 'host', 'stranger'), room)
+  })
+})
+
+describe('hostAlone', () => {
+  it('keeps the game, frees the seats of everyone else and marks the room provisional', () => {
+    const alone = hostAlone(forfeit, room, 'guest')
+
+    assert.deepEqual(alone.members, ['guest'])
+    assert.deepEqual(alone.seats, {A: null, B: 'guest'})
+    assert.equal(alone.game.winner, 'B')
+    assert.equal(alone.term, room.term)
+    assert.equal(alone.provisional, true)
   })
 })
 
@@ -156,11 +168,11 @@ describe('winsTie', () => {
     assert.equal(winsTie(bigger, byGuest, {selfId: 'spectator', departed: [], sender: 'guest'}), false)
   })
 
-  it('keeps the room for the older one, whatever its size and peer ID', () => {
+  it('keeps the room for the one that is not provisional, whatever its size and peer ID', () => {
     // A player started a room under the code, then met the room with a game in progress. Once
-    // connected, each host counts the other's players too, so only the age tells them apart.
-    const game = addPeer(addPeer(createRoomState(race, 'z-host', 1000), 'z-guest'), 'a-newcomer')
-    const started = addPeer(addPeer(createRoomState(race, 'a-newcomer', 2000), 'z-host'), 'z-guest')
+    // connected, each host counts the other's players too, so only the mark tells them apart.
+    const game = addPeer(addPeer(createRoomState(race, 'z-host'), 'z-guest'), 'a-newcomer')
+    const started = addPeer(addPeer(createRoomState(race, 'a-newcomer', true), 'z-host'), 'z-guest')
 
     assert.equal(winsTie(started, game, {selfId: 'a-newcomer', departed: [], sender: 'z-host'}), false)
     assert.equal(winsTie(game, started, {selfId: 'z-host', departed: [], sender: 'a-newcomer'}), true)
