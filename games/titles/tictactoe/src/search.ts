@@ -26,7 +26,7 @@ export const searchOf = ({view, hostIsLate, signalingOpen}: SearchState): Search
 }
 
 // Only on the player's word: a mistyped code would otherwise start an empty room. If the room was
-// there after all, this one is provisional and folds into it (see winsTie in @whenparty/p2p).
+// there after all, this one is fresh and folds into it (see winsTie in @whenparty/p2p).
 export const canStartRoom = (state: SearchState): boolean =>
   !state.view?.room && !state.view?.hostLeft && searchOf(state) === 'nobody'
 

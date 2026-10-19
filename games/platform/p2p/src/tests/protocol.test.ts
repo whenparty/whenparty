@@ -32,7 +32,7 @@ describe('snapshots', () => {
   })
 
   it('reject bad members, terms, marks and handled intents', () => {
-    const {provisional: _, ...unmarked} = room
+    const {origin: _, ...unmarked} = room
     const malformed = [
       {...room, members: undefined},
       {...room, members: []},
@@ -45,7 +45,7 @@ describe('snapshots', () => {
       {...room, term: 1.5},
       {...room, term: '1'},
       unmarked,
-      {...room, provisional: 1},
+      {...room, origin: 'later'},
       {...room, handled: []},
       {...room, handled: {host: 0}},
       {...room, handled: {host: 'one'}},

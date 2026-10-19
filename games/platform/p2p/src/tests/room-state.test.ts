@@ -19,11 +19,11 @@ const playMoves = (room: RoomState<Race>, moves: [string, number][]) =>
 
 describe('createRoomState', () => {
   it('makes the host the only member, in the first seat, with a new game', () => {
-    assert.equal(createRoomState(race, tab('host'), true).provisional, true)
+    assert.equal(createRoomState(race, tab('host'), 'fresh').origin, 'fresh')
     assert.deepEqual(createRoomState(race, tab('host')), {
       members: [{playerId: 'host', peerId: 'host'}],
       term: 0,
-      provisional: false,
+      origin: 'original',
       seats: {A: 'host', B: null},
       game: race.createState(),
       handled: {},

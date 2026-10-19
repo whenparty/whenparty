@@ -1,6 +1,6 @@
 // The wire format. Peers send JSON strings, and everything received is checked before use,
 // because any browser that knows the room code can join and send anything.
-import type {Absence, GameRules, Member, NumberedIntent, RoomState} from './room-state.ts'
+import type {Absence, GameRules, Member, NumberedIntent, Origin, RoomState} from './room-state.ts'
 
 export const encode = (value: unknown): string => JSON.stringify(value)
 
@@ -44,6 +44,8 @@ const isSeats = (value: unknown, seats: readonly string[], members: Member[]): v
   })
 }
 
+const isOrigin = (value: unknown): value is Origin => value === 'original' || value === 'resumed' || value === 'fresh'
+
 const isHandled = (value: unknown): value is Record<string, number> =>
   isRecord(value) && Object.values(value).every(isIntentId)
 
@@ -61,10 +63,10 @@ export const decodeSnapshot = <State, Move>(rules: GameRules<State, Move>, data:
     return null
   }
 
-  const {members, term, provisional, seats, game, handled, absent} = value
+  const {members, term, origin, seats, game, handled, absent} = value
 
   if (
-    typeof provisional !== 'boolean' ||
+    !isOrigin(origin) ||
     !isSeats(seats, rules.seats, members) ||
     !rules.isState(game) ||
     !isHandled(handled) ||
@@ -73,7 +75,7 @@ export const decodeSnapshot = <State, Move>(rules: GameRules<State, Move>, data:
     return null
   }
 
-  return {members, term: Number(term), provisional, seats, game, handled, absent}
+  return {members, term: Number(term), origin, seats, game, handled, absent}
 }
 
 export const decodeIntent = <State, Move>(rules: GameRules<State, Move>, data: unknown): NumberedIntent<Move> | null => {

@@ -68,7 +68,11 @@ describe('GET /turn-credentials', () => {
     assert.equal((await get(server.port)).status, 403)
   })
 
-  it('is a 404 without TURN settings', async () => {
-    assert.equal((await get(serverWithoutTurn.port, 'https://tictactoe.when.party')).status, 404)
+  it('is a 404 the page may read without TURN settings, and still refuses other sites', async () => {
+    const response = await get(serverWithoutTurn.port, 'https://tictactoe.when.party')
+
+    assert.equal(response.status, 404)
+    assert.equal(response.headers.get('access-control-allow-origin'), 'https://tictactoe.when.party')
+    assert.equal((await get(serverWithoutTurn.port, 'https://evil.example')).status, 403)
   })
 })
