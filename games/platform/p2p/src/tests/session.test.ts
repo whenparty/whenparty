@@ -297,7 +297,6 @@ describe('startSession', () => {
     const {network, sessions, membersOf} = await startRoom()
 
     network.page('c', 'leaving')
-    network.page('c', 'gone')
 
     assert.equal(network.sends('c', 'bye'), 0)
 
@@ -626,7 +625,7 @@ describe('startSession', () => {
     assert.equal(views.get('b')?.isHost, true)
     assert.deepEqual(membersOf('b'), ['b'])
     assert.deepEqual(movesOf('b'), ['A'])
-    assert.equal(views.get('b')?.room?.provisional, true)
+    assert.equal(views.get('b')?.room?.origin, 'resumed')
   })
 
   it('sends its pending intent again after joining again', async () => {
@@ -835,6 +834,123 @@ describe('startSession', () => {
     assert.equal(views.get('b')?.unreachable, false)
   })
 
+  it('hosts the room again when no snapshot comes in time, even with other guests around', async () => {
+    const {network, views, start, hostOf} = await startRoom()
+
+    // Two guests find each other and nobody else: a reloaded host and a member that lost it
+    start('d', false, {rejoinAsHost: true})
+    start('e', false)
+    network.connect('d', 'e')
+    await sleep(takeoverDelayMs * 3)
+    await network.settle()
+
+    assert.equal(views.get('d')?.isHost, true)
+    assert.equal(views.get('d')?.room?.origin, 'fresh')
+    assert.equal(hostOf('e'), 'd')
+  })
+
+  it('resumes the game rather than starting over, when a reloaded host meets a member that hosts again', async () => {
+    const {network, sessions, views, start, hostOf, movesOf} = await startRoom()
+
+    sessions.a.send(go)
+    await network.settle()
+    // b's phone hides and freezes, and a reloads meanwhile. b comes back and finds only a2, which
+    // knows nothing of the game.
+    network.page('b', 'away')
+    await network.settle()
+    network.cut('a', 'b')
+    network.cut('b', 'c')
+    network.page('b', 'back')
+    network.notice('b', 'a')
+    network.notice('b', 'c')
+    await network.settle()
+    start('a2', false, {playerId: 'a', rejoinAsHost: true})
+    network.connect('a2', 'b')
+    await sleep(takeoverDelayMs * 3)
+    await network.settle()
+
+    for (const selfId of ['a2', 'b']) {
+      assert.equal(hostOf(selfId), 'b', selfId)
+      assert.deepEqual(movesOf(selfId), ['A'], selfId)
+    }
+    assert.equal(views.get('b')?.room?.origin, 'resumed')
+    assert.equal(views.get('a2')?.isHost, false)
+  })
+
+  it('moves a player back to its other tab when the controlling one goes, instead of dropping it', async () => {
+    const {network, sessions, views, start, movesOf, membersOf, seatsOf} = await startRoom()
+
+    start('c2', false, {playerId: 'c'})
+    network.connect('a', 'c2')
+    network.connect('b', 'c2')
+    network.connect('c', 'c2')
+    await network.settle()
+
+    assert.equal(views.get('c')?.inControl, false)
+
+    network.cut('a', 'c2')
+    network.cut('b', 'c2')
+    network.cut('c', 'c2')
+    network.notice('a', 'c2')
+    await sleep(takeoverDelayMs * 3)
+    await network.settle()
+
+    assert.deepEqual(membersOf('a'), ['a', 'b', 'c'])
+    assert.equal(seatsOf('a')?.C, 'c')
+    assert.equal(views.get('c')?.inControl, true)
+
+    sessions.a.send(go)
+    await network.settle()
+    sessions.b.send(go)
+    await network.settle()
+    sessions.c.send(go)
+    await network.settle()
+
+    assert.deepEqual(movesOf('c'), ['A', 'B', 'C'])
+  })
+
+  it('holds a member the old host marked away, even if its word never reached the new host', async () => {
+    const {network, membersOf} = await startRoom({awayHoldMs: takeoverDelayMs * 100})
+
+    // c says it is away while its link to b is down, so only a hears it and marks it in the room
+    network.cut('b', 'c')
+    network.page('c', 'away')
+    await network.settle()
+    network.cut('a', 'b')
+    network.cut('a', 'c')
+    network.notice('b', 'a')
+    network.notice('b', 'c')
+    await sleep(takeoverDelayMs * 5)
+    await network.settle()
+
+    // a, which just dropped, is gone by now; c is held for awayHoldMs
+    assert.deepEqual(membersOf('b'), ['b', 'c'])
+  })
+
+  it('tells everyone when the host itself steps away', async () => {
+    const {network, views} = await startRoom()
+
+    network.page('a', 'away')
+    await network.settle()
+
+    assert.deepEqual(views.get('b')?.room?.absent, {a: 'away'})
+
+    network.page('a', 'back')
+    await network.settle()
+
+    assert.deepEqual(views.get('b')?.room?.absent, {})
+  })
+
+  it('leaves the room when the page goes, so the others hear at once', async () => {
+    const {network, views, membersOf} = await startRoom()
+
+    network.page('c', 'gone')
+    await network.settle()
+
+    assert.deepEqual(views.get('a')?.room?.absent, {c: 'offline'})
+    assert.deepEqual(membersOf('a'), ['a', 'b', 'c'])
+  })
+
   it('hosts the room again after a reload when nobody is in it', async () => {
     const {network, views, start, membersOf} = await startRoom()
 
@@ -844,7 +960,7 @@ describe('startSession', () => {
 
     assert.equal(views.get('z')?.isHost, true)
     assert.deepEqual(membersOf('z'), ['z'])
-    assert.equal(views.get('z')?.room?.provisional, true)
+    assert.equal(views.get('z')?.room?.origin, 'fresh')
   })
 
   it('follows the room under its new host after taking it back too early', async () => {

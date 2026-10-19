@@ -58,7 +58,7 @@ describe('hostAlone', () => {
     assert.deepEqual(alone.seats, {A: null, B: 'guest'})
     assert.equal(alone.game.winner, 'B')
     assert.equal(alone.term, room.term)
-    assert.equal(alone.provisional, true)
+    assert.equal(alone.origin, 'resumed')
     assert.deepEqual(alone.absent, {})
   })
 
@@ -156,14 +156,21 @@ describe('winsTie', () => {
     assert.equal(winsTie(bigger, byGuest, {selfId: 'spectator', departed: [], sender: 'guest'}), false)
   })
 
-  it('keeps the room for the one that is not provisional, whatever its size and peer ID', () => {
+  it('keeps the room for the earlier origin, whatever its size and peer ID', () => {
     // A player started a room under the code, then met the room with a game in progress. Once
-    // connected, each host counts the other's players too, so only the mark tells them apart.
+    // connected, each host counts the other's players too, so only the origin tells them apart.
     const game = joinPlayer(joinPlayer(createRoomState(race, tab('z-host')), tab('z-guest')), tab('a-newcomer'))
-    const started = joinPlayer(joinPlayer(createRoomState(race, tab('a-newcomer'), true), tab('z-host')), tab('z-guest'))
+    const started = joinPlayer(joinPlayer(createRoomState(race, tab('a-newcomer'), 'fresh'), tab('z-host')), tab('z-guest'))
+    const resumed = {...game, origin: 'resumed' as const}
+    const asNewcomer = {selfId: 'a-newcomer', departed: [], sender: 'z-host'}
+    const asHost = {selfId: 'z-host', departed: [], sender: 'a-newcomer'}
 
-    assert.equal(winsTie(started, game, {selfId: 'a-newcomer', departed: [], sender: 'z-host'}), false)
-    assert.equal(winsTie(game, started, {selfId: 'z-host', departed: [], sender: 'a-newcomer'}), true)
+    assert.equal(winsTie(started, game, asNewcomer), false)
+    assert.equal(winsTie(game, started, asHost), true)
+    assert.equal(winsTie(started, resumed, asNewcomer), false)
+    assert.equal(winsTie(resumed, started, asHost), true)
+    assert.equal(winsTie({...started, origin: 'resumed'}, game, asNewcomer), false)
+    assert.equal(winsTie(game, {...started, origin: 'resumed'}, asHost), true)
   })
 
   it('applies only between two hosts of the same term', () => {

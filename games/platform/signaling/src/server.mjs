@@ -27,14 +27,14 @@ const logError = error => console.error(`signaling error: ${error.message}`)
 
 // GET /turn-credentials hands a game page short-lived TURN credentials (see turn.mjs). Only the
 // game sites may ask, like for the WebSocket, and nothing may cache the answer. Without TURN
-// settings it is a 404, and the games connect without TURN.
+// settings it is a 404 the page may read, so that it connects without TURN quietly.
 const handleHttp = turn => (request, response) => {
   if (request.method === 'GET' && request.url === '/health') {
     response.writeHead(200, {'Content-Type': 'text/plain'}).end('OK')
     return
   }
 
-  if (request.method === 'GET' && request.url === '/turn-credentials' && turn) {
+  if (request.method === 'GET' && request.url === '/turn-credentials') {
     const {origin} = request.headers
 
     if (!isAllowedOrigin(origin)) {
@@ -42,13 +42,15 @@ const handleHttp = turn => (request, response) => {
       return
     }
 
+    const cors = {'Access-Control-Allow-Origin': origin, Vary: 'Origin'}
+
+    if (!turn) {
+      response.writeHead(404, cors).end()
+      return
+    }
+
     response
-      .writeHead(200, {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-        'Access-Control-Allow-Origin': origin,
-        Vary: 'Origin'
-      })
+      .writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...cors})
       .end(JSON.stringify(turnCredentials(turn)))
     return
   }
