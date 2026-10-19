@@ -1,11 +1,16 @@
 import './style.css'
 import {ROOM_CODE_LENGTH, createRoomCode, isFull, normalizeRoomCode, roomCodeFromHash, seatOf, startSession} from '@whenparty/p2p'
 import type {Session, SessionView} from '@whenparty/p2p'
+import {canStartRoom, lostRoom, searchOf, type SearchState} from './search.ts'
 import {ticTacToe, type TicTacToe} from './tictactoe.ts'
 
 const appId = 'when.party/tictactoe'
-// A guest that has not heard from a host by then gets a hint to check the code
+// A guest that has not heard from a host by then gets a hint: check the code or the connection
 const hostHintMs = 10_000
+// How often the hint checks the connection to the signaling server again
+const hintRefreshMs = 2_000
+// The room this tab hosts, so that it hosts it again after a reload if nobody else is there
+const hostingKey = 'tictactoe:hosting'
 
 // The room this tab is in
 interface Visit {
@@ -13,9 +18,34 @@ interface Visit {
   session: Session<number> | null
   view: SessionView<TicTacToe> | null
   hostIsLate: boolean
+  stopHint: () => void
 }
 
 let visit: Visit | null = null
+
+// sessionStorage lives as long as the tab and survives a reload. It may be unavailable.
+const hostedRoom = (): string | null => {
+  try {
+    return sessionStorage.getItem(hostingKey)
+  } catch {
+    return null
+  }
+}
+
+const rememberHosting = (code: string | null) => {
+  try {
+    if (code) {
+      sessionStorage.setItem(hostingKey, code)
+    } else {
+      sessionStorage.removeItem(hostingKey)
+    }
+  } catch {
+    // Without storage, a reloaded host just comes back as a guest
+  }
+}
+
+const isReload = () =>
+  performance.getEntriesByType('navigation').some(entry => (entry as PerformanceNavigationTiming).type === 'reload')
 
 const find = <T extends Element>(selector: string): T => {
   const found = document.querySelector<T>(selector)
@@ -36,6 +66,7 @@ const copyLink = find<HTMLButtonElement>('#copy-link')
 const statusText = find<HTMLElement>('#status')
 const hostBadge = find<HTMLElement>('#host-badge')
 const restartButton = find<HTMLButtonElement>('#restart')
+const startRoomButton = find<HTMLButtonElement>('#start-room')
 
 const cells = Array.from({length: 9}, (_, index) => {
   const cell = document.createElement('button')
@@ -46,7 +77,31 @@ const cells = Array.from({length: 9}, (_, index) => {
   return cell
 })
 
-const describe = ({code, view, hostIsLate}: Visit): string => {
+const searchStateOf = ({session, view, hostIsLate}: Visit): SearchState => ({
+  view,
+  hostIsLate,
+  signalingOpen: session?.isSignalingOpen() ?? true
+})
+
+// Why a guest has not found its room yet
+const describeSearch = (current: Visit): string => {
+  const {code} = current
+
+  switch (searchOf(searchStateOf(current))) {
+    case 'unreachable':
+      return `Found room ${code}, but could not connect to the players in it. Your network may block direct connections: try another one, like mobile data.`
+    case 'offline':
+      return 'Cannot reach the game server. Check your internet connection.'
+    case 'nobody':
+      return `Nobody is hosting ${code} yet. Check the code, or start the room yourself.`
+    default:
+      return `Looking for room ${code}…`
+  }
+}
+
+const describe = (current: Visit): string => {
+  const {view} = current
+
   if (view?.hostLeft) {
     return 'The host left, so the game is over.'
   }
@@ -56,7 +111,7 @@ const describe = ({code, view, hostIsLate}: Visit): string => {
   }
 
   if (!view?.room) {
-    return hostIsLate ? `Nobody is hosting ${code} yet. Check the code.` : `Looking for room ${code}…`
+    return describeSearch(current)
   }
 
   const {game} = view.room
@@ -99,10 +154,31 @@ const render = (current: Visit) => {
     cell.classList.toggle('win', game?.line.includes(index) ?? false)
   })
   restartButton.hidden = !(isLive && game && ticTacToe.isOver(game))
+  startRoomButton.hidden = !canStartRoom(searchStateOf(current))
+  startRoomButton.textContent = `Start room ${current.code}`
 }
 
-const enterRoom = (code: string, isHost: boolean) => {
-  const entry: Visit = {code, session: null, view: null, hostIsLate: false}
+// The hint waits hostHintMs, then checks the connection to the signaling server again every
+// hintRefreshMs: that can drop and come back without an event. It starts over when the tab has no
+// room again.
+const startHint = (entry: Visit, refresh: () => void) => {
+  entry.stopHint()
+  entry.hostIsLate = false
+  let interval: ReturnType<typeof setInterval> | undefined
+  const timeout = setTimeout(() => {
+    entry.hostIsLate = true
+    refresh()
+    interval = setInterval(refresh, hintRefreshMs)
+  }, hostHintMs)
+  entry.stopHint = () => {
+    clearTimeout(timeout)
+    clearInterval(interval)
+  }
+}
+
+// rejoinAsHost: this tab hosted the room before it reloaded (see SessionOptions)
+const enterRoom = (code: string, isHost: boolean, rejoinAsHost = false) => {
+  const entry: Visit = {code, session: null, view: null, hostIsLate: false, stopHint: () => {}}
   const refresh = () => {
     if (visit === entry) {
       render(entry)
@@ -116,16 +192,23 @@ const enterRoom = (code: string, isHost: boolean) => {
     appId,
     code,
     isHost,
+    rejoinAsHost,
     rules: ticTacToe,
     onChange: view => {
+      if (lostRoom(entry.view, view)) {
+        startHint(entry, refresh)
+      }
+
       entry.view = view
+
+      if (visit === entry && view.room) {
+        rememberHosting(view.isHost ? code : null)
+      }
+
       refresh()
     }
   })
-  setTimeout(() => {
-    entry.hostIsLate = true
-    refresh()
-  }, hostHintMs)
+  startHint(entry, refresh)
 
   roomCode.textContent = code
   lobby.hidden = true
@@ -135,6 +218,8 @@ const enterRoom = (code: string, isHost: boolean) => {
 
 const leaveRoom = () => {
   visit?.session?.leave().catch(error => console.warn('p2p:', error))
+  visit?.stopHint()
+  rememberHosting(null)
   visit = null
   history.replaceState(null, '', location.pathname)
   gameSection.hidden = true
@@ -172,12 +257,20 @@ copyLink.addEventListener('click', () => {
 })
 
 restartButton.addEventListener('click', () => visit?.session?.send({type: 'restart'}))
+startRoomButton.addEventListener('click', () => {
+  const code = visit?.code
+
+  if (code) {
+    leaveRoom()
+    enterRoom(code, true)
+  }
+})
 find('#leave').addEventListener('click', leaveRoom)
 
 // An invite link (https://tictactoe.when.party/#K7MXQ) joins straight away. Opened in a tab that
 // already shows the game, only the hash changes and the page does not reload, so listen for that too.
 // enterRoom and leaveRoom set the hash with replaceState, which fires no hashchange.
-const joinLinkedRoom = () => {
+const joinLinkedRoom = (rejoinAsHost: boolean) => {
   const code = roomCodeFromHash(location.hash)
 
   if (!code || code === visit?.code) {
@@ -188,8 +281,10 @@ const joinLinkedRoom = () => {
     leaveRoom()
   }
 
-  enterRoom(code, false)
+  enterRoom(code, false, rejoinAsHost)
 }
 
-addEventListener('hashchange', joinLinkedRoom)
-joinLinkedRoom()
+addEventListener('hashchange', () => joinLinkedRoom(false))
+// A host that reloads comes back with the code in the URL
+const linkedCode = roomCodeFromHash(location.hash)
+joinLinkedRoom(linkedCode !== null && isReload() && hostedRoom() === linkedCode)
