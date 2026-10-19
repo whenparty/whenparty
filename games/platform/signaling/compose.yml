@@ -10,6 +10,11 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    environment:
+      # Written to .env by the deploy from the TURN_SECRET repository secret. Without it,
+      # /turn-credentials is a 404 and the games connect without TURN.
+      TURN_SECRET: ${TURN_SECRET:-}
+      TURN_URLS: turn:turn.when.party:3478?transport=udp,turn:turn.when.party:3478?transport=tcp
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.routers.signaling.rule=Host(`signaling.when.party`)'

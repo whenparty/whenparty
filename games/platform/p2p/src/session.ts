@@ -3,12 +3,13 @@
 // leaves, the next member takes over (see succession.ts). Nothing is stored on a server: the
 // signaling server only helps browsers find each other.
 import {getRelaySockets, joinRoom, selfId, type MessageAction} from '@trystero-p2p/ws-relay'
-import {joinAfterLeave} from './join-after-leave.ts'
+import {joinAfterLeave, joinWhenReady} from './join-after-leave.ts'
 import {decodeIntent, decodeSnapshot, encode} from './protocol.ts'
 import {addPeer, applyIntent, createRoomState, removePeer} from './room-state.ts'
 import type {GameRules, Intent, NumberedIntent, RoomState} from './room-state.ts'
-import {signalingUrlFor} from './signaling-url.ts'
+import {signalingUrlFor, turnCredentialsUrlFor} from './signaling-url.ts'
 import {acceptsSnapshot, hostAlone, promote, successorOf, winsTie} from './succession.ts'
+import {turnServerLoader, type TurnServer} from './turn-servers.ts'
 
 export interface SessionView<State> {
   selfId: string
@@ -102,15 +103,25 @@ export const onPageEvents =
 
 const logError = (error: unknown) => console.warn('p2p:', error)
 
+let loadTurnServers: (() => Promise<TurnServer[]>) | null = null
+
+// Each room joins once the TURN servers are known, so that a peer it can't reach directly can be
+// reached through them. That waits for one request at most, and only for the first room or after
+// the credentials' half-life.
 const trystero: Transport = joinAfterLeave({
   selfId,
-  join: (appId, code, onUnreachable) =>
-    joinRoom({appId, relayConfig: {urls: [signalingUrlFor(location.hostname)]}}, code, {
-      onJoinError: ({peerId, error}) => {
-        logError(error)
-        onUnreachable(peerId)
-      }
-    }),
+  join: (appId, code, onUnreachable) => {
+    loadTurnServers ??= turnServerLoader(turnCredentialsUrlFor(location.hostname))
+
+    return joinWhenReady(loadTurnServers(), turnConfig =>
+      joinRoom({appId, relayConfig: {urls: [signalingUrlFor(location.hostname)]}, turnConfig}, code, {
+        onJoinError: ({peerId, error}) => {
+          logError(error)
+          onUnreachable(peerId)
+        }
+      })
+    )
+  },
   isSignalingOpen: () =>
     Object.values(getRelaySockets() as Record<string, WebSocket>).some(socket => socket.readyState === WebSocket.OPEN),
   onPageEvent: onPageEvents(globalThis, () => document.visibilityState === 'hidden')

@@ -82,6 +82,12 @@ Limits:
 
 `src/signaling-url.ts` picks `wss://signaling.when.party` (`games/platform/signaling`), or `ws://localhost:8080` for pages on `localhost` and `127.0.0.1`. A test checks that this package and the signaling server use the same `@trystero-p2p/ws-relay` version.
 
+## TURN
+
+When two browsers can't connect directly (a phone on mobile data behind its carrier's NAT, a strict office network), they relay through the TURN server at `turn.when.party` (`games/platform/turn`). Each room joins once the page has its short-lived credentials from the signaling server's `/turn-credentials` (`src/turn-servers.ts`), and passes them to Trystero as `turnConfig`. The page asks again only after half their lifetime, and joins at the same time share one request. If the request fails or takes over 3 seconds, the room joins without TURN, as before, and the page asks again a minute later. A room still waits with no peers until then (`joinWhenReady` in `src/join-after-leave.ts`).
+
+Without TURN, or when even TURN can't connect two peers, Trystero reports the peer through `onJoinError`, and the view's `unreachable` is true.
+
 ## Dev Server Headers
 
 `src/dev-headers.ts` (`@whenparty/p2p/dev-headers`) holds the production `Content-Security-Policy` and `Permissions-Policy` from `infra/nginx/conf.d/`, plus the local signaling server. Titles send them from the Vite dev and preview servers, so a script from a CDN or a connection to another server fails locally the same way it would in production. Keep them in sync when the nginx headers change.
@@ -97,6 +103,7 @@ src/
   protocol.ts        # encode and check what goes over the wire (pure)
   session.ts         # Trystero: runs the host or a guest, hands over the host role, calls onChange
   join-after-leave.ts # joins a room again only once the tab has left it (wraps the Trystero transport)
+  turn-servers.ts    # loads the TURN servers and their short-lived credentials
   signaling-url.ts   # which signaling server to use
   dev-headers.ts     # production headers for the Vite dev servers
   tests/             # node:test, with a tiny test game (race.ts) and an in-memory network
@@ -106,5 +113,5 @@ src/
 
 ## Limits
 
-- There is no TURN server yet. Players behind strict NAT (some mobile and corporate networks) may never connect to each other.
+- TURN runs over UDP and TCP on port 3478, without TLS. A network that blocks everything but 443 (some offices and hotels) can't reach it (see `games/platform/turn/README.md`).
 - Data channels only. `Permissions-Policy` blocks camera and microphone on every `*.when.party` site.

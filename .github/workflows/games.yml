@@ -22,6 +22,16 @@ jobs:
           docker run --rm -v "$PWD/games:/games" -w /games node:24.22.0-alpine3.24 \
             sh -c 'npm ci && npm test && npm run typecheck'
 
+  # coturn as deployed, against coturn's own test client: it relays to public peers and between
+  # two relayed clients, and refuses private peers and bad credentials
+  turn:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Smoke-test coturn
+        run: sh games/platform/turn/tests/smoke.sh
+
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -101,7 +111,7 @@ jobs:
           echo "Changed projects: $projects"
 
   deploy:
-    needs: [check, detect-changes]
+    needs: [check, turn, detect-changes]
     if: needs.detect-changes.outputs.projects != '[]'
     strategy:
       fail-fast: false

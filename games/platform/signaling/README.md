@@ -26,11 +26,12 @@ const room = joinRoom(
 - `roomCode`: the room ID or short code the players share.
 - Bundle Trystero into the game (`@trystero-p2p/ws-relay`, the same version as this server: a test in `platform/p2p` checks it) instead of loading it from a CDN. The `*.when.party` CSP (`infra/nginx/conf.d/temp-sites.conf`) allows scripts only from the site itself, and WebSocket connections only to the site itself and `wss://signaling.when.party`.
 - State lives only in the open tabs. When the last player leaves, it is gone unless the game saves it itself (for example in `localStorage`).
-- There is no TURN server yet. Players behind strict NAT (some mobile and corporate networks) may not be able to connect to each other.
+- Players behind strict NAT (some mobile and corporate networks) relay through the TURN server (`games/platform/turn`), with credentials from this server's `/turn-credentials`.
 
 ## How It Works
 
 - `src/server.mjs` runs one HTTP server on port 8080. `GET /health` returns `OK`. WebSocket upgrades go to `createWsRelayServer` from `@trystero-p2p/ws-relay/server`, a topic pub/sub that Trystero's ws-relay strategy talks to.
+- `GET /turn-credentials` hands a game page short-lived credentials for the TURN server (`src/turn.mjs`): a username `expiry:random-id` and its HMAC-SHA1 under `TURN_SECRET`, the secret coturn shares (TURN REST API), valid for 24 hours, with the server URLs from `TURN_URLS`. Only the origins below may ask (others get a 403), with `Cache-Control: no-store`. Without `TURN_SECRET` it is a 404, and the games connect without TURN. The deploy writes `TURN_SECRET` to `.env` from the repository secret (see `compose.yml`), and nginx limits requests per IP for the whole server.
 - `src/origin.mjs` accepts only browsers on `https://when.party`, `https://*.when.party`, `http://localhost[:port]` and `http://127.0.0.1[:port]`. Others get a 403. This stops other websites from using the server through their visitors' browsers. It is not a security boundary, because non-browser clients can send any `Origin`.
 - The server pings every client every 30 s and drops the ones that did not answer the previous ping. That keeps idle sockets under nginx's 90 s `proxy_read_timeout` and Cloudflare's ~100 s WebSocket idle limit, and releases the subscriptions of dead connections.
 - Limits keep one client from taking the server's capacity (`defaultLimits` in `src/server.mjs`). A player's tab holds one socket with 2 subscriptions (the room and its own peer topic) and sends messages under 1 KB: about 5 for each other player while it connects to them, then one a minute. Measured with 6 tabs in one room: 2 subscriptions, at most 854 bytes and 28 messages per second per socket.

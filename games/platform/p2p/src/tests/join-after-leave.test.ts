@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
 import type {MessageAction} from '@trystero-p2p/ws-relay'
-import {joinAfterLeave} from '../join-after-leave.ts'
+import {joinAfterLeave, joinWhenReady} from '../join-after-leave.ts'
 import type {SessionRoom, Transport} from '../session.ts'
 
 type Handler = NonNullable<MessageAction<string>['onMessage']>
@@ -106,5 +106,22 @@ describe('joinAfterLeave', () => {
     await nextTurn()
 
     assert.deepEqual(joins, ['game/A', 'game/A'])
+  })
+})
+
+describe('joinWhenReady', () => {
+  it('joins with the value it waited for', async () => {
+    const {transport, joins} = createTransport()
+    const joinedWith: string[][] = []
+    const room = joinWhenReady(Promise.resolve(['turn:turn.example:3478']), turnConfig => {
+      joinedWith.push(turnConfig)
+      return transport.join('game', 'A', () => {})
+    })
+
+    assert.deepEqual(room.getPeers(), {})
+    await nextTurn()
+
+    assert.deepEqual(joinedWith, [['turn:turn.example:3478']])
+    assert.deepEqual(joins, ['game/A'])
   })
 })

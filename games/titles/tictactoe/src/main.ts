@@ -89,7 +89,7 @@ const describeSearch = (current: Visit): string => {
 
   switch (searchOf(searchStateOf(current))) {
     case 'unreachable':
-      return `Found room ${code}, but could not connect to the players in it. Your network may block direct connections: try another one, like mobile data.`
+      return `Found room ${code}, but could not connect to the players in it. A network on the way blocks the connection. Try again in a moment, or switch between Wi-Fi and mobile data.`
     case 'offline':
       return 'Cannot reach the game server. Check your internet connection.'
     case 'nobody':
