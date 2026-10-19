@@ -1,10 +1,12 @@
 import './style.css'
-import {ROOM_CODE_LENGTH, createRoomCode, isFull, normalizeRoomCode, roomCodeFromHash, seatOf, startSession} from '@whenparty/p2p'
+import {ROOM_CODE_LENGTH, createRoomCode, isFull, normalizeRoomCode, playerIdFrom, roomCodeFromHash, seatOf, startSession} from '@whenparty/p2p'
 import type {Session, SessionOptions, SessionView} from '@whenparty/p2p'
 import {canStartRoom, lostRoom, searchOf, type SearchState} from './search.ts'
 import {ticTacToe, type TicTacToe} from './tictactoe.ts'
 
 const appId = 'when.party/tictactoe'
+// The same in every tab of this browser, so a reload comes back to its seat and a second tab takes it over
+const playerId = playerIdFrom(() => localStorage)
 // A guest that has not heard from a host by then gets a hint: check the code or the connection
 const hostHintMs = 10_000
 // How often the hint checks the connection to the signaling server again
@@ -114,8 +116,12 @@ const describe = (current: Visit): string => {
     return describeSearch(current)
   }
 
+  if (!view.inControl) {
+    return 'This game is open in another tab of yours, which plays now.'
+  }
+
   const {game} = view.room
-  const seat = seatOf(view.room, view.selfId)
+  const seat = seatOf(view.room, view.playerId)
 
   if (!isFull(view.room)) {
     return seat ? 'Waiting for a second player. Send them the code.' : 'Waiting for players.'
@@ -139,10 +145,11 @@ const describe = (current: Visit): string => {
 const render = (current: Visit) => {
   const {view} = current
   const room = view?.room ?? null
-  const seat = view && room ? seatOf(room, view.selfId) : null
+  const seat = view && room ? seatOf(room, view.playerId) : null
   const game = room?.game
-  // Moves and rematches need the host, a full room and a seat. Otherwise the board is read-only.
-  const isLive = Boolean(room && seat && !view?.hostLeft && !view?.switchingHost && isFull(room))
+  // Moves and rematches need the host, a full room, a seat and the tab that controls the player.
+  // Otherwise the board is read-only.
+  const isLive = Boolean(room && seat && view?.inControl && !view?.hostLeft && !view?.switchingHost && isFull(room))
   const canMove = isLive && game?.winner === null && game.turn === seat
 
   statusText.textContent = describe(current)
@@ -194,6 +201,7 @@ const enterRoom = (code: string, {isHost, rejoinAsHost = false, provisional = fa
   entry.session = startSession({
     appId,
     code,
+    playerId,
     isHost,
     rejoinAsHost,
     provisional,

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
-import {addPeer, applyIntent, createRoomState, type RoomState} from '../room-state.ts'
+import {applyIntent, createRoomState, joinPlayer, type RoomState} from '../room-state.ts'
 import {acceptsSnapshot, hostAlone, promote, successorOf, winsTie} from '../succession.ts'
+import {playersOf, tab} from './members.ts'
 import {race, type Race} from './race.ts'
 
 const forfeit = {...race, onSeatLeft: (state: Race, seat: string): Race => ({...state, winner: seat === 'A' ? 'B' : 'A'})}
@@ -9,91 +10,104 @@ const forfeit = {...race, onSeatLeft: (state: Race, seat: string): Race => ({...
 // host (A), guest (B) and a spectator, in that order, after the host's first move
 const room: RoomState<Race> = applyIntent(
   race,
-  addPeer(addPeer(createRoomState(race, 'host'), 'guest'), 'spectator'),
+  joinPlayer(joinPlayer(createRoomState(race, tab('host')), tab('guest')), tab('spectator')),
   'host',
   {type: 'move', move: 2, id: 1}
 )
 
 describe('successorOf', () => {
   it('is the first member after the host', () => {
-    assert.equal(successorOf(room, ['host']), 'guest')
+    assert.equal(successorOf(room, ['host'])?.playerId, 'guest')
   })
 
   it('skips members whose link dropped too', () => {
-    assert.equal(successorOf(room, ['host', 'guest']), 'spectator')
+    assert.equal(successorOf(room, ['host', 'guest'])?.playerId, 'spectator')
   })
 
   it('is null when nobody is left to take over', () => {
     assert.equal(successorOf(room, ['host', 'guest', 'spectator']), null)
-    assert.equal(successorOf(createRoomState(race, 'host'), []), null)
+    assert.equal(successorOf(createRoomState(race, tab('host')), []), null)
   })
 })
 
 describe('promote', () => {
   it('puts the new host first, drops the old one and starts a new term', () => {
-    const promoted = promote(race, room, 'host', 'guest')
+    const promoted = promote(race, room, 'guest')
 
-    assert.deepEqual(promoted.members, ['guest', 'spectator'])
+    assert.deepEqual(playersOf(promoted.members), ['guest', 'spectator'])
     assert.equal(promoted.term, 1)
   })
 
   it("gives the old host's seat to the first member without one and keeps the game", () => {
-    const promoted = promote(race, room, 'host', 'guest')
+    const promoted = promote(race, room, 'guest')
 
     assert.deepEqual(promoted.seats, {A: 'spectator', B: 'guest'})
     assert.equal(promoted.game, room.game)
   })
 
   it("leaves the old host's seat free when everyone else has one", () => {
-    const pair = addPeer(createRoomState(race, 'host'), 'guest')
+    const pair = joinPlayer(createRoomState(race, tab('host')), tab('guest'))
 
-    assert.deepEqual(promote(race, pair, 'host', 'guest').seats, {A: null, B: 'guest'})
+    assert.deepEqual(promote(race, pair, 'guest').seats, {A: null, B: 'guest'})
   })
 
   it('moves the new host to the front even when it had no seat', () => {
-    const promoted = promote(race, room, 'host', 'spectator')
+    const promoted = promote(race, room, 'spectator')
 
-    assert.deepEqual(promoted.members, ['spectator', 'guest'])
+    assert.deepEqual(playersOf(promoted.members), ['spectator', 'guest'])
     assert.deepEqual(promoted.seats, {A: 'spectator', B: 'guest'})
   })
 
   it('lets the game react to the old host leaving its seat', () => {
-    assert.equal(promote(forfeit, room, 'host', 'guest').game.winner, 'B')
+    assert.equal(promote(forfeit, room, 'guest').game.winner, 'B')
   })
 
   it('keeps an old host that stepped away as the last member, in its seat', () => {
-    const promoted = promote(forfeit, room, 'host', 'guest', true)
+    const promoted = promote(forfeit, room, 'guest', true)
 
-    assert.deepEqual(promoted.members, ['guest', 'spectator', 'host'])
+    assert.deepEqual(playersOf(promoted.members), ['guest', 'spectator', 'host'])
     assert.deepEqual(promoted.seats, room.seats)
     assert.equal(promoted.game, room.game)
     assert.equal(promoted.term, 1)
   })
 
-  it('does nothing for a new host that is not a member', () => {
-    assert.equal(promote(race, room, 'host', 'stranger'), room)
+  it('does nothing for a connection that is not a member, or for the host itself', () => {
+    assert.equal(promote(race, room, 'stranger'), room)
+    assert.equal(promote(race, room, 'host'), room)
   })
 })
 
 describe('hostAlone', () => {
   it('keeps the game, frees the seats of everyone else and marks the room provisional', () => {
-    const alone = hostAlone(forfeit, room, 'guest')
+    const alone = hostAlone(forfeit, room, tab('guest'))
 
-    assert.deepEqual(alone.members, ['guest'])
+    assert.deepEqual(alone.members, [tab('guest')])
     assert.deepEqual(alone.seats, {A: null, B: 'guest'})
     assert.equal(alone.game.winner, 'B')
     assert.equal(alone.term, room.term)
     assert.equal(alone.provisional, true)
   })
+
+  it('hosts on a new connection, and even from a snapshot that did not list this player yet', () => {
+    assert.deepEqual(hostAlone(race, room, tab('guest-2', 'guest')).members, [tab('guest-2', 'guest')])
+    assert.deepEqual(hostAlone(race, room, tab('late')).members, [tab('late')])
+    assert.equal(Object.values(hostAlone(race, room, tab('late')).seats).includes('late'), true)
+  })
 })
 
 describe('acceptsSnapshot', () => {
   const asGuest = (departed: string[], sender: string) => ({selfId: 'spectator', departed, sender})
-  const promoted = promote(race, room, 'host', 'guest')
+  const promoted = promote(race, room, 'guest')
 
-  it('takes the first snapshot only from the peer it names as host', () => {
+  it('takes the first snapshot only from the connection it names as host', () => {
     assert.equal(acceptsSnapshot(null, room, asGuest([], 'host')), true)
     assert.equal(acceptsSnapshot(null, room, asGuest([], 'guest')), false)
+  })
+
+  it("takes a first snapshot that names this tab as host, from its player's old tab", () => {
+    const handed = joinPlayer(room, tab('host-2', 'host'))
+
+    assert.equal(acceptsSnapshot(null, handed, {selfId: 'host-2', departed: [], sender: 'host'}), true)
   })
 
   it('follows its host within a term', () => {
@@ -110,8 +124,8 @@ describe('acceptsSnapshot', () => {
   })
 
   it('ignores members that are not next in line', () => {
-    const withLate = addPeer(room, 'late')
-    const bySpectator = promote(race, withLate, 'host', 'spectator')
+    const withLate = joinPlayer(room, tab('late'))
+    const bySpectator = promote(race, withLate, 'spectator')
 
     for (const departed of [[], ['host']]) {
       assert.equal(acceptsSnapshot(withLate, bySpectator, {selfId: 'late', departed, sender: 'spectator'}), false)
@@ -130,7 +144,7 @@ describe('acceptsSnapshot', () => {
   })
 
   it('ignores a passed-on snapshot from anyone but its host, or without a newer term', () => {
-    const byGuest = {...promoted, members: ['spectator2', ...promoted.members], term: 1}
+    const byGuest = {...promoted, members: [tab('spectator2'), ...promoted.members], term: 1}
 
     assert.equal(acceptsSnapshot(room, byGuest, asGuest([], 'guest')), false)
     assert.equal(acceptsSnapshot(room, {...promoted, term: room.term}, asGuest([], 'host')), false)
@@ -148,19 +162,19 @@ describe('acceptsSnapshot', () => {
     const asHost = {selfId: 'host', departed: [], sender: 'guest'}
 
     assert.equal(acceptsSnapshot(room, promoted, asHost), true)
-    assert.equal(acceptsSnapshot(room, {...room, members: ['guest', 'host', 'spectator']}, asHost), false)
+    assert.equal(acceptsSnapshot(room, {...room, members: [tab('guest'), tab('host'), tab('spectator')]}, asHost), false)
   })
 })
 
 describe('winsTie', () => {
   // Two hosts of term 1: each took over from host on its own
-  const byGuest = promote(race, room, 'host', 'guest')
-  const bySpectator = promote(race, room, 'host', 'spectator')
+  const byGuest = promote(race, room, 'guest')
+  const bySpectator = promote(race, room, 'spectator')
 
   it('keeps the room for the lower peer ID between halves of one room, whatever their sizes', () => {
     // Each host reads its own members as they are now and the other's as they were sent, so sizes
     // could make both lose. Only values that don't change decide.
-    const bigger = addPeer(bySpectator, 'late')
+    const bigger = joinPlayer(bySpectator, tab('late'))
 
     assert.equal(winsTie(byGuest, bySpectator, {selfId: 'guest', departed: [], sender: 'spectator'}), true)
     assert.equal(winsTie(bySpectator, byGuest, {selfId: 'spectator', departed: [], sender: 'guest'}), false)
@@ -171,8 +185,8 @@ describe('winsTie', () => {
   it('keeps the room for the one that is not provisional, whatever its size and peer ID', () => {
     // A player started a room under the code, then met the room with a game in progress. Once
     // connected, each host counts the other's players too, so only the mark tells them apart.
-    const game = addPeer(addPeer(createRoomState(race, 'z-host'), 'z-guest'), 'a-newcomer')
-    const started = addPeer(addPeer(createRoomState(race, 'a-newcomer', true), 'z-host'), 'z-guest')
+    const game = joinPlayer(joinPlayer(createRoomState(race, tab('z-host')), tab('z-guest')), tab('a-newcomer'))
+    const started = joinPlayer(joinPlayer(createRoomState(race, tab('a-newcomer'), true), tab('z-host')), tab('z-guest'))
 
     assert.equal(winsTie(started, game, {selfId: 'a-newcomer', departed: [], sender: 'z-host'}), false)
     assert.equal(winsTie(game, started, {selfId: 'z-host', departed: [], sender: 'a-newcomer'}), true)
@@ -183,6 +197,6 @@ describe('winsTie', () => {
 
     assert.equal(winsTie(byGuest, {...bySpectator, term: 2}, asGuestHost), false)
     assert.equal(winsTie(room, bySpectator, asGuestHost), false)
-    assert.equal(winsTie(byGuest, {...bySpectator, members: ['guest', 'spectator']}, asGuestHost), false)
+    assert.equal(winsTie(byGuest, {...bySpectator, members: [tab('guest'), tab('spectator')]}, asGuestHost), false)
   })
 })

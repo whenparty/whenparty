@@ -5,7 +5,9 @@ import {canStartRoom, lostRoom, searchOf} from '../search.ts'
 
 const view = (changes: Partial<SessionView<unknown>> = {}): SessionView<unknown> => ({
   selfId: 'self',
+  playerId: 'self',
   isHost: false,
+  inControl: true,
   room: null,
   switchingHost: false,
   hostLeft: false,
@@ -13,7 +15,7 @@ const view = (changes: Partial<SessionView<unknown>> = {}): SessionView<unknown>
   ...changes
 })
 
-const room = {members: ['host', 'self'], term: 0, provisional: false, seats: {}, game: {}, handled: {}}
+const room = {members: [{playerId: 'host', peerId: 'host'}], term: 0, provisional: false, seats: {}, game: {}, handled: {}}
 
 describe('searchOf', () => {
   it('is looking until the hint time has passed', () => {
