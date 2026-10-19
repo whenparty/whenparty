@@ -6,6 +6,8 @@ name: Deploy Compose Project
 # - Copies <path> to /opt/services/whenparty/<path> on the VPS and runs its compose.yml
 #   with the sha-<commit> image.
 # - If <path> is gone from the repo, takes the project down on the VPS and removes its folder.
+# - If its compose.yml uses TURN_SECRET (games/platform/turn and signaling), writes the repository
+#   secret to the project's .env on the VPS, readable by the deploy user only.
 # Callers grant contents: read and packages: write.
 on:
   workflow_call:
@@ -40,6 +42,24 @@ jobs:
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for secrets the project uses
+        id: project_secrets
+        run: |
+          if [ -f "${{ inputs.path }}/compose.yml" ] && grep -q 'TURN_SECRET' "${{ inputs.path }}/compose.yml"; then
+            echo "turn=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "turn=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Warn about a missing TURN_SECRET
+        if: steps.project_secrets.outputs.turn == 'true'
+        env:
+          TURN_SECRET: ${{ secrets.TURN_SECRET }}
+        run: |
+          if [ -z "$TURN_SECRET" ]; then
+            echo "::warning::TURN_SECRET is not set: ${{ inputs.path }} runs without TURN. Add the repository secret and deploy again."
           fi
 
       - name: Check for Dockerfile
@@ -150,10 +170,14 @@ jobs:
 
       - name: Deploy project
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        env:
+          # Empty unless the project's compose.yml uses it
+          TURN_SECRET: ${{ steps.project_secrets.outputs.turn == 'true' && secrets.TURN_SECRET || '' }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_DEPLOY_KEY }}
+          envs: TURN_SECRET
           script: |
             set -euo pipefail
 
@@ -171,6 +195,11 @@ jobs:
               fi
 
               cd "$PROJECT_DIR"
+
+              # docker compose reads .env for ${TURN_SECRET} in compose.yml
+              if [ -n "${TURN_SECRET:-}" ]; then
+                (umask 077 && printf 'TURN_SECRET=%s\n' "$TURN_SECRET" > .env)
+              fi
 
               if [ -n "$IMAGE_OVERRIDE" ]; then
                 IMAGE="$IMAGE_OVERRIDE" docker compose up -d --remove-orphans

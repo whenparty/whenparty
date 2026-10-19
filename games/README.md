@@ -5,6 +5,7 @@ Peer-to-peer browser games on `*.when.party`, and the platform they share. Playe
 ```
 signaling:   browser → wss://signaling.when.party ← browser   (only to find each other)
 game state:  browser ⇄ WebRTC data channel ⇄ browser
+             browser ⇄ turn.when.party ⇄ browser             (only when they can't connect directly)
 ```
 
 ## Layout
@@ -16,6 +17,7 @@ games/
   platform/                         # what the games share
     p2p/                            # client library: room codes, host-authoritative rooms, Trystero sessions
     signaling/                      # Trystero signaling server, signaling.when.party
+    turn/                           # coturn, turn.when.party: relays for browsers that can't connect directly
   titles/                           # one folder per game
     tictactoe/                      # tictactoe.when.party
 ```

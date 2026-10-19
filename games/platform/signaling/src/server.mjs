@@ -2,6 +2,7 @@ import {once} from 'node:events'
 import {createServer} from 'node:http'
 import {createWsRelayServer} from '@trystero-p2p/ws-relay/server'
 import {isAllowedOrigin} from './origin.mjs'
+import {turnCredentials} from './turn.mjs'
 
 // Well below nginx's 90 s proxy_read_timeout and Cloudflare's ~100 s WebSocket idle timeout
 const defaultHeartbeatMs = 30_000
@@ -24,9 +25,31 @@ const defaultLimits = {
 
 const logError = error => console.error(`signaling error: ${error.message}`)
 
-const handleHttp = (request, response) => {
+// GET /turn-credentials hands a game page short-lived TURN credentials (see turn.mjs). Only the
+// game sites may ask, like for the WebSocket, and nothing may cache the answer. Without TURN
+// settings it is a 404, and the games connect without TURN.
+const handleHttp = turn => (request, response) => {
   if (request.method === 'GET' && request.url === '/health') {
     response.writeHead(200, {'Content-Type': 'text/plain'}).end('OK')
+    return
+  }
+
+  if (request.method === 'GET' && request.url === '/turn-credentials' && turn) {
+    const {origin} = request.headers
+
+    if (!isAllowedOrigin(origin)) {
+      response.writeHead(403).end()
+      return
+    }
+
+    response
+      .writeHead(200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Access-Control-Allow-Origin': origin,
+        Vary: 'Origin'
+      })
+      .end(JSON.stringify(turnCredentials(turn)))
     return
   }
 
@@ -80,9 +103,10 @@ const limitMessageRate = (wss, {messageBurst, messagesPerSecond}) => {
   })
 }
 
-export const startSignalingServer = async ({port, heartbeatMs = defaultHeartbeatMs, limits} = {}) => {
+// turn: {secret, urls, ttlSeconds} for /turn-credentials, or null (see turnFromEnv)
+export const startSignalingServer = async ({port, heartbeatMs = defaultHeartbeatMs, limits, turn = null} = {}) => {
   const {maxConnections, maxSubscriptions, maxSubscriptionsPerSocket, maxPayload, ...rate} = {...defaultLimits, ...limits}
-  const server = createServer(handleHttp)
+  const server = createServer(handleHttp(turn))
   const wsRelay = createWsRelayServer({
     server,
     onError: logError,

@@ -38,7 +38,7 @@ All nginx configs live in `infra/nginx/conf.d/` and ship together with the nginx
 - `default.conf` holds the settings shared by every site: rate limits, Cloudflare real IP, security headers, proxy headers (including WebSocket), the Docker DNS resolver, plus the port 80 catch-all that redirects to HTTPS and serves `/health`.
 - `www.conf` serves `www.when.party` and redirects `when.party` to it. These exact names win over the wildcard in `temp-sites.conf`.
 - `nii-au.conf` serves `www.nii.au` and redirects `nii.au` to it.
-- `temp-sites.conf` terminates TLS for every other `*.when.party` host and passes the request to Traefik. Its CSP also allows `wss://signaling.when.party`, the Trystero signaling server for peer-to-peer games (`games/platform/signaling/`).
+- `temp-sites.conf` terminates TLS for every other `*.when.party` host and passes the request to Traefik. Its CSP also allows `wss://signaling.when.party` and `https://signaling.when.party`, the Trystero signaling server for peer-to-peer games (`games/platform/signaling/`), which also hands out TURN credentials.
 - `cloudflare_real_ip.conf` is the Cloudflare IP allow list. It is generated on the VPS and not tracked in git (see below).
 - `cloudflare-origin-pull-ca.pem` is Cloudflare's public Authenticated Origin Pulls CA (valid until 2029-11-01). With `ssl_verify_client on` in `default.conf`, port 443 accepts only connections that present Cloudflare's client certificate, so nobody can bypass Cloudflare by hitting the server IP directly (they get a 400). Port 80 (redirects and `/health`) is unaffected.
 

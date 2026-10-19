@@ -24,9 +24,10 @@ const withLeave = (room: SessionRoom, leave: () => Promise<void>): SessionRoom =
   leave
 })
 
-// A room that joins once ready settles, unless it is left first. Until then it has no peers and
-// sends nothing. Once joined, the real room's events reach the handlers set on this one.
-const standIn = (ready: Promise<void>, join: () => SessionRoom): SessionRoom => {
+// A room that joins with ready's value once it settles, unless it is left first. Until then it has
+// no peers and sends nothing. Once joined, the real room's events reach the handlers set on this
+// one. Also used to join only once the TURN servers are known (see session.ts).
+export const joinWhenReady = <T>(ready: Promise<T>, join: (value: T) => SessionRoom): SessionRoom => {
   let real: SessionRoom | null = null
   let left = false
   const actions = new Map<string, MessageAction<string>>()
@@ -56,12 +57,12 @@ const standIn = (ready: Promise<void>, join: () => SessionRoom): SessionRoom => 
     }
   }
 
-  void ready.then(() => {
+  void ready.then(value => {
     if (left) {
       return
     }
 
-    const joined = join()
+    const joined = join(value)
     joined.onPeerJoin = peerId => room.onPeerJoin?.(peerId)
     joined.onPeerLeave = peerId => room.onPeerLeave?.(peerId)
     actions.forEach((action, namespace) => {
@@ -85,7 +86,7 @@ export const joinAfterLeave = (transport: Transport): Transport => {
       const key = `${appId}\n${code}`
       const pending = leaving.get(key)
       const join = () => transport.join(appId, code, onUnreachable)
-      const room = pending ? standIn(pending, join) : join()
+      const room = pending ? joinWhenReady(pending, join) : join()
 
       return withLeave(room, () => {
         const leave = room.leave()

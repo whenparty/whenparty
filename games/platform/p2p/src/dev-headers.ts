@@ -4,6 +4,6 @@
 // on Trystero's default public Nostr servers. Keep them in sync with nginx.
 export const devHeaders: Record<string, string> = {
   'Content-Security-Policy':
-    "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://signaling.when.party ws://localhost:8080; frame-ancestors 'none';",
+    "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://signaling.when.party https://signaling.when.party ws://localhost:8080 http://localhost:8080; frame-ancestors 'none';",
   'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
 }
