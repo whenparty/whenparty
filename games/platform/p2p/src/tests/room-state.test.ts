@@ -1,111 +1,146 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
-import {addPeer, applyIntent, createRoomState, removePeer, seatOf, type RoomState} from '../room-state.ts'
+import {applyIntent, createRoomState, dropPlayer, joinPlayer, seatOf, type RoomState} from '../room-state.ts'
+import {playersOf, tab} from './members.ts'
 import {race, type Race} from './race.ts'
 
 // The player who stays wins when the other one leaves
 const forfeit = {...race, onSeatLeft: (state: Race, seat: string): Race => ({...state, winner: seat === 'A' ? 'B' : 'A'})}
 
-const fullRoom = (): RoomState<Race> => addPeer(createRoomState(race, 'host'), 'guest')
+const fullRoom = (): RoomState<Race> => joinPlayer(createRoomState(race, tab('host')), tab('guest'))
 
 let intentId = 0
 
 const playMoves = (room: RoomState<Race>, moves: [string, number][]) =>
   moves.reduce(
-    (current, [peerId, step]) => applyIntent(race, current, peerId, {type: 'move', move: step, id: ++intentId}),
+    (current, [playerId, step]) => applyIntent(race, current, playerId, {type: 'move', move: step, id: ++intentId}),
     room
   )
 
 describe('createRoomState', () => {
   it('makes the host the only member, in the first seat, with a new game', () => {
-    assert.deepEqual(createRoomState(race, 'host', 1000), {
-      members: ['host'],
+    assert.equal(createRoomState(race, tab('host'), true).provisional, true)
+    assert.deepEqual(createRoomState(race, tab('host')), {
+      members: [{playerId: 'host', peerId: 'host'}],
       term: 0,
-      createdAt: 1000,
+      provisional: false,
       seats: {A: 'host', B: null},
       game: race.createState(),
-      handled: {}
+      handled: {},
+      absent: {}
     })
   })
 })
 
-describe('addPeer', () => {
-  it('adds members in join order and gives them the next free seat', () => {
+describe('joinPlayer', () => {
+  it('adds players in join order and gives them the next free seat', () => {
     const room = fullRoom()
 
-    assert.deepEqual(room.members, ['host', 'guest'])
+    assert.deepEqual(playersOf(room.members), ['host', 'guest'])
     assert.deepEqual(room.seats, {A: 'host', B: 'guest'})
   })
 
   it('adds spectators as members without a seat once every seat is taken', () => {
-    const room = addPeer(fullRoom(), 'spectator')
+    const room = joinPlayer(fullRoom(), tab('spectator'))
 
-    assert.deepEqual(room.members, ['host', 'guest', 'spectator'])
+    assert.deepEqual(playersOf(room.members), ['host', 'guest', 'spectator'])
     assert.deepEqual(room.seats, {A: 'host', B: 'guest'})
   })
 
-  it('never adds a member twice', () => {
+  it('never adds a connection twice', () => {
     const room = fullRoom()
 
-    assert.equal(addPeer(room, 'guest'), room)
+    assert.equal(joinPlayer(room, tab('guest')), room)
+  })
+
+  it('moves a player that comes back on another connection to it, in its place and seat', () => {
+    const room = playMoves(joinPlayer(fullRoom(), tab('spectator')), [['host', 2], ['guest', 1]])
+    const back = joinPlayer(room, tab('guest-2', 'guest'))
+
+    assert.deepEqual(back.members, [tab('host'), tab('guest-2', 'guest'), tab('spectator')])
+    assert.equal(back.seats, room.seats)
+    assert.equal(back.game, room.game)
+    assert.equal(back.term, room.term)
+  })
+
+  it('forgets what it handled from the old connection, which numbers its intents from one again', () => {
+    const room = playMoves(fullRoom(), [['host', 2], ['guest', 1]])
+    const back = joinPlayer(room, tab('guest-2', 'guest'))
+
+    assert.deepEqual(Object.keys(back.handled), ['host'])
+    assert.equal(playMoves(back, [['guest', 1]]).handled.guest, intentId)
+  })
+
+  it('starts a new term when the host comes back on another connection', () => {
+    const room = fullRoom()
+    const back = joinPlayer(room, tab('host-2', 'host'))
+
+    assert.deepEqual(back.members[0], tab('host-2', 'host'))
+    assert.equal(back.term, room.term + 1)
   })
 })
 
-describe('removePeer', () => {
+describe('dropPlayer', () => {
   it('drops a member and keeps the order of the others', () => {
-    const room = removePeer(race, addPeer(fullRoom(), 'spectator'), 'guest')
+    const room = dropPlayer(race, joinPlayer(fullRoom(), tab('spectator')), 'guest')
 
-    assert.deepEqual(room.members, ['host', 'spectator'])
+    assert.deepEqual(playersOf(room.members), ['host', 'spectator'])
   })
 
   it('frees the seat of a leaving player and keeps the game', () => {
     const room = playMoves(fullRoom(), [['host', 2]])
-    const left = removePeer(race, room, 'guest')
+    const left = dropPlayer(race, room, 'guest')
 
     assert.deepEqual(left.seats, {A: 'host', B: null})
     assert.equal(left.game, room.game)
   })
 
   it('lets the game react to a player leaving', () => {
-    const left = removePeer(forfeit, fullRoom(), 'guest')
+    const left = dropPlayer(forfeit, fullRoom(), 'guest')
 
     assert.equal(left.game.winner, 'A')
   })
 
   it('leaves seats and game alone when a spectator leaves', () => {
-    const room = addPeer(fullRoom(), 'spectator')
-    const left = removePeer(forfeit, room, 'spectator')
+    const room = joinPlayer(fullRoom(), tab('spectator'))
+    const left = dropPlayer(forfeit, room, 'spectator')
 
-    assert.deepEqual(left.members, ['host', 'guest'])
+    assert.deepEqual(playersOf(left.members), ['host', 'guest'])
     assert.equal(left.seats, room.seats)
     assert.equal(left.game, room.game)
   })
 
-  it('ignores peers that are not members', () => {
+  it('ignores players that are not members', () => {
     const room = fullRoom()
 
-    assert.equal(removePeer(race, room, 'stranger'), room)
+    assert.equal(dropPlayer(race, room, 'stranger'), room)
+  })
+
+  it('forgets that a dropped player was absent', () => {
+    const room = {...fullRoom(), absent: {guest: 'offline' as const}}
+
+    assert.deepEqual(dropPlayer(race, room, 'guest').absent, {})
   })
 
   it('gives the freed seat to the first member without one, in join order', () => {
-    const room = addPeer(addPeer(playMoves(fullRoom(), [['host', 2]]), 'first'), 'second')
-    const left = removePeer(race, room, 'guest')
+    const room = joinPlayer(joinPlayer(playMoves(fullRoom(), [['host', 2]]), tab('first')), tab('second'))
+    const left = dropPlayer(race, room, 'guest')
 
     assert.deepEqual(left.seats, {A: 'host', B: 'first'})
     assert.equal(left.game.total, 2)
   })
 
   it('lets the game react before the seat goes to someone else', () => {
-    const left = removePeer(forfeit, addPeer(fullRoom(), 'spectator'), 'guest')
+    const left = dropPlayer(forfeit, joinPlayer(fullRoom(), tab('spectator')), 'guest')
 
     // The forfeit counts against the seat that was left, not against the spectator who took it
     assert.equal(left.game.winner, 'A')
     assert.equal(left.seats.B, 'spectator')
   })
 
-  it('hands the freed seat and the game to the next peer who joins', () => {
+  it('hands the freed seat and the game to the next player who joins', () => {
     const room = playMoves(fullRoom(), [['host', 2]])
-    const rejoined = addPeer(removePeer(race, room, 'guest'), 'new-guest')
+    const rejoined = joinPlayer(dropPlayer(race, room, 'guest'), tab('new-guest'))
 
     assert.equal(seatOf(rejoined, 'new-guest'), 'B')
     assert.equal(rejoined.game.total, 2)
@@ -113,8 +148,8 @@ describe('removePeer', () => {
 })
 
 describe('seatOf', () => {
-  it('finds the seat of a peer, or null for spectators', () => {
-    const room = addPeer(fullRoom(), 'spectator')
+  it('finds the seat of a player, or null for spectators', () => {
+    const room = joinPlayer(fullRoom(), tab('spectator'))
 
     assert.equal(seatOf(room, 'host'), 'A')
     assert.equal(seatOf(room, 'guest'), 'B')
@@ -123,7 +158,7 @@ describe('seatOf', () => {
 })
 
 describe('applyIntent', () => {
-  it('applies a move from the peer whose turn it is', () => {
+  it('applies a move from the player whose turn it is', () => {
     const room = playMoves(fullRoom(), [['host', 2], ['guest', 1]])
 
     assert.equal(room.game.total, 3)
@@ -131,13 +166,13 @@ describe('applyIntent', () => {
   })
 
   it('waits until every seat is taken', () => {
-    const room = playMoves(createRoomState(race, 'host'), [['host', 1]])
+    const room = playMoves(createRoomState(race, tab('host')), [['host', 1]])
 
     assert.equal(room.game.total, 0)
   })
 
   it('rejects moves out of turn, from spectators and illegal moves', () => {
-    const room = addPeer(fullRoom(), 'spectator')
+    const room = joinPlayer(fullRoom(), tab('spectator'))
 
     for (const move of [['guest', 1], ['spectator', 1], ['host', 3]] as [string, number][]) {
       assert.equal(playMoves(room, [move]).game, room.game, move.join(' '))
@@ -153,7 +188,7 @@ describe('applyIntent', () => {
     assert.equal(once.game.total, 2)
   })
 
-  it('remembers the last intent it handled from each member, applied or not', () => {
+  it('remembers the last intent it handled from each player, applied or not', () => {
     const before = fullRoom()
     const room = applyIntent(race, before, 'guest', {type: 'move', move: 1, id: 3})
 
@@ -161,13 +196,13 @@ describe('applyIntent', () => {
     assert.equal(room.game, before.game)
   })
 
-  it('ignores intents from peers that are not members', () => {
+  it('ignores intents from players that are not members', () => {
     const room = fullRoom()
 
     assert.equal(applyIntent(race, room, 'stranger', {type: 'move', move: 1, id: 1}), room)
   })
 
-  it('restarts a finished game for a seated peer', () => {
+  it('restarts a finished game for a seated player', () => {
     const over = playMoves(fullRoom(), [['host', 2], ['guest', 2], ['host', 1]])
     const restarted = applyIntent(race, over, 'guest', {type: 'restart', id: ++intentId})
 
@@ -177,7 +212,7 @@ describe('applyIntent', () => {
   })
 
   it('does not restart a game in progress, or for spectators', () => {
-    const playing = playMoves(addPeer(fullRoom(), 'spectator'), [['host', 2]])
+    const playing = playMoves(joinPlayer(fullRoom(), tab('spectator')), [['host', 2]])
     const over = playMoves(playing, [['guest', 2], ['host', 1]])
 
     assert.equal(applyIntent(race, playing, 'host', {type: 'restart', id: ++intentId}).game, playing.game)

@@ -1,10 +1,12 @@
 import './style.css'
-import {ROOM_CODE_LENGTH, createRoomCode, isFull, normalizeRoomCode, roomCodeFromHash, seatOf, startSession} from '@whenparty/p2p'
-import type {Session, SessionView} from '@whenparty/p2p'
+import {ROOM_CODE_LENGTH, createRoomCode, isFull, normalizeRoomCode, playerIdFrom, roomCodeFromHash, seatOf, startSession} from '@whenparty/p2p'
+import type {Session, SessionOptions, SessionView} from '@whenparty/p2p'
 import {canStartRoom, lostRoom, searchOf, type SearchState} from './search.ts'
 import {ticTacToe, type TicTacToe} from './tictactoe.ts'
 
 const appId = 'when.party/tictactoe'
+// The same in every tab of this browser, so a reload comes back to its seat and a second tab takes it over
+const playerId = playerIdFrom(() => localStorage)
 // A guest that has not heard from a host by then gets a hint: check the code or the connection
 const hostHintMs = 10_000
 // How often the hint checks the connection to the signaling server again
@@ -99,6 +101,15 @@ const describeSearch = (current: Visit): string => {
   }
 }
 
+// Who among the players is not here right now, for the status line
+const absentNote = (room: SessionView<TicTacToe>['room'] & object): string =>
+  Object.entries(room.seats)
+    .flatMap(([mark, playerId]) => {
+      const absence = playerId ? room.absent[playerId] : undefined
+      return absence === 'away' ? [` ${mark} stepped away.`] : absence === 'offline' ? [` ${mark} lost the connection. Their seat is held.`] : []
+    })
+    .join('')
+
 const describe = (current: Visit): string => {
   const {view} = current
 
@@ -114,8 +125,12 @@ const describe = (current: Visit): string => {
     return describeSearch(current)
   }
 
+  if (!view.inControl) {
+    return 'This game is open in another tab of yours, which plays now.'
+  }
+
   const {game} = view.room
-  const seat = seatOf(view.room, view.selfId)
+  const seat = seatOf(view.room, view.playerId)
 
   if (!isFull(view.room)) {
     return seat ? 'Waiting for a second player. Send them the code.' : 'Waiting for players.'
@@ -129,20 +144,19 @@ const describe = (current: Visit): string => {
     return game.winner === seat ? 'You win!' : `${game.winner} wins.`
   }
 
-  if (!seat) {
-    return `You are watching. ${game.turn} to move.`
-  }
+  const turn = !seat ? `You are watching. ${game.turn} to move.` : game.turn === seat ? `Your turn. You are ${seat}.` : `You are ${seat}. ${game.turn} to move.`
 
-  return game.turn === seat ? `Your turn. You are ${seat}.` : `You are ${seat}. ${game.turn} to move.`
+  return `${turn}${absentNote(view.room)}`
 }
 
 const render = (current: Visit) => {
   const {view} = current
   const room = view?.room ?? null
-  const seat = view && room ? seatOf(room, view.selfId) : null
+  const seat = view && room ? seatOf(room, view.playerId) : null
   const game = room?.game
-  // Moves and rematches need the host, a full room and a seat. Otherwise the board is read-only.
-  const isLive = Boolean(room && seat && !view?.hostLeft && !view?.switchingHost && isFull(room))
+  // Moves and rematches need the host, a full room, a seat and the tab that controls the player.
+  // Otherwise the board is read-only.
+  const isLive = Boolean(room && seat && view?.inControl && !view?.hostLeft && !view?.switchingHost && isFull(room))
   const canMove = isLive && game?.winner === null && game.turn === seat
 
   statusText.textContent = describe(current)
@@ -176,8 +190,11 @@ const startHint = (entry: Visit, refresh: () => void) => {
   }
 }
 
-// rejoinAsHost: this tab hosted the room before it reloaded (see SessionOptions)
-const enterRoom = (code: string, isHost: boolean, rejoinAsHost = false) => {
+type Entry = Pick<SessionOptions<TicTacToe, number>, 'isHost' | 'rejoinAsHost' | 'provisional'>
+
+// rejoinAsHost: this tab hosted the room before it reloaded. provisional: it starts a room under a
+// code someone gave it. See SessionOptions.
+const enterRoom = (code: string, {isHost, rejoinAsHost = false, provisional = false}: Entry) => {
   const entry: Visit = {code, session: null, view: null, hostIsLate: false, stopHint: () => {}}
   const refresh = () => {
     if (visit === entry) {
@@ -191,8 +208,10 @@ const enterRoom = (code: string, isHost: boolean, rejoinAsHost = false) => {
   entry.session = startSession({
     appId,
     code,
+    playerId,
     isHost,
     rejoinAsHost,
+    provisional,
     rules: ticTacToe,
     onChange: view => {
       if (lostRoom(entry.view, view)) {
@@ -232,7 +251,7 @@ const flash = (button: HTMLButtonElement, text: string) => {
   setTimeout(() => (button.textContent = original), 2000)
 }
 
-find('#create').addEventListener('click', () => enterRoom(createRoomCode(), true))
+find('#create').addEventListener('click', () => enterRoom(createRoomCode(), {isHost: true}))
 
 find('#join').addEventListener('submit', event => {
   event.preventDefault()
@@ -244,7 +263,7 @@ find('#join').addEventListener('submit', event => {
   }
 
   joinError.textContent = ''
-  enterRoom(code, false)
+  enterRoom(code, {isHost: false})
 })
 
 copyLink.addEventListener('click', () => {
@@ -262,7 +281,7 @@ startRoomButton.addEventListener('click', () => {
 
   if (code) {
     leaveRoom()
-    enterRoom(code, true)
+    enterRoom(code, {isHost: true, provisional: true})
   }
 })
 find('#leave').addEventListener('click', leaveRoom)
@@ -281,7 +300,7 @@ const joinLinkedRoom = (rejoinAsHost: boolean) => {
     leaveRoom()
   }
 
-  enterRoom(code, false, rejoinAsHost)
+  enterRoom(code, {isHost: false, rejoinAsHost})
 }
 
 addEventListener('hashchange', () => joinLinkedRoom(false))
