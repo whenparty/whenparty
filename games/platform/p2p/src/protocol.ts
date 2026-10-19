@@ -1,6 +1,6 @@
 // The wire format. Peers send JSON strings, and everything received is checked before use,
 // because any browser that knows the room code can join and send anything.
-import type {GameRules, Member, NumberedIntent, RoomState} from './room-state.ts'
+import type {Absence, GameRules, Member, NumberedIntent, RoomState} from './room-state.ts'
 
 export const encode = (value: unknown): string => JSON.stringify(value)
 
@@ -47,6 +47,13 @@ const isSeats = (value: unknown, seats: readonly string[], members: Member[]): v
 const isHandled = (value: unknown): value is Record<string, number> =>
   isRecord(value) && Object.values(value).every(isIntentId)
 
+// Members only, each away or offline
+const isAbsent = (value: unknown, members: Member[]): value is Record<string, Absence> =>
+  isRecord(value) &&
+  Object.entries(value).every(
+    ([playerId, absence]) => members.some(member => member.playerId === playerId) && (absence === 'away' || absence === 'offline')
+  )
+
 export const decodeSnapshot = <State, Move>(rules: GameRules<State, Move>, data: unknown): RoomState<State> | null => {
   const value = parse(data)
 
@@ -54,13 +61,19 @@ export const decodeSnapshot = <State, Move>(rules: GameRules<State, Move>, data:
     return null
   }
 
-  const {members, term, provisional, seats, game, handled} = value
+  const {members, term, provisional, seats, game, handled, absent} = value
 
-  if (typeof provisional !== 'boolean' || !isSeats(seats, rules.seats, members) || !rules.isState(game) || !isHandled(handled)) {
+  if (
+    typeof provisional !== 'boolean' ||
+    !isSeats(seats, rules.seats, members) ||
+    !rules.isState(game) ||
+    !isHandled(handled) ||
+    !isAbsent(absent, members)
+  ) {
     return null
   }
 
-  return {members, term: Number(term), provisional, seats, game, handled}
+  return {members, term: Number(term), provisional, seats, game, handled, absent}
 }
 
 export const decodeIntent = <State, Move>(rules: GameRules<State, Move>, data: unknown): NumberedIntent<Move> | null => {

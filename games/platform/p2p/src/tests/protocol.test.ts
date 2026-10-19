@@ -9,7 +9,10 @@ const room = applyIntent(race, joinPlayer(createRoomState(race, tab('host')), ta
 
 describe('snapshots', () => {
   it('survive the round trip', () => {
+    const marked = {...room, absent: {guest: 'away' as const}}
+
     assert.deepEqual(decodeSnapshot(race, encode(room)), room)
+    assert.deepEqual(decodeSnapshot(race, encode(marked)), marked)
   })
 
   it('reject anything that is not a room of this game', () => {
@@ -45,7 +48,11 @@ describe('snapshots', () => {
       {...room, provisional: 1},
       {...room, handled: []},
       {...room, handled: {host: 0}},
-      {...room, handled: {host: 'one'}}
+      {...room, handled: {host: 'one'}},
+      {...room, absent: undefined},
+      {...room, absent: ['guest']},
+      {...room, absent: {stranger: 'away'}},
+      {...room, absent: {guest: 'gone'}}
     ]
 
     for (const value of malformed) {

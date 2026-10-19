@@ -23,6 +23,10 @@ export interface Member {
   peerId: string
 }
 
+// Why a player is not here right now. away: its page is hidden, and it said so. offline: the host
+// lost its connection, and holds its place and seat while it may come back.
+export type Absence = 'away' | 'offline'
+
 export interface RoomState<State> {
   // Players in join order, spectators too. The first one is the host, and the next one whose
   // connection is still up takes over when the host leaves (see succession.ts).
@@ -38,6 +42,8 @@ export interface RoomState<State> {
   game: State
   // Player → ID of the last intent the host handled from it, so a resent intent is applied once
   handled: Record<string, number>
+  // Players that are not here right now, as the host sees it (see session.ts)
+  absent: Record<string, Absence>
 }
 
 export interface MoveIntent<Move> {
@@ -65,7 +71,8 @@ export const createRoomState = <State, Move>(
   provisional,
   seats: Object.fromEntries(rules.seats.map((seat, index) => [seat, index === 0 ? host.playerId : null])),
   game: rules.createState(),
-  handled: {}
+  handled: {},
+  absent: {}
 })
 
 export const hostOf = (room: RoomState<unknown>): Member | null => room.members[0] ?? null
@@ -136,16 +143,17 @@ export const dropPlayer = <State, Move>(
 
   const members = room.members.filter(member => member.playerId !== playerId)
   const handled = without(room.handled, playerId)
+  const absent = without(room.absent, playerId)
   const seat = seatOf(room, playerId)
 
   if (!seat) {
-    return {...room, members, handled}
+    return {...room, members, handled, absent}
   }
 
   // The game sees the seat left before it goes to someone else
   const game = rules.onSeatLeft ? rules.onSeatLeft(room.game, seat) : room.game
 
-  return fillSeats({...room, members, handled, game, seats: {...room.seats, [seat]: null}})
+  return fillSeats({...room, members, handled, absent, game, seats: {...room.seats, [seat]: null}})
 }
 
 const applyToGame = <State, Move>(

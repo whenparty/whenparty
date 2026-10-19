@@ -8,14 +8,10 @@ export const successorOf = (room: RoomState<unknown>, departed: readonly string[
   room.members.slice(1).find(member => !departed.includes(member.peerId)) ?? null
 
 // The room as its new host (the member on the given connection) starts it: the new host is first,
-// and a new term begins. The old host is gone (its seat freed as if it had left), or with
-// keepOldHost (it stepped away and may come back) it stays a member with its seat, last in line.
-export const promote = <State, Move>(
-  rules: GameRules<State, Move>,
-  room: RoomState<State>,
-  newHostPeerId: string,
-  keepOldHost = false
-): RoomState<State> => {
+// and a new term begins. The old host stays a member with its seat, last in line: its connection
+// dropped, which is not the same as leaving, and the new host drops it later like any member
+// whose connection dropped (see session.ts).
+export const promote = <State>(room: RoomState<State>, newHostPeerId: string): RoomState<State> => {
   const oldHost = hostOf(room)
   const newHost = memberByPeer(room, newHostPeerId)
 
@@ -23,14 +19,9 @@ export const promote = <State, Move>(
     return room
   }
 
-  if (keepOldHost) {
-    const others = room.members.filter(member => member !== newHost && member !== oldHost)
-    return {...room, members: [newHost, ...others, oldHost], term: room.term + 1}
-  }
+  const others = room.members.filter(member => member !== newHost && member !== oldHost)
 
-  const left = dropPlayer(rules, room, oldHost.playerId)
-
-  return {...left, members: [newHost, ...left.members.filter(member => member !== newHost)], term: room.term + 1}
+  return {...room, members: [newHost, ...others, oldHost], term: room.term + 1}
 }
 
 // The room as a member that found itself alone hosts it, with the game as it last saw it: everyone
@@ -42,7 +33,7 @@ export const hostAlone = <State, Move>(rules: GameRules<State, Move>, room: Room
     .filter(member => member.playerId !== self.playerId)
     .reduce((left, member) => dropPlayer(rules, left, member.playerId), joined)
 
-  return {...alone, members: [self], term: room.term, provisional: true}
+  return {...alone, members: [self], term: room.term, provisional: true, absent: {}}
 }
 
 export interface SnapshotSource {
