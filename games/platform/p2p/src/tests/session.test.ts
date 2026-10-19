@@ -412,9 +412,8 @@ describe('startSession', () => {
 
     sessions.a.send(go)
     await network.settle()
-    // '0' sorts before every other peer ID, so only the rooms' age can make it lose
-    await sleep(2)
-    start('0', true)
+    // '0' sorts before every other peer ID, so only the mark can make it lose
+    start('0', true, {provisional: true})
     network.connect('0', 'a')
     network.connect('0', 'b')
     network.connect('0', 'c')
@@ -480,6 +479,7 @@ describe('startSession', () => {
     assert.equal(views.get('b')?.isHost, true)
     assert.deepEqual(membersOf('b'), ['b'])
     assert.deepEqual(movesOf('b'), ['A'])
+    assert.equal(views.get('b')?.room?.provisional, true)
   })
 
   it('sends its pending intent again after joining again', async () => {
@@ -695,6 +695,7 @@ describe('startSession', () => {
 
     assert.equal(views.get('z')?.isHost, true)
     assert.deepEqual(views.get('z')?.room?.members, ['z'])
+    assert.equal(views.get('z')?.room?.provisional, true)
   })
 
   it('follows the room under its new host after taking it back too early', async () => {
