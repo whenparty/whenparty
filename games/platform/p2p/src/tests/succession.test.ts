@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
 import {addPeer, applyIntent, createRoomState, type RoomState} from '../room-state.ts'
-import {acceptsSnapshot, promote, successorOf} from '../succession.ts'
+import {acceptsSnapshot, promote, successorOf, winsTie} from '../succession.ts'
 import {race, type Race} from './race.ts'
 
 const forfeit = {...race, onSeatLeft: (state: Race, seat: string): Race => ({...state, winner: seat === 'A' ? 'B' : 'A'})}
@@ -61,6 +61,15 @@ describe('promote', () => {
     assert.equal(promote(forfeit, room, 'host', 'guest').game.winner, 'B')
   })
 
+  it('keeps an old host that stepped away as the last member, in its seat', () => {
+    const promoted = promote(forfeit, room, 'host', 'guest', true)
+
+    assert.deepEqual(promoted.members, ['guest', 'spectator', 'host'])
+    assert.deepEqual(promoted.seats, room.seats)
+    assert.equal(promoted.game, room.game)
+    assert.equal(promoted.term, 1)
+  })
+
   it('does nothing for a new host that is not a member', () => {
     assert.equal(promote(race, room, 'host', 'stranger'), room)
   })
@@ -104,8 +113,15 @@ describe('acceptsSnapshot', () => {
     assert.equal(acceptsSnapshot(room, sameTerm, asGuest(['host'], 'guest')), false)
   })
 
-  it('ignores a snapshot that names someone else as host', () => {
-    assert.equal(acceptsSnapshot(room, promoted, asGuest([], 'host')), false)
+  it('takes a newer term that its host passes on as it steps down', () => {
+    assert.equal(acceptsSnapshot(room, promoted, asGuest([], 'host')), true)
+  })
+
+  it('ignores a passed-on snapshot from anyone but its host, or without a newer term', () => {
+    const byGuest = {...promoted, members: ['spectator2', ...promoted.members], term: 1}
+
+    assert.equal(acceptsSnapshot(room, byGuest, asGuest([], 'guest')), false)
+    assert.equal(acceptsSnapshot(room, {...promoted, term: room.term}, asGuest([], 'host')), false)
   })
 
   it('takes the old host back when it returns within the pause', () => {
@@ -121,5 +137,40 @@ describe('acceptsSnapshot', () => {
 
     assert.equal(acceptsSnapshot(room, promoted, asHost), true)
     assert.equal(acceptsSnapshot(room, {...room, members: ['guest', 'host', 'spectator']}, asHost), false)
+  })
+})
+
+describe('winsTie', () => {
+  // Two hosts of term 1: each took over from host on its own
+  const byGuest = promote(race, room, 'host', 'guest')
+  const bySpectator = promote(race, room, 'host', 'spectator')
+
+  it('keeps the room for the lower peer ID between halves of one room, whatever their sizes', () => {
+    // Each host reads its own members as they are now and the other's as they were sent, so sizes
+    // could make both lose. Only values that don't change decide.
+    const bigger = addPeer(bySpectator, 'late')
+
+    assert.equal(winsTie(byGuest, bySpectator, {selfId: 'guest', departed: [], sender: 'spectator'}), true)
+    assert.equal(winsTie(bySpectator, byGuest, {selfId: 'spectator', departed: [], sender: 'guest'}), false)
+    assert.equal(winsTie(byGuest, bigger, {selfId: 'guest', departed: [], sender: 'spectator'}), true)
+    assert.equal(winsTie(bigger, byGuest, {selfId: 'spectator', departed: [], sender: 'guest'}), false)
+  })
+
+  it('keeps the room for the older one, whatever its size and peer ID', () => {
+    // A player started a room under the code, then met the room with a game in progress. Once
+    // connected, each host counts the other's players too, so only the age tells them apart.
+    const game = addPeer(addPeer(createRoomState(race, 'z-host', 1000), 'z-guest'), 'a-newcomer')
+    const started = addPeer(addPeer(createRoomState(race, 'a-newcomer', 2000), 'z-host'), 'z-guest')
+
+    assert.equal(winsTie(started, game, {selfId: 'a-newcomer', departed: [], sender: 'z-host'}), false)
+    assert.equal(winsTie(game, started, {selfId: 'z-host', departed: [], sender: 'a-newcomer'}), true)
+  })
+
+  it('applies only between two hosts of the same term', () => {
+    const asGuestHost = {selfId: 'guest', departed: [], sender: 'spectator'}
+
+    assert.equal(winsTie(byGuest, {...bySpectator, term: 2}, asGuestHost), false)
+    assert.equal(winsTie(room, bySpectator, asGuestHost), false)
+    assert.equal(winsTie(byGuest, {...bySpectator, members: ['guest', 'spectator']}, asGuestHost), false)
   })
 })

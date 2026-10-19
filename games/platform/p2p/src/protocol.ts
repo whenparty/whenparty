@@ -39,6 +39,8 @@ const isSeats = (value: unknown, seats: readonly string[], members: string[]): v
   })
 }
 
+const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0
+
 const isHandled = (value: unknown): value is Record<string, number> =>
   isRecord(value) && Object.values(value).every(isIntentId)
 
@@ -50,12 +52,14 @@ export const decodeSnapshot = <State, Move>(rules: GameRules<State, Move>, data:
   }
 
   const {members, term, seats, game, handled} = value
+  // A snapshot from a page loaded before createdAt existed counts as the oldest room
+  const createdAt = value.createdAt ?? 0
 
-  if (!isSeats(seats, rules.seats, members) || !rules.isState(game) || !isHandled(handled)) {
+  if (!isSeats(seats, rules.seats, members) || !rules.isState(game) || !isHandled(handled) || !isTime(createdAt)) {
     return null
   }
 
-  return {members, term: Number(term), seats, game, handled}
+  return {members, term: Number(term), createdAt, seats, game, handled}
 }
 
 export const decodeIntent = <State, Move>(rules: GameRules<State, Move>, data: unknown): NumberedIntent<Move> | null => {
