@@ -33,7 +33,13 @@ const room = joinRoom(
 - `src/server.mjs` runs one HTTP server on port 8080. `GET /health` returns `OK`. WebSocket upgrades go to `createWsRelayServer` from `@trystero-p2p/ws-relay/server`, a topic pub/sub that Trystero's ws-relay strategy talks to.
 - `src/origin.mjs` accepts only browsers on `https://when.party`, `https://*.when.party`, `http://localhost[:port]` and `http://127.0.0.1[:port]`. Others get a 403. This stops other websites from using the server through their visitors' browsers. It is not a security boundary, because non-browser clients can send any `Origin`.
 - The server pings every client every 30 s and drops the ones that did not answer the previous ping. That keeps idle sockets under nginx's 90 s `proxy_read_timeout` and Cloudflare's ~100 s WebSocket idle limit, and releases the subscriptions of dead connections.
-- ws-relay's own limits apply: 1 MB per message, 128 subscriptions per socket, 10,000 in total.
+- Limits keep one client from taking the server's capacity (`defaultLimits` in `src/server.mjs`). A player's tab holds one socket with 2 subscriptions (the room and its own peer topic) and sends messages under 1 KB: about 5 for each other player while it connects to them, then one a minute. Measured with 6 tabs in one room: 2 subscriptions, at most 854 bytes and 28 messages per second per socket.
+  - 5,000 connections in total. More get a 503.
+  - 40,000 subscriptions in total (enough for 5,000 sockets with 8 each), and 8 per socket. One more closes the socket with 1008.
+  - 64 KB per message. A larger one closes the socket with 1009.
+  - 200 messages at once per socket (enough to join a room of 40), refilled at 20 per second. A socket that sends faster is closed with 1008.
+
+  A closed client reconnects after a few seconds and subscribes again. Per IP, nginx allows 64 connections and 10 new ones a second with bursts of 100 (`infra/nginx/conf.d/temp-sites.conf`), in zones of their own: the players of one party often share an IP, and the game pages keep the 15 connections every site gets. So one IP holds at most 512 subscriptions, and it takes 79 IPs to fill the server.
 
 ## Local Development
 
