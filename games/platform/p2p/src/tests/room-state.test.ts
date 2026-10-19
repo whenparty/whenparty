@@ -26,7 +26,8 @@ describe('createRoomState', () => {
       provisional: false,
       seats: {A: 'host', B: null},
       game: race.createState(),
-      handled: {}
+      handled: {},
+      absent: {}
     })
   })
 })
@@ -113,6 +114,12 @@ describe('dropPlayer', () => {
     const room = fullRoom()
 
     assert.equal(dropPlayer(race, room, 'stranger'), room)
+  })
+
+  it('forgets that a dropped player was absent', () => {
+    const room = {...fullRoom(), absent: {guest: 'offline' as const}}
+
+    assert.deepEqual(dropPlayer(race, room, 'guest').absent, {})
   })
 
   it('gives the freed seat to the first member without one, in join order', () => {

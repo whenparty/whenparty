@@ -31,49 +31,22 @@ describe('successorOf', () => {
 })
 
 describe('promote', () => {
-  it('puts the new host first, drops the old one and starts a new term', () => {
-    const promoted = promote(race, room, 'guest')
+  it('puts the new host first, keeps the old one last in its seat, and starts a new term', () => {
+    const promoted = promote(room, 'guest')
 
-    assert.deepEqual(playersOf(promoted.members), ['guest', 'spectator'])
-    assert.equal(promoted.term, 1)
-  })
-
-  it("gives the old host's seat to the first member without one and keeps the game", () => {
-    const promoted = promote(race, room, 'guest')
-
-    assert.deepEqual(promoted.seats, {A: 'spectator', B: 'guest'})
+    assert.deepEqual(playersOf(promoted.members), ['guest', 'spectator', 'host'])
+    assert.equal(promoted.seats, room.seats)
     assert.equal(promoted.game, room.game)
-  })
-
-  it("leaves the old host's seat free when everyone else has one", () => {
-    const pair = joinPlayer(createRoomState(race, tab('host')), tab('guest'))
-
-    assert.deepEqual(promote(race, pair, 'guest').seats, {A: null, B: 'guest'})
+    assert.equal(promoted.term, 1)
   })
 
   it('moves the new host to the front even when it had no seat', () => {
-    const promoted = promote(race, room, 'spectator')
-
-    assert.deepEqual(playersOf(promoted.members), ['spectator', 'guest'])
-    assert.deepEqual(promoted.seats, {A: 'spectator', B: 'guest'})
-  })
-
-  it('lets the game react to the old host leaving its seat', () => {
-    assert.equal(promote(forfeit, room, 'guest').game.winner, 'B')
-  })
-
-  it('keeps an old host that stepped away as the last member, in its seat', () => {
-    const promoted = promote(forfeit, room, 'guest', true)
-
-    assert.deepEqual(playersOf(promoted.members), ['guest', 'spectator', 'host'])
-    assert.deepEqual(promoted.seats, room.seats)
-    assert.equal(promoted.game, room.game)
-    assert.equal(promoted.term, 1)
+    assert.deepEqual(playersOf(promote(room, 'spectator').members), ['spectator', 'guest', 'host'])
   })
 
   it('does nothing for a connection that is not a member, or for the host itself', () => {
-    assert.equal(promote(race, room, 'stranger'), room)
-    assert.equal(promote(race, room, 'host'), room)
+    assert.equal(promote(room, 'stranger'), room)
+    assert.equal(promote(room, 'host'), room)
   })
 })
 
@@ -86,6 +59,7 @@ describe('hostAlone', () => {
     assert.equal(alone.game.winner, 'B')
     assert.equal(alone.term, room.term)
     assert.equal(alone.provisional, true)
+    assert.deepEqual(alone.absent, {})
   })
 
   it('hosts on a new connection, and even from a snapshot that did not list this player yet', () => {
@@ -97,7 +71,7 @@ describe('hostAlone', () => {
 
 describe('acceptsSnapshot', () => {
   const asGuest = (departed: string[], sender: string) => ({selfId: 'spectator', departed, sender})
-  const promoted = promote(race, room, 'guest')
+  const promoted = promote(room, 'guest')
 
   it('takes the first snapshot only from the connection it names as host', () => {
     assert.equal(acceptsSnapshot(null, room, asGuest([], 'host')), true)
@@ -125,7 +99,7 @@ describe('acceptsSnapshot', () => {
 
   it('ignores members that are not next in line', () => {
     const withLate = joinPlayer(room, tab('late'))
-    const bySpectator = promote(race, withLate, 'spectator')
+    const bySpectator = promote(withLate, 'spectator')
 
     for (const departed of [[], ['host']]) {
       assert.equal(acceptsSnapshot(withLate, bySpectator, {selfId: 'late', departed, sender: 'spectator'}), false)
@@ -168,8 +142,8 @@ describe('acceptsSnapshot', () => {
 
 describe('winsTie', () => {
   // Two hosts of term 1: each took over from host on its own
-  const byGuest = promote(race, room, 'guest')
-  const bySpectator = promote(race, room, 'spectator')
+  const byGuest = promote(room, 'guest')
+  const bySpectator = promote(room, 'spectator')
 
   it('keeps the room for the lower peer ID between halves of one room, whatever their sizes', () => {
     // Each host reads its own members as they are now and the other's as they were sent, so sizes

@@ -112,13 +112,13 @@ describe('startSession', () => {
     await sleep(takeoverDelayMs * 4)
     await network.settle()
 
-    // c's move went to a and was lost. c follows b right away and sends it again, and b handles it
-    // (as a rejected move: a's seat is free now, so the room is not full).
+    // c's move went to a and was lost. c follows b right away and sends it again, and b applies
+    // it: a keeps its seat for now, so the room is still full.
     assert.equal(hostOf('b'), 'b')
     assert.equal(hostOf('c'), 'b')
     assert.equal(handledOf('b', 'c'), 1)
     assert.equal(handledOf('c', 'c'), 1)
-    assert.deepEqual(movesOf('c'), ['A', 'B'])
+    assert.deepEqual(movesOf('c'), ['A', 'B', 'C'])
   })
 
   it('moves everyone to the new host after a short blip at the old one', async () => {
@@ -433,6 +433,96 @@ describe('startSession', () => {
     assert.deepEqual(membersOf('a'), ['a', 'b'])
   })
 
+  it("keeps the old host's seat on a handover, and drops it only after the wait", async () => {
+    const {network, views, hostOf, membersOf, seatsOf} = await startRoom()
+
+    network.cut('a', 'b')
+    network.cut('a', 'c')
+    network.notice('b', 'a')
+    network.notice('c', 'a')
+    await sleep(takeoverDelayMs * 2)
+    await network.settle()
+
+    // b hosts. a is last in line, in its seat, and everyone sees it is offline.
+    assert.equal(hostOf('c'), 'b')
+    assert.deepEqual(membersOf('b'), ['b', 'c', 'a'])
+    assert.equal(seatsOf('c')?.A, 'a')
+    assert.deepEqual(views.get('c')?.room?.absent, {a: 'offline'})
+
+    await sleep(takeoverDelayMs * 3)
+    await network.settle()
+
+    assert.deepEqual(membersOf('c'), ['b', 'c'])
+    assert.equal(seatsOf('c')?.A, null)
+  })
+
+  it('tells everyone who stepped away or lost the connection', async () => {
+    const {network, views} = await startRoom({awayHoldMs: takeoverDelayMs * 100})
+    const absentFor = (selfId: string) => views.get(selfId)?.room?.absent
+
+    network.page('c', 'away')
+    await network.settle()
+
+    assert.deepEqual(absentFor('b'), {c: 'away'})
+
+    network.cut('a', 'c')
+    network.notice('a', 'c')
+    await network.settle()
+
+    assert.deepEqual(absentFor('b'), {c: 'offline'})
+
+    network.connect('a', 'c')
+    await network.settle()
+
+    assert.deepEqual(absentFor('b'), {c: 'away'})
+
+    network.page('c', 'back')
+    await network.settle()
+
+    assert.deepEqual(absentFor('b'), {})
+    assert.deepEqual(absentFor('c'), {})
+  })
+
+  it('gives a link that keeps dropping one wait in all', async () => {
+    const pause = 40
+    const {network, membersOf} = await startRoom({takeoverDelayMs: pause})
+
+    // c drops, comes back within the wait, and drops again as the wait runs out
+    network.cut('a', 'c')
+    network.notice('a', 'c')
+    await sleep(pause)
+    network.connect('a', 'c')
+    await network.settle()
+    await sleep(pause)
+    network.cut('a', 'c')
+    network.notice('a', 'c')
+    await network.settle()
+
+    assert.deepEqual(membersOf('a'), ['a', 'b'])
+  })
+
+  it('gives a link that held for a while a fresh wait when it drops again', async () => {
+    const pause = 40
+    const {network, membersOf} = await startRoom({takeoverDelayMs: pause})
+
+    network.cut('a', 'c')
+    network.notice('a', 'c')
+    await sleep(pause)
+    network.connect('a', 'c')
+    await network.settle()
+    await sleep(pause * 3)
+    network.cut('a', 'c')
+    network.notice('a', 'c')
+    await network.settle()
+
+    assert.deepEqual(membersOf('a'), ['a', 'b', 'c'])
+
+    await sleep(pause * 3)
+    await network.settle()
+
+    assert.deepEqual(membersOf('a'), ['a', 'b'])
+  })
+
   it('hands the room over from a host that stepped away, and keeps its seat', async () => {
     const {network, sessions, views, hostOf, movesOf, membersOf, seatsOf} = await startRoom({awayHoldMs: takeoverDelayMs * 8})
 
@@ -598,7 +688,7 @@ describe('startSession', () => {
     network.notice('b', 'a')
     network.notice('c', 'a')
     network.notice('c', 'b')
-    await sleep(takeoverDelayMs * 3)
+    await sleep(takeoverDelayMs * 4)
     await network.settle()
 
     assert.equal(hostOf('b'), 'b')
@@ -627,14 +717,14 @@ describe('startSession', () => {
   it('sends its pending intent again to the host its own host hands it to', async () => {
     const {network, start, hostOf, movesOf} = await startRoom()
 
-    // Two hosts of term 1, b and c, as above. e hears c first, and has seat A in both rooms.
+    // Two hosts of term 1, b and c, as above, that dropped a by now. e hears c first, and has seat A in both rooms.
     network.cut('a', 'b')
     network.cut('a', 'c')
     network.cut('b', 'c')
     network.notice('b', 'a')
     network.notice('c', 'a')
     network.notice('c', 'b')
-    await sleep(takeoverDelayMs * 3)
+    await sleep(takeoverDelayMs * 4)
     await network.settle()
     const e = start('e', false)
     network.connect('c', 'e')

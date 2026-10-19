@@ -6,7 +6,7 @@
 import type {MessageAction} from '@trystero-p2p/ws-relay'
 import {decodeIntent, decodePresence, decodeSnapshot, encode} from './protocol.ts'
 import {applyIntent, createRoomState, dropPlayer, hostOf as hostOfRoom, joinPlayer, memberByPeer, memberByPlayer} from './room-state.ts'
-import type {GameRules, Intent, Member, NumberedIntent, RoomState} from './room-state.ts'
+import type {Absence, GameRules, Intent, Member, NumberedIntent, RoomState} from './room-state.ts'
 import {acceptsSnapshot, hostAlone, promote, successorOf, winsTie} from './succession.ts'
 import type {PageEvent, SessionRoom, Transport} from './transport.ts'
 import {trystero} from './trystero-transport.ts'
@@ -103,6 +103,9 @@ interface Context<State, Move> {
   unreachable: Set<string>
   // A host's timers for dropping members whose link dropped (see scheduleRemoval)
   removals: Map<string, ReturnType<typeof setTimeout>>
+  // A host's record of when it first lost each peer's link, until the link has held for a while
+  // again: a link that keeps dropping gets one wait in all, not a fresh one each time (see holdOf)
+  holds: Map<string, {since: number; settled: ReturnType<typeof setTimeout> | undefined}>
   // Peers that said goodbye before leaving, so a host drops them at once
   saidBye: Set<string>
   // The last intent this guest sent, until a snapshot shows the host handled it
@@ -148,10 +151,23 @@ const publish = <State, Move>(context: Context<State, Move>) => {
   })
 }
 
+// The players that are not here, as the host sees them: whose page is hidden (they said so, see
+// receivePresence), or whose link dropped and whose place the host holds (see scheduleRemoval)
+const absentOf = <State, Move>(context: Context<State, Move>, room: RoomState<State>): Record<string, Absence> =>
+  Object.fromEntries(
+    room.members.flatMap(({playerId, peerId}): [string, Absence][] => {
+      if (context.removals.has(peerId)) {
+        return [[playerId, 'offline']]
+      }
+
+      return context.away.has(peerId) || (peerId === context.selfId && context.selfAway) ? [[playerId, 'away']] : []
+    })
+  )
+
 // The host broadcasts every new state, even when nothing changed: it puts a guest with a stale view right again
 const commit = <State, Move>(context: Context<State, Move>, next: RoomState<State>) => {
-  context.state = next
-  context.snapshots.send(encode(next)).catch(logError)
+  context.state = {...next, absent: absentOf(context, next)}
+  context.snapshots.send(encode(context.state)).catch(logError)
   publish(context)
 }
 
@@ -183,12 +199,18 @@ const clearRemovals = <State, Move>(context: Context<State, Move>) => {
   context.removals.clear()
 }
 
+const clearHolds = <State, Move>(context: Context<State, Move>) => {
+  context.holds.forEach(hold => clearTimeout(hold.settled))
+  context.holds.clear()
+}
+
 const clearTimers = <State, Move>(context: Context<State, Move>) => {
   clearTimeout(context.takeover)
   clearTimeout(context.rejoin)
   clearTimeout(context.reclaim)
   clearTimeout(context.revive)
   clearRemovals(context)
+  clearHolds(context)
 }
 
 // Leaves the room for good. Leaving takes a while, and the links drop meanwhile: the session
@@ -212,6 +234,8 @@ const cancelRemoval = <State, Move>(context: Context<State, Move>, peerId: strin
 // Drops the player of a connection that is gone, unless the player is on another connection by now
 const dropMember = <State, Move>(context: Context<State, Move>, peerId: string) => {
   cancelRemoval(context, peerId)
+  clearTimeout(context.holds.get(peerId)?.settled)
+  context.holds.delete(peerId)
 
   if (isHost(context)) {
     const member = memberByPeer(context.state, peerId)
@@ -220,6 +244,17 @@ const dropMember = <State, Move>(context: Context<State, Move>, peerId: string) 
       commit(context, dropPlayer(context.rules, context.state, member.playerId))
     }
   }
+}
+
+// When the host first lost this peer's link. A link that comes back and drops again within twice
+// the takeover pause continues the same hold, so a flapping link never holds a seat for longer than
+// one wait in all. A link that has held that long starts over (see peerJoined).
+const holdOf = <State, Move>(context: Context<State, Move>, peerId: string) => {
+  const hold = context.holds.get(peerId) ?? {since: Date.now(), settled: undefined}
+  clearTimeout(hold.settled)
+  hold.settled = undefined
+  context.holds.set(peerId, hold)
+  return hold
 }
 
 // A host drops a member whose link dropped only after twice the takeover pause. If that member is
@@ -235,17 +270,24 @@ const scheduleRemoval = <State, Move>(context: Context<State, Move>, peerId: str
   }
 
   const holdMs = context.away.has(peerId) ? context.awayHoldMs : context.takeoverDelayMs * 2
+  const left = holdOf(context, peerId).since + holdMs - Date.now()
+
+  if (left <= 0) {
+    dropMember(context, peerId)
+    return
+  }
+
   cancelRemoval(context, peerId)
   context.removals.set(
     peerId,
-    setTimeout(() => dropMember(context, peerId), holdMs)
+    setTimeout(() => dropMember(context, peerId), left)
   )
 }
 
 // Every peer keeps track of whose connection each peer is and whether its page is hidden, so a
 // member that takes over later knows who to add and who stepped away. The host adds the player to
-// the room, or moves it to this connection, and answers with the room, so a connection that joined
-// gets the state at once.
+// the room, or moves it to this connection, and broadcasts the room: a connection that joined gets
+// the state at once, and everyone sees who stepped away or came back.
 const receivePresence = <State, Move>(context: Context<State, Move>, data: unknown, sender: string) => {
   const presence = decodePresence(data)
 
@@ -253,7 +295,6 @@ const receivePresence = <State, Move>(context: Context<State, Move>, data: unkno
     return
   }
 
-  const justJoined = !context.players.has(sender)
   context.players.set(sender, presence.playerId)
 
   if (presence.away) {
@@ -262,14 +303,8 @@ const receivePresence = <State, Move>(context: Context<State, Move>, data: unkno
     context.away.delete(sender)
   }
 
-  if (!isHost(context)) {
-    return
-  }
-
-  const next = joinPlayer(context.state, {playerId: presence.playerId, peerId: sender})
-
-  if (justJoined || next !== context.state) {
-    commit(context, next)
+  if (isHost(context)) {
+    commit(context, joinPlayer(context.state, {playerId: presence.playerId, peerId: sender}))
   }
 }
 
@@ -373,22 +408,24 @@ const connectedMembers = <State, Move>(context: Context<State, Move>): Member[] 
     return playerId ? [{playerId, peerId}] : []
   })
 
-// The new host starts from the last snapshot: without the old host, with the peers it is
-// connected to, and with its own unhandled intent applied. An old host that stepped away stays a
-// member with its seat, last in line, and is dropped only after awayHoldMs, like any member that
-// stepped away. Members it lost meanwhile are dropped later, like any member whose link dropped.
+// The new host starts from the last snapshot: with the peers it is connected to, and with its own
+// unhandled intent applied. The old host stays a member with its seat, last in line, and is held
+// like any member whose link dropped: for the usual wait, longer if it stepped away, and not at
+// all if it said goodbye. So are the members this host lost meanwhile.
 const takeOver = <State, Move>(context: Context<State, Move>) => {
-  const {state, rules, departed} = context
+  const {state, departed} = context
   const host = hostOf(context)
 
   if (!state || !host || !departed.includes(host.peerId) || successorOf(state, departed)?.peerId !== context.selfId) {
     return
   }
 
-  const promoted = promote(rules, state, context.selfId, context.away.has(host.peerId))
+  const promoted = promote(state, context.selfId)
   const next = withPending(context, connectedMembers(context).reduce(joinPlayer, promoted))
-  commit(context, next)
+  // This tab hosts from here on, so the holds it schedules show in the snapshot it sends
+  context.state = next
   departed.filter(peerId => memberByPeer(next, peerId)).forEach(peerId => scheduleRemoval(context, peerId))
+  commit(context, context.state)
 }
 
 const scheduleReclaim = <State, Move>(context: Context<State, Move>) => {
@@ -471,23 +508,37 @@ const scheduleTakeover = <State, Move>(context: Context<State, Move>) => {
   }
 }
 
-// A peer that joined says whose connection it is (see receivePresence); the host adds it then
+// A peer that joined says whose connection it is (see receivePresence); the host adds it then.
+// A link that was held is forgotten once it has held for twice the takeover pause.
 const peerJoined = <State, Move>(context: Context<State, Move>, peerId: string) => {
+  const hold = context.holds.get(peerId)
   context.departed = context.departed.filter(id => id !== peerId)
   context.unreachable.delete(peerId)
   context.saidBye.delete(peerId)
   context.players.delete(peerId)
   cancelRemoval(context, peerId)
+
+  if (hold) {
+    clearTimeout(hold.settled)
+    hold.settled = setTimeout(() => context.holds.delete(peerId), context.takeoverDelayMs * 2)
+  }
+
   tellPresence(context, peerId)
   publish(context)
 }
 
-// Trystero reports a dropped link, which is not always a peer leaving the room
+// Trystero reports a dropped link, which is not always a peer leaving the room. A host holds the
+// member's place and tells the others, who see it as offline.
 const peerLeft = <State, Move>(context: Context<State, Move>, peerId: string) => {
   context.departed = [...context.departed.filter(id => id !== peerId), peerId]
 
   if (isHost(context)) {
     scheduleRemoval(context, peerId)
+
+    if (memberByPeer(context.state, peerId)) {
+      commit(context, context.state)
+    }
+
     return
   }
 
@@ -635,6 +686,7 @@ export const startSession = <State, Move>(
     lastRoom: null,
     unreachable: new Set(),
     removals: new Map(),
+    holds: new Map(),
     saidBye: new Set(),
     pending: null,
     nextIntentId: 1,

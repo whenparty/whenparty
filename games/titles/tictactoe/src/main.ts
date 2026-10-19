@@ -101,6 +101,15 @@ const describeSearch = (current: Visit): string => {
   }
 }
 
+// Who among the players is not here right now, for the status line
+const absentNote = (room: SessionView<TicTacToe>['room'] & object): string =>
+  Object.entries(room.seats)
+    .flatMap(([mark, playerId]) => {
+      const absence = playerId ? room.absent[playerId] : undefined
+      return absence === 'away' ? [` ${mark} stepped away.`] : absence === 'offline' ? [` ${mark} lost the connection. Their seat is held.`] : []
+    })
+    .join('')
+
 const describe = (current: Visit): string => {
   const {view} = current
 
@@ -135,11 +144,9 @@ const describe = (current: Visit): string => {
     return game.winner === seat ? 'You win!' : `${game.winner} wins.`
   }
 
-  if (!seat) {
-    return `You are watching. ${game.turn} to move.`
-  }
+  const turn = !seat ? `You are watching. ${game.turn} to move.` : game.turn === seat ? `Your turn. You are ${seat}.` : `You are ${seat}. ${game.turn} to move.`
 
-  return game.turn === seat ? `Your turn. You are ${seat}.` : `You are ${seat}. ${game.turn} to move.`
+  return `${turn}${absentNote(view.room)}`
 }
 
 const render = (current: Visit) => {
