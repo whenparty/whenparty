@@ -1,6 +1,6 @@
 // Who hosts a room when its host leaves. Every peer works it out from the same last snapshot,
 // so nobody has to vote. Pure functions; session.ts runs them.
-import {dropPlayer, hostOf, joinPlayer, memberByPeer, type GameRules, type Member, type RoomState} from './room-state.ts'
+import {dropPlayer, hostOf, joinPlayer, memberByPeer, type GameRules, type Member, type Origin, type RoomState} from './room-state.ts'
 
 // The member that takes over when the host leaves: the first one after it whose connection has
 // not dropped as well. Null when nobody is left.
@@ -25,15 +25,16 @@ export const promote = <State>(room: RoomState<State>, newHostPeerId: string): R
 }
 
 // The room as a member that found itself alone hosts it, with the game as it last saw it: everyone
-// else is gone (their seats freed as if they had left). It is provisional, with the same term, so
-// if the room went on elsewhere, that one keeps it when they meet.
+// else is gone (their seats freed as if they had left). It is resumed, with the same term, so if
+// the room went on elsewhere, that one keeps it when they meet, and it keeps the game against a
+// room started over.
 export const hostAlone = <State, Move>(rules: GameRules<State, Move>, room: RoomState<State>, self: Member): RoomState<State> => {
   const joined = joinPlayer(room, self)
   const alone = joined.members
     .filter(member => member.playerId !== self.playerId)
     .reduce((left, member) => dropPlayer(rules, left, member.playerId), joined)
 
-  return {...alone, members: [self], term: room.term, provisional: true, absent: {}}
+  return {...alone, members: [self], term: room.term, origin: 'resumed', absent: {}}
 }
 
 export interface SnapshotSource {
@@ -79,20 +80,25 @@ export const acceptsSnapshot = <State>(
   return snapshot.term > known.term && sender === successorOf(known, departed)?.peerId
 }
 
+// Earlier origins keep the room against later ones
+const origins: readonly Origin[] = ['original', 'resumed', 'fresh']
+
 // Whether this host keeps the room against another host of the same term. That happens when a
-// player starts a room under a code whose room it could not reach yet, when a member alone hosts
-// the room again, or when links drop in different ways and two members take over at once. A
-// provisional room gives way, so a room just started never replaces the game it stands in for.
-// Between two rooms that are both provisional or both not (two halves of one room), the lower peer
-// ID keeps it. Both hosts read these from values that don't change, so exactly one of them wins.
-// Member counts would not do: each host reads its own as it is now, and the other's as it was
-// sent. Nor would the rooms' creation times: a device whose clock runs behind would make a room
-// just started the older one. The winner starts a newer term, and the other host steps down when
-// that reaches it.
+// player starts a room under a code whose room it could not reach yet, when members that lost the
+// host each host it again, or when links drop in different ways and two members take over at
+// once. The room with the earlier origin keeps it: the original over one resumed from a snapshot,
+// and either over one started over with a new game, so a room just started never replaces a game
+// in progress. Between rooms of the same origin (two halves of one room), the lower peer ID keeps
+// it. Both hosts read these from values that don't change, so exactly one of them wins. Member
+// counts would not do: each host reads its own as it is now, and the other's as it was sent. Nor
+// would the rooms' creation times: a device whose clock runs behind would make a room just started
+// the older one. The winner starts a newer term, and the other host steps down when that reaches it.
 export const winsTie = <State>(known: RoomState<State>, snapshot: RoomState<State>, {selfId, sender}: SnapshotSource) => {
   if (hostOf(known)?.peerId !== selfId || hostOf(snapshot)?.peerId !== sender || snapshot.term !== known.term) {
     return false
   }
 
-  return known.provisional !== snapshot.provisional ? snapshot.provisional : selfId < sender
+  const [mine, theirs] = [origins.indexOf(known.origin), origins.indexOf(snapshot.origin)]
+
+  return mine !== theirs ? mine < theirs : selfId < sender
 }

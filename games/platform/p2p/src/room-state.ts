@@ -27,16 +27,20 @@ export interface Member {
 // lost its connection, and holds its place and seat while it may come back.
 export type Absence = 'away' | 'offline'
 
+// How a room came about, which settles two hosts of the same term (see succession.ts). original:
+// made by a player who created it. resumed: hosted again from its last snapshot by a member that
+// found itself alone. fresh: started with a new game under a code someone else gave out, or by a
+// reloaded host that found nobody. A room gives way to one that comes earlier in this order.
+export type Origin = 'original' | 'resumed' | 'fresh'
+
 export interface RoomState<State> {
   // Players in join order, spectators too. The first one is the host, and the next one whose
   // connection is still up takes over when the host leaves (see succession.ts).
   members: Member[]
   // Goes up by one each time a new host takes over, so peers can tell a stale host from the current one
   term: number
-  // The room stands in for one that may exist under the same code: it was started under a code
-  // someone else gave out, or hosted again by a member that found itself alone. It stays so through
-  // every handover, and gives way to a room that is not when the two meet (see succession.ts).
-  provisional: boolean
+  // Kept through every handover
+  origin: Origin
   // Seat → player ID of the player in it, or null while it is free
   seats: Record<string, string | null>
   game: State
@@ -64,11 +68,11 @@ export type NumberedIntent<Move> = Intent<Move> & {id: number}
 export const createRoomState = <State, Move>(
   rules: GameRules<State, Move>,
   host: Member,
-  provisional = false
+  origin: Origin = 'original'
 ): RoomState<State> => ({
   members: [host],
   term: 0,
-  provisional,
+  origin,
   seats: Object.fromEntries(rules.seats.map((seat, index) => [seat, index === 0 ? host.playerId : null])),
   game: rules.createState(),
   handled: {},

@@ -47,7 +47,7 @@ export interface SessionOptions<State, Move> {
   // that went on under another host has a newer term, so this tab steps down when it gets there.
   rejoinAsHost?: boolean
   // For a host: this tab starts the room under a code it was given, whose room it could not reach
-  // yet. A provisional room gives way to the room it stands in for when they meet (see winsTie).
+  // yet. Its room is fresh, and gives way to that room when they meet (see winsTie).
   provisional?: boolean
   rules: GameRules<State, Move>
   onChange: (view: SessionView<State>) => void
@@ -231,19 +231,32 @@ const cancelRemoval = <State, Move>(context: Context<State, Move>, peerId: strin
   context.removals.delete(peerId)
 }
 
-// Drops the player of a connection that is gone, unless the player is on another connection by now
+// Drops the player of a connection that is gone. A player that has another tab in the room moves
+// to that connection instead, and a player on another connection by now is left alone.
 const dropMember = <State, Move>(context: Context<State, Move>, peerId: string) => {
   cancelRemoval(context, peerId)
   clearTimeout(context.holds.get(peerId)?.settled)
   context.holds.delete(peerId)
 
-  if (isHost(context)) {
-    const member = memberByPeer(context.state, peerId)
-
-    if (member) {
-      commit(context, dropPlayer(context.rules, context.state, member.playerId))
-    }
+  if (!isHost(context)) {
+    return
   }
+
+  const member = memberByPeer(context.state, peerId)
+
+  if (!member) {
+    return
+  }
+
+  const otherTab = connectedMembers(context).find(each => each.playerId === member.playerId && each.peerId !== peerId)
+  commit(context, otherTab ? joinPlayer(context.state, otherTab) : dropPlayer(context.rules, context.state, member.playerId))
+}
+
+// Whether a peer's page is hidden: it said so to this tab, or the host this tab took over from
+// marked it so in its last snapshot, when the word reached that host but not this tab
+const isAway = <State, Move>(context: Context<State, Move>, peerId: string) => {
+  const member = context.state ? memberByPeer(context.state, peerId) : null
+  return context.away.has(peerId) || (member !== null && context.state?.absent[member.playerId] === 'away')
 }
 
 // When the host first lost this peer's link. A link that comes back and drops again within twice
@@ -269,7 +282,7 @@ const scheduleRemoval = <State, Move>(context: Context<State, Move>, peerId: str
     return
   }
 
-  const holdMs = context.away.has(peerId) ? context.awayHoldMs : context.takeoverDelayMs * 2
+  const holdMs = isAway(context, peerId) ? context.awayHoldMs : context.takeoverDelayMs * 2
   const left = holdOf(context, peerId).since + holdMs - Date.now()
 
   if (left <= 0) {
@@ -606,25 +619,30 @@ const connect = <State, Move>(
   return {room, snapshots, intents, byes, presences}
 }
 
-// A tab that finds nobody hosts the room again: with the game as it last saw it, or a new one
-// after a reload. Either is provisional, so it gives way to a room that went on elsewhere when
-// they meet. Its pending intent goes in, as with a takeover.
+// A tab that heard from no host in time hosts the room again: resumed with the game as it last saw
+// it, or fresh after a reload. Peers around it are no reason to wait: a host answers at once, so
+// they are guests waiting like this one, and they follow. Two tabs that host again at the same
+// time are settled by winsTie, and either gives way to the room if it went on elsewhere. Its
+// pending intent goes in, as with a takeover.
 const reclaimRoom = <State, Move>(context: Context<State, Move>) => {
   const {rules, lastRoom} = context
 
-  if (context.state || Object.keys(context.room.getPeers()).length > 0) {
+  if (context.state) {
     return
   }
 
-  commit(context, withPending(context, lastRoom ? hostAlone(rules, lastRoom, self(context)) : createRoomState(rules, self(context), true)))
+  const room = lastRoom ? hostAlone(rules, lastRoom, self(context)) : createRoomState(rules, self(context), 'fresh')
+  commit(context, withPending(context, connectedMembers(context).reduce(joinPlayer, room)))
 }
 
 // Only leave() says goodbye: a page that unloads just drops its links, and the host holds its
-// player's place and seat, so a reloaded tab comes back to them. Trystero leaves the room on
-// beforeunload, so a page that is still here a takeover pause later was not unloaded: the user
-// stayed, or the next page is slow. A page back from the back-forward cache was gone meanwhile.
-// Either way it joins again. A hidden page only tells the others: it keeps running, and stays in
-// the room as it is.
+// player's place and seat, so a reloaded tab comes back to them. A page that goes (pagehide)
+// leaves the room, so the others hear at once instead of waiting for WebRTC to give up on the
+// link: Trystero leaves on beforeunload only, which iOS Safari never fires. Trystero's leave also
+// means a page that is still here a takeover pause later was not unloaded: the user stayed, or the
+// next page is slow. A page back from the back-forward cache was gone meanwhile. Either way it
+// joins again. A hidden page only tells the others, and a hidden host sends the room so they see
+// it marked: it keeps running, and stays in the room as it is.
 const receivePageEvent = <State, Move>(context: Context<State, Move>, event: PageEvent) => {
   if (event === 'away' || event === 'back') {
     if (event === 'back' && context.selfAway) {
@@ -633,6 +651,11 @@ const receivePageEvent = <State, Move>(context: Context<State, Move>, event: Pag
 
     context.selfAway = event === 'away'
     tellPresence(context)
+
+    if (isHost(context)) {
+      commit(context, context.state)
+    }
+
     return
   }
 
@@ -645,6 +668,8 @@ const receivePageEvent = <State, Move>(context: Context<State, Move>, event: Pag
 
   if (event === 'leaving') {
     context.revive = setTimeout(() => joinAgain(context), context.takeoverDelayMs)
+  } else {
+    context.room.leave().catch(logError)
   }
 }
 
@@ -677,7 +702,7 @@ export const startSession = <State, Move>(
     onChange,
     takeoverDelayMs,
     awayHoldMs,
-    state: isHost ? createRoomState(rules, {playerId, peerId: transport.selfId}, provisional) : null,
+    state: isHost ? createRoomState(rules, {playerId, peerId: transport.selfId}, provisional ? 'fresh' : 'original') : null,
     players: new Map(),
     departed: [],
     away: new Set(),
