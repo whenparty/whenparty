@@ -11,6 +11,12 @@ describe('snapshots', () => {
     assert.deepEqual(decodeSnapshot(race, encode(room)), room)
   })
 
+  it('take a snapshot without createdAt, from a page loaded before it, as the oldest room', () => {
+    const {createdAt: _, ...older} = room
+
+    assert.deepEqual(decodeSnapshot(race, encode(older)), {...room, createdAt: 0})
+  })
+
   it('reject anything that is not a room of this game', () => {
     const malformed = [
       42,
@@ -37,6 +43,8 @@ describe('snapshots', () => {
       {...room, term: -1},
       {...room, term: 1.5},
       {...room, term: '1'},
+      {...room, createdAt: -1},
+      {...room, createdAt: 'yesterday'},
       {...room, handled: []},
       {...room, handled: {host: 0}},
       {...room, handled: {host: 'one'}}

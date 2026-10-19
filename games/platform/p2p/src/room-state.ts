@@ -22,6 +22,9 @@ export interface RoomState<State> {
   members: string[]
   // Goes up by one each time a new host takes over, so peers can tell a stale host from the current one
   term: number
+  // When the room's first host made it (milliseconds since 1970, by that host's clock). It goes on
+  // through every handover, so of two hosts that meet, the one whose room is older keeps it.
+  createdAt: number
   // Seat → peer ID of the player in it, or null while it is free
   seats: Record<string, string | null>
   game: State
@@ -44,9 +47,14 @@ export type Intent<Move> = MoveIntent<Move> | RestartIntent
 // An intent with an ID that goes up with every intent its sender sends
 export type NumberedIntent<Move> = Intent<Move> & {id: number}
 
-export const createRoomState = <State, Move>(rules: GameRules<State, Move>, hostId: string): RoomState<State> => ({
+export const createRoomState = <State, Move>(
+  rules: GameRules<State, Move>,
+  hostId: string,
+  createdAt = Date.now()
+): RoomState<State> => ({
   members: [hostId],
   term: 0,
+  createdAt,
   seats: Object.fromEntries(rules.seats.map((seat, index) => [seat, index === 0 ? hostId : null])),
   game: rules.createState(),
   handled: {}
