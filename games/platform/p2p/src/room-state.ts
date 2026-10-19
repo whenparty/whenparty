@@ -16,20 +16,34 @@ export interface GameRules<State, Move> {
   onSeatLeft?: (state: State, seat: string) => State
 }
 
+// A player in the room, with the connection that controls it. The player stays the same across
+// tabs, reloads and connections (see player-id.ts); the peer is one tab's connection to the room.
+export interface Member {
+  playerId: string
+  peerId: string
+}
+
+// Why a player is not here right now. away: its page is hidden, and it said so. offline: the host
+// lost its connection, and holds its place and seat while it may come back.
+export type Absence = 'away' | 'offline'
+
 export interface RoomState<State> {
-  // Peer IDs in join order, spectators too. The first one is the host, and the next one still
-  // here takes over when the host leaves (see succession.ts).
-  members: string[]
+  // Players in join order, spectators too. The first one is the host, and the next one whose
+  // connection is still up takes over when the host leaves (see succession.ts).
+  members: Member[]
   // Goes up by one each time a new host takes over, so peers can tell a stale host from the current one
   term: number
-  // When the room's first host made it (milliseconds since 1970, by that host's clock). It goes on
-  // through every handover, so of two hosts that meet, the one whose room is older keeps it.
-  createdAt: number
-  // Seat → peer ID of the player in it, or null while it is free
+  // The room stands in for one that may exist under the same code: it was started under a code
+  // someone else gave out, or hosted again by a member that found itself alone. It stays so through
+  // every handover, and gives way to a room that is not when the two meet (see succession.ts).
+  provisional: boolean
+  // Seat → player ID of the player in it, or null while it is free
   seats: Record<string, string | null>
   game: State
-  // Member → ID of the last intent the host handled from it, so a resent intent is applied once
+  // Player → ID of the last intent the host handled from it, so a resent intent is applied once
   handled: Record<string, number>
+  // Players that are not here right now, as the host sees it (see session.ts)
+  absent: Record<string, Absence>
 }
 
 export interface MoveIntent<Move> {
@@ -49,32 +63,39 @@ export type NumberedIntent<Move> = Intent<Move> & {id: number}
 
 export const createRoomState = <State, Move>(
   rules: GameRules<State, Move>,
-  hostId: string,
-  createdAt = Date.now()
+  host: Member,
+  provisional = false
 ): RoomState<State> => ({
-  members: [hostId],
+  members: [host],
   term: 0,
-  createdAt,
-  seats: Object.fromEntries(rules.seats.map((seat, index) => [seat, index === 0 ? hostId : null])),
+  provisional,
+  seats: Object.fromEntries(rules.seats.map((seat, index) => [seat, index === 0 ? host.playerId : null])),
   game: rules.createState(),
-  handled: {}
+  handled: {},
+  absent: {}
 })
 
-export const seatOf = (room: RoomState<unknown>, peerId: string): string | null =>
-  Object.keys(room.seats).find(seat => room.seats[seat] === peerId) ?? null
+export const hostOf = (room: RoomState<unknown>): Member | null => room.members[0] ?? null
 
-export const isFull = (room: RoomState<unknown>): boolean => Object.values(room.seats).every(peerId => peerId !== null)
+export const memberByPeer = (room: RoomState<unknown>, peerId: string): Member | null =>
+  room.members.find(member => member.peerId === peerId) ?? null
 
-const withSeat = <State>(room: RoomState<State>, seat: string, peerId: string | null): RoomState<State> => ({
-  ...room,
-  seats: {...room.seats, [seat]: peerId}
-})
+export const memberByPlayer = (room: RoomState<unknown>, playerId: string): Member | null =>
+  room.members.find(member => member.playerId === playerId) ?? null
+
+export const seatOf = (room: RoomState<unknown>, playerId: string): string | null =>
+  Object.keys(room.seats).find(seat => room.seats[seat] === playerId) ?? null
+
+export const isFull = (room: RoomState<unknown>): boolean => Object.values(room.seats).every(playerId => playerId !== null)
+
+const without = <T>(record: Record<string, T>, key: string): Record<string, T> =>
+  Object.fromEntries(Object.entries(record).filter(([id]) => id !== key))
 
 // Free seats go to the members without one, in join order. Returns the same room when there is
 // nothing to fill.
 const fillSeats = <State>(room: RoomState<State>): RoomState<State> => {
   const seated = new Set(Object.values(room.seats))
-  const waiting = room.members.filter(peerId => !seated.has(peerId))
+  const waiting = room.members.filter(member => !seated.has(member.playerId))
   const free = Object.keys(room.seats).filter(seat => room.seats[seat] === null)
 
   if (waiting.length === 0 || free.length === 0) {
@@ -82,42 +103,57 @@ const fillSeats = <State>(room: RoomState<State>): RoomState<State> => {
   }
 
   const seats = {...room.seats}
-  free.forEach((seat, index) => (seats[seat] = waiting[index] ?? null))
+  free.forEach((seat, index) => (seats[seat] = waiting[index]?.playerId ?? null))
 
   return {...room, seats}
 }
 
-// A joining peer becomes the last member and takes a free seat, with the game as it is.
-// Without a free seat, it watches until one frees up.
-export const addPeer = <State>(room: RoomState<State>, peerId: string): RoomState<State> => {
-  if (room.members.includes(peerId)) {
+// A connection that joins. A new player becomes the last member and takes a free seat, with the
+// game as it is, or watches until one frees up. A player already in the room (back after a reload,
+// or in another tab) keeps its place and seat, and this connection controls it from now on. The
+// new connection numbers its intents from one again, so what was handled from the old one no
+// longer counts. The host's player on a new connection is a new host, with a new term.
+export const joinPlayer = <State>(room: RoomState<State>, member: Member): RoomState<State> => {
+  const known = memberByPlayer(room, member.playerId)
+
+  if (!known) {
+    return fillSeats({...room, members: [...room.members, member]})
+  }
+
+  if (known.peerId === member.peerId) {
     return room
   }
 
-  return fillSeats({...room, members: [...room.members, peerId]})
+  return {
+    ...room,
+    members: room.members.map(each => (each === known ? member : each)),
+    term: known === hostOf(room) ? room.term + 1 : room.term,
+    handled: without(room.handled, member.playerId)
+  }
 }
 
-export const removePeer = <State, Move>(
+export const dropPlayer = <State, Move>(
   rules: GameRules<State, Move>,
   room: RoomState<State>,
-  peerId: string
+  playerId: string
 ): RoomState<State> => {
-  if (!room.members.includes(peerId)) {
+  if (!memberByPlayer(room, playerId)) {
     return room
   }
 
-  const members = room.members.filter(id => id !== peerId)
-  const handled = Object.fromEntries(Object.entries(room.handled).filter(([id]) => id !== peerId))
-  const seat = seatOf(room, peerId)
+  const members = room.members.filter(member => member.playerId !== playerId)
+  const handled = without(room.handled, playerId)
+  const absent = without(room.absent, playerId)
+  const seat = seatOf(room, playerId)
 
   if (!seat) {
-    return {...room, members, handled}
+    return {...room, members, handled, absent}
   }
 
   // The game sees the seat left before it goes to someone else
   const game = rules.onSeatLeft ? rules.onSeatLeft(room.game, seat) : room.game
 
-  return fillSeats({...withSeat(room, seat, null), members, handled, game})
+  return fillSeats({...room, members, handled, absent, game, seats: {...room.seats, [seat]: null}})
 }
 
 const applyToGame = <State, Move>(
@@ -133,20 +169,20 @@ const applyToGame = <State, Move>(
   return rules.applyMove(room.game, seat, intent.move) ?? room.game
 }
 
-// Each intent of a member is handled once: it counts as handled even when the rules reject it.
+// Each intent of a player is handled once: it counts as handled even when the rules reject it.
 // Returns the same room object for an intent that was handled already or comes from a stranger.
 export const applyIntent = <State, Move>(
   rules: GameRules<State, Move>,
   room: RoomState<State>,
-  peerId: string,
+  playerId: string,
   intent: NumberedIntent<Move>
 ): RoomState<State> => {
-  if (!room.members.includes(peerId) || intent.id <= (room.handled[peerId] ?? 0)) {
+  if (!memberByPlayer(room, playerId) || intent.id <= (room.handled[playerId] ?? 0)) {
     return room
   }
 
-  const handled = {...room.handled, [peerId]: intent.id}
-  const seat = seatOf(room, peerId)
+  const handled = {...room.handled, [playerId]: intent.id}
+  const seat = seatOf(room, playerId)
 
   if (!seat || !isFull(room)) {
     return {...room, handled}

@@ -1,6 +1,6 @@
 // The wire format. Peers send JSON strings, and everything received is checked before use,
 // because any browser that knows the room code can join and send anything.
-import type {GameRules, NumberedIntent, RoomState} from './room-state.ts'
+import type {Absence, GameRules, Member, NumberedIntent, RoomState} from './room-state.ts'
 
 export const encode = (value: unknown): string => JSON.stringify(value)
 
@@ -21,28 +21,38 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isIntentId = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) > 0
 
-const isMembers = (value: unknown): value is string[] =>
+const isMember = (value: unknown): value is Member =>
+  isRecord(value) && typeof value.playerId === 'string' && typeof value.peerId === 'string'
+
+// Every player once, and every connection once
+const isMembers = (value: unknown): value is Member[] =>
   Array.isArray(value) &&
   value.length > 0 &&
-  value.every(peerId => typeof peerId === 'string') &&
-  new Set(value).size === value.length
+  value.every(isMember) &&
+  new Set(value.map(member => member.playerId)).size === value.length &&
+  new Set(value.map(member => member.peerId)).size === value.length
 
 // Every seat of the game, each free or held by a member
-const isSeats = (value: unknown, seats: readonly string[], members: string[]): value is Record<string, string | null> => {
+const isSeats = (value: unknown, seats: readonly string[], members: Member[]): value is Record<string, string | null> => {
   if (!isRecord(value) || Object.keys(value).length !== seats.length) {
     return false
   }
 
   return seats.every(seat => {
-    const peerId = value[seat]
-    return peerId === null || (typeof peerId === 'string' && members.includes(peerId))
+    const playerId = value[seat]
+    return playerId === null || members.some(member => member.playerId === playerId)
   })
 }
 
-const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0
-
 const isHandled = (value: unknown): value is Record<string, number> =>
   isRecord(value) && Object.values(value).every(isIntentId)
+
+// Members only, each away or offline
+const isAbsent = (value: unknown, members: Member[]): value is Record<string, Absence> =>
+  isRecord(value) &&
+  Object.entries(value).every(
+    ([playerId, absence]) => members.some(member => member.playerId === playerId) && (absence === 'away' || absence === 'offline')
+  )
 
 export const decodeSnapshot = <State, Move>(rules: GameRules<State, Move>, data: unknown): RoomState<State> | null => {
   const value = parse(data)
@@ -51,15 +61,19 @@ export const decodeSnapshot = <State, Move>(rules: GameRules<State, Move>, data:
     return null
   }
 
-  const {members, term, seats, game, handled} = value
-  // A snapshot from a page loaded before createdAt existed counts as the oldest room
-  const createdAt = value.createdAt ?? 0
+  const {members, term, provisional, seats, game, handled, absent} = value
 
-  if (!isSeats(seats, rules.seats, members) || !rules.isState(game) || !isHandled(handled) || !isTime(createdAt)) {
+  if (
+    typeof provisional !== 'boolean' ||
+    !isSeats(seats, rules.seats, members) ||
+    !rules.isState(game) ||
+    !isHandled(handled) ||
+    !isAbsent(absent, members)
+  ) {
     return null
   }
 
-  return {members, term: Number(term), createdAt, seats, game, handled}
+  return {members, term: Number(term), provisional, seats, game, handled, absent}
 }
 
 export const decodeIntent = <State, Move>(rules: GameRules<State, Move>, data: unknown): NumberedIntent<Move> | null => {
@@ -74,4 +88,20 @@ export const decodeIntent = <State, Move>(rules: GameRules<State, Move>, data: u
   }
 
   return value.type === 'move' && rules.isMove(value.move) ? {type: 'move', move: value.move, id: value.id} : null
+}
+
+// What a connection says about itself: whose it is, and whether its page is hidden
+export interface Presence {
+  playerId: string
+  away: boolean
+}
+
+export const decodePresence = (data: unknown): Presence | null => {
+  const value = parse(data)
+
+  if (!isRecord(value) || typeof value.playerId !== 'string' || typeof value.away !== 'boolean') {
+    return null
+  }
+
+  return {playerId: value.playerId, away: value.away}
 }

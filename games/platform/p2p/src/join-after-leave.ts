@@ -3,7 +3,7 @@
 // joined again meanwhile, and that room would stay without peers. joinAfterLeave wraps a transport
 // so that it joins a room only once the tab has left it, with a stand-in room until then.
 import type {MessageAction} from '@trystero-p2p/ws-relay'
-import type {SessionRoom, Transport} from './session.ts'
+import type {SessionRoom, Transport} from './transport.ts'
 
 // The room as the session sees it, with leave() replaced
 const withLeave = (room: SessionRoom, leave: () => Promise<void>): SessionRoom => ({
