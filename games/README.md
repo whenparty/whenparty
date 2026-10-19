@@ -32,12 +32,14 @@ Games use the temp-sites infrastructure: the Traefik router on the `wp_tempsites
 
 On a push to `main` that changes `games/**` (Markdown excluded), `.github/workflows/games.yml`:
 
-1. runs `npm ci`, `npm test` and `npm run typecheck` for the whole workspace in `node:24.22.0-alpine3.24`. Nothing deploys if they fail.
+1. runs `npm ci`, `npm test` and `npm run typecheck` for the whole workspace in `node:24.22.0-alpine3.24`, and the coturn smoke test (`platform/turn/tests/smoke.sh`). Nothing deploys if they fail.
 2. finds the projects the change reaches:
    - a file in a project: that project
    - a file in a platform library without `compose.yml`: every title
    - a file at the top of `games/` (`package.json`, `package-lock.json`): every project
 3. deploys each one with `.github/workflows/deploy-project.yml`, building its `Dockerfile` with `games/` as the context. A deleted project is taken down.
+
+A push deploys only what it changes, so the projects of a push whose deploy was skipped (a failed test) stay as they were after the fix is pushed. Running the workflow by hand (`gh workflow run games.yml`) deploys every project.
 
 Every Dockerfile is built from the `games/` context, so it can use the workspace lockfile. `games/.dockerignore` keeps `node_modules`, `dist`, tests and Markdown out of it.
 

@@ -8,6 +8,9 @@ on:
       - '!games/**/*.md'
       - '.github/workflows/games.yml'
       - '.github/workflows/deploy-project.yml'
+  # Deploys every project: a run has no previous commit, so every file counts as changed. For a
+  # push whose deploy was skipped, since the next push deploys only what it changes.
+  workflow_dispatch:
 
 jobs:
   # The whole workspace is tested together, because a change in games/platform reaches every game
