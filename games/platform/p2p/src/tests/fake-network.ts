@@ -2,7 +2,7 @@
 // links, cutting one and noticing it are separate: a peer can look present after its link is gone.
 import type {MessageAction} from '@trystero-p2p/ws-relay'
 import {joinAfterLeave} from '../join-after-leave.ts'
-import type {PageEvent, SessionRoom, Transport} from '../session.ts'
+import type {PageEvent, SessionRoom, Transport} from '../transport.ts'
 
 type Handler = NonNullable<MessageAction<string>['onMessage']>
 
