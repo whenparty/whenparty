@@ -608,6 +608,22 @@ describe('startSession', () => {
     assert.equal(handledOf('c', 'b'), undefined)
   })
 
+  it('stays out of the room after leave(), whatever it hears while it is still leaving', async () => {
+    const {network, sessions, views} = await startRoom()
+    const before = views.get('c')
+
+    // c leaves. Before it is out, its link to the host drops: it must neither wait for the next
+    // member in line, nor join the room again when that member never shows up.
+    const left = sessions.c.leave()
+    network.notice('c', 'a')
+    await sleep(takeoverDelayMs * 6)
+    await network.settle()
+
+    assert.equal(network.joins('c'), 1)
+    assert.equal(views.get('c'), before)
+    assert.equal(sessions.c.leave(), left)
+  })
+
   it('hands the room over at once when the host says goodbye', async () => {
     // A pause far longer than the test: only a goodbye can skip it
     const {network, sessions, hostOf} = await startRoom({takeoverDelayMs: 60_000})

@@ -32,6 +32,7 @@ await session.leave()
 - `takeoverDelayMs` (default 2500) is how long the next member waits before it takes over from a host whose link dropped. A host waits twice as long before it drops a member whose link dropped.
 - `awayHoldMs` (default 2 minutes) is how long the room holds the place and seat of a member that stepped away. A page that gets hidden (minimized, another tab or app, the screen off) tells the others (the `away` action) and stays in the room as it is: on a computer it keeps running. A phone soon freezes a hidden page and its links drop. The host then waits `awayHoldMs` instead of twice `takeoverDelayMs` before it drops that member, so a player who comes back within it finds its seat. The page says when it is shown again, and tells every peer that joins whether it is hidden, since a word sent while its links were down is lost.
 - `rules.onSeatLeft(state, seat)`, optional, runs when a seated player leaves, the host included, for example to skip their turn or end the game. Then the seat goes to the first member without one.
+- `session.leave()` says goodbye and leaves the room for good. Leaving takes a moment, and the links drop meanwhile, so the session ignores what it still hears: nothing brings it back into the room, `send` does nothing, and calling `leave()` again gives the same promise. A guest whose host left with nobody to take over (`hostLeft`) is closed the same way.
 - `seatOf(room, peerId)` and `isFull(room)` help the page decide what to show.
 - `titles/tictactoe/` is the working example.
 

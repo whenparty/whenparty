@@ -177,6 +177,8 @@ interface Context<State, Move> {
   hostLeft: boolean
   // Stops listening to the page's lifecycle events
   stopPageEvents: () => void
+  // The leave that closed this session for good (see close)
+  closed: Promise<void> | null
 }
 
 const hostOf = <State, Move>(context: Context<State, Move>) => context.state?.members[0] ?? null
@@ -243,11 +245,17 @@ const clearTimers = <State, Move>(context: Context<State, Move>) => {
   clearRemovals(context)
 }
 
-// Leaves the room for good: no timer or page event brings the session back into it
-const close = <State, Move>(context: Context<State, Move>) => {
-  context.stopPageEvents()
-  clearTimers(context)
-  return context.room.leave()
+// Leaves the room for good. Leaving takes a while, and the links drop meanwhile: the session
+// ignores what it still hears, so no event, timer or page event brings it back into the room.
+// Closing again gives the same leave.
+const close = <State, Move>(context: Context<State, Move>): Promise<void> => {
+  if (!context.closed) {
+    context.stopPageEvents()
+    clearTimers(context)
+    context.closed = context.room.leave()
+  }
+
+  return context.closed
 }
 
 const cancelRemoval = <State, Move>(context: Context<State, Move>, peerId: string) => {
@@ -522,6 +530,10 @@ const peerUnreachable = <State, Move>(context: Context<State, Move>, peerId: str
 }
 
 const send = <State, Move>(context: Context<State, Move>, intent: Intent<Move>) => {
+  if (context.closed) {
+    return
+  }
+
   const numbered = {...intent, id: context.nextIntentId++}
 
   if (isHost(context)) {
@@ -535,7 +547,8 @@ const send = <State, Move>(context: Context<State, Move>, intent: Intent<Move>) 
 
 type Connection<State, Move> = Pick<Context<State, Move>, 'room' | 'snapshots' | 'intents' | 'byes' | 'aways'>
 
-// Joins the room and listens to it. Its events reach the session only while it is the session's room.
+// Joins the room and listens to it. Its events reach the session only while it is the session's
+// room and the session is not closed.
 const connect = <State, Move>(
   {transport, appId, code}: Pick<Context<State, Move>, 'transport' | 'appId' | 'code'>,
   getContext: () => Context<State, Move>
@@ -545,7 +558,7 @@ const connect = <State, Move>(
     (...args: Args) => {
       const context = getContext()
 
-      if (context.room === room) {
+      if (!context.closed && context.room === room) {
         handler(context, ...args)
       }
     }
@@ -653,7 +666,8 @@ export const startSession = <State, Move>(
     reclaim: undefined,
     revive: undefined,
     saidGoodbye: false,
-    hostLeft: false
+    hostLeft: false,
+    closed: null
   }
 
   if (!isHost && rejoinAsHost) {
