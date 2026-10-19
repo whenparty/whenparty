@@ -76,6 +76,96 @@ describe('signaling server', () => {
   })
 })
 
+describe('signaling server limits', () => {
+  const startWith = async (t, limits) => {
+    const server = await startSignalingServer({port: 0, limits})
+    t.after(() => server.close())
+    return server
+  }
+
+  it('closes a socket that sends a message over maxPayload with 1009', async t => {
+    const server = await startWith(t, {maxPayload: 1024})
+    const socket = await openSocket(server.port)
+
+    send(socket, {type: 'publish', topic: 'room-1', payload: 'x'.repeat(2048)})
+    const [code] = await once(socket, 'close')
+
+    assert.equal(code, 1009)
+  })
+
+  it('closes a socket that subscribes to more than maxSubscriptionsPerSocket topics with 1008', async t => {
+    const server = await startWith(t, {maxSubscriptionsPerSocket: 2})
+    const socket = await openSocket(server.port)
+
+    for (const topic of ['room-1', 'room-2', 'room-3']) {
+      send(socket, {type: 'subscribe', topic})
+    }
+    const [code] = await once(socket, 'close')
+
+    assert.equal(code, 1008)
+  })
+
+  it('rejects connections over maxConnections with 503, in a burst too, and accepts one again after a socket closes', async t => {
+    const server = await startWith(t, {maxConnections: 1})
+    const outcome = socket =>
+      new Promise(resolve => {
+        socket.once('open', () => resolve('open'))
+        socket.once('error', error => resolve(error.message))
+      })
+    const sockets = [connect(server.port), connect(server.port), connect(server.port)]
+    const outcomes = await Promise.all(sockets.map(outcome))
+
+    assert.equal(outcomes.filter(result => result === 'open').length, 1)
+    assert.equal(outcomes.filter(result => /503/.test(result)).length, 2)
+
+    const open = sockets[outcomes.indexOf('open')]
+    open.close()
+    await once(open, 'close')
+    const next = await openSocket(server.port)
+    next.close()
+  })
+
+  it('closes a socket that sends more than messageBurst messages at once with 1008, without relaying the rest', async t => {
+    const server = await startWith(t, {messageBurst: 3, messagesPerSecond: 0.001})
+    const subscriber = await openSocket(server.port)
+    const publisher = await openSocket(server.port)
+    const received = []
+
+    // The subscriber spends its 3 messages on the subscription and two echoes
+    send(subscriber, {type: 'subscribe', topic: 'room-1'})
+    send(subscriber, {type: 'publish', topic: 'room-1', payload: 'ready'})
+    await nextMessage(subscriber)
+    subscriber.on('message', data => received.push(JSON.parse(data.toString()).payload))
+
+    for (const payload of [1, 2, 3, 4, 5]) {
+      send(publisher, {type: 'publish', topic: 'room-1', payload})
+    }
+    const [code] = await once(publisher, 'close')
+
+    // The echo comes after everything the server relayed from the publisher
+    send(subscriber, {type: 'publish', topic: 'room-1', payload: 'done'})
+    await once(subscriber, 'message')
+
+    assert.equal(code, 1008)
+    assert.deepEqual(received, [1, 2, 3, 'done'])
+    subscriber.close()
+  })
+
+  it('refills the message budget over time', async t => {
+    const server = await startWith(t, {messageBurst: 2, messagesPerSecond: 100})
+    const socket = await openSocket(server.port)
+
+    for (let round = 0; round < 3; round++) {
+      send(socket, {type: 'subscribe', topic: 'room-1'})
+      send(socket, {type: 'unsubscribe', topic: 'room-1'})
+      await new Promise(resolve => setTimeout(resolve, 50))
+    }
+
+    assert.equal(socket.readyState, WebSocket.OPEN)
+    socket.close()
+  })
+})
+
 describe('signaling server heartbeat', () => {
   it('terminates clients that stop answering pings and keeps the others', async t => {
     const server = await startSignalingServer({port: 0, heartbeatMs: 50})
