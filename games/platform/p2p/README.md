@@ -86,7 +86,7 @@ Limits:
 
 ## TURN
 
-When two browsers can't connect directly (a phone on mobile data behind its carrier's NAT, a strict office network), they relay through the TURN server at `turn.when.party` (`games/platform/turn`). Each room joins once the page has its short-lived credentials from the signaling server's `/turn-credentials` (`src/turn-servers.ts`), and passes them to Trystero as `turnConfig`. The page asks again only after half their lifetime, and joins at the same time share one request. If the request fails or takes over 3 seconds, the room joins without TURN, as before, and the page asks again a minute later. A room still waits with no peers until then (`joinWhenReady` in `src/join-after-leave.ts`).
+When two browsers can't connect directly (a phone on mobile data behind its carrier's NAT, a strict office network), they relay through the TURN server at `turn.when.party` (`games/platform/turn`). Each room joins once the page has its short-lived credentials from the signaling server's `/turn-credentials` (`src/turn-servers.ts`), and passes them to Trystero as `turnConfig` (`src/trystero-transport.ts`). The page asks again only after half their lifetime, and joins at the same time share one request. If the request fails or takes over 3 seconds, the room joins without TURN, as before, and the page asks again a minute later. A room still waits with no peers until then (`joinWhenReady` in `src/join-after-leave.ts`).
 
 Without TURN, or when even TURN can't connect two peers, Trystero reports the peer through `onJoinError`, and the view's `unreachable` is true.
 
@@ -103,7 +103,9 @@ src/
   room-state.ts      # GameRules interface; members, seats, joins, leaves and intents (pure)
   succession.ts      # who takes over from a host that left, and which snapshots to trust (pure)
   protocol.ts        # encode and check what goes over the wire (pure)
-  session.ts         # Trystero: runs the host or a guest, hands over the host role, calls onChange
+  session.ts         # runs the host or a guest over a Transport, hands over the host role, calls onChange
+  transport.ts       # what a session needs from the network: SessionRoom, Transport, PageEvent
+  trystero-transport.ts # the browser's Transport: Trystero, the TURN servers, the page's lifecycle events
   join-after-leave.ts # joins a room again only once the tab has left it (wraps the Trystero transport)
   turn-servers.ts    # loads the TURN servers and their short-lived credentials
   signaling-url.ts   # which signaling server to use

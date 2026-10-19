@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
 import type {MessageAction} from '@trystero-p2p/ws-relay'
 import {joinAfterLeave, joinWhenReady} from '../join-after-leave.ts'
-import type {SessionRoom, Transport} from '../session.ts'
+import type {SessionRoom, Transport} from '../transport.ts'
 
 type Handler = NonNullable<MessageAction<string>['onMessage']>
 

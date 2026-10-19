@@ -3,3 +3,4 @@
 export * from './room-code.ts'
 export * from './room-state.ts'
 export * from './session.ts'
+export type * from './transport.ts'

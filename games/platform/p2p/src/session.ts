@@ -1,15 +1,17 @@
-// Connects a game to its room over Trystero. The host runs the rules and broadcasts every new
-// room state. Guests send their intents to the host and show what it broadcasts. When the host
-// leaves, the next member takes over (see succession.ts). Nothing is stored on a server: the
-// signaling server only helps browsers find each other.
-import {getRelaySockets, joinRoom, selfId, type MessageAction} from '@trystero-p2p/ws-relay'
-import {joinAfterLeave, joinWhenReady} from './join-after-leave.ts'
+// Connects a game to its room over a Transport (Trystero in the browser, see
+// trystero-transport.ts). The host runs the rules and broadcasts every new room state. Guests
+// send their intents to the host and show what it broadcasts. When the host leaves, the next
+// member takes over (see succession.ts). Nothing is stored on a server: the signaling server only
+// helps browsers find each other.
+import type {MessageAction} from '@trystero-p2p/ws-relay'
 import {decodeIntent, decodeSnapshot, encode} from './protocol.ts'
 import {addPeer, applyIntent, createRoomState, removePeer} from './room-state.ts'
 import type {GameRules, Intent, NumberedIntent, RoomState} from './room-state.ts'
-import {signalingUrlFor, turnCredentialsUrlFor} from './signaling-url.ts'
 import {acceptsSnapshot, hostAlone, promote, successorOf, winsTie} from './succession.ts'
-import {turnServerLoader, type TurnServer} from './turn-servers.ts'
+import type {PageEvent, SessionRoom, Transport} from './transport.ts'
+import {trystero} from './trystero-transport.ts'
+
+const logError = (error: unknown) => console.warn('p2p:', error)
 
 export interface SessionView<State> {
   selfId: string
@@ -55,80 +57,6 @@ export interface Session<Move> {
   isSignalingOpen: () => boolean
   leave: () => Promise<void>
 }
-
-// The parts of a Trystero room a session uses
-export interface SessionRoom {
-  makeAction: (namespace: string) => MessageAction<string>
-  onPeerJoin: ((peerId: string) => void) | null
-  onPeerLeave: ((peerId: string) => void) | null
-  getPeers: () => Record<string, unknown>
-  leave: () => Promise<void>
-}
-
-// How a session reaches the other peers. Tests pass an in-memory one.
-export interface Transport {
-  selfId: string
-  // onUnreachable: a peer the signaling server found could not be connected to
-  join: (appId: string, code: string, onUnreachable: (peerId: string) => void) => SessionRoom
-  isSignalingOpen?: () => boolean
-  // Calls back on the page's lifecycle events, and returns how to stop
-  onPageEvent?: (callback: (event: PageEvent) => void) => () => void
-}
-
-// leaving: beforeunload. The page may still stay: the user can cancel, and a slow navigation
-// keeps it a while. gone: pagehide, the page goes away or into the back-forward cache. Mobile
-// browsers often skip beforeunload (iOS Safari always does), but fire pagehide. shown: the page
-// is back from the back-forward cache. away and back: the page was hidden (minimized, another tab
-// or app, the screen off) and shown again. A hidden page keeps running, but a phone soon freezes
-// it, and its links drop.
-export type PageEvent = 'leaving' | 'gone' | 'shown' | 'away' | 'back'
-
-// Calls back on the lifecycle events of the page, until the returned function stops it.
-// isHidden reads the page's visibility (document.visibilityState).
-export const onPageEvents =
-  (page: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>, isHidden: () => boolean) =>
-  (callback: (event: PageEvent) => void): (() => void) => {
-    const listeners: Record<string, (event: Event) => void> = {
-      beforeunload: () => callback('leaving'),
-      pagehide: () => callback('gone'),
-      pageshow: event => {
-        if ((event as PageTransitionEvent).persisted) {
-          callback('shown')
-        }
-      },
-      // Fired at the document, and it bubbles up to the window
-      visibilitychange: () => callback(isHidden() ? 'away' : 'back')
-    }
-
-    Object.entries(listeners).forEach(([type, listener]) => page.addEventListener(type, listener))
-    return () => Object.entries(listeners).forEach(([type, listener]) => page.removeEventListener(type, listener))
-  }
-
-const logError = (error: unknown) => console.warn('p2p:', error)
-
-let loadTurnServers: (() => Promise<TurnServer[]>) | null = null
-
-// Each room joins once the TURN servers are known, so that a peer it can't reach directly can be
-// reached through them. That waits for one request at most, and only for the first room or after
-// the credentials' half-life.
-const trystero: Transport = joinAfterLeave({
-  selfId,
-  join: (appId, code, onUnreachable) => {
-    loadTurnServers ??= turnServerLoader(turnCredentialsUrlFor(location.hostname))
-
-    return joinWhenReady(loadTurnServers(), turnConfig =>
-      joinRoom({appId, relayConfig: {urls: [signalingUrlFor(location.hostname)]}, turnConfig}, code, {
-        onJoinError: ({peerId, error}) => {
-          logError(error)
-          onUnreachable(peerId)
-        }
-      })
-    )
-  },
-  isSignalingOpen: () =>
-    Object.values(getRelaySockets() as Record<string, WebSocket>).some(socket => socket.readyState === WebSocket.OPEN),
-  onPageEvent: onPageEvents(globalThis, () => document.visibilityState === 'hidden')
-})
 
 const defaultTakeoverDelayMs = 2500
 const defaultAwayHoldMs = 120_000
