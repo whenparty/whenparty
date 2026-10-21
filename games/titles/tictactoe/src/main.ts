@@ -101,14 +101,16 @@ const describeSearch = (current: Visit): string => {
   }
 }
 
-// Who among the players is not here right now, for the status line
-const absentNote = (view: SessionView<TicTacToe>, room: SessionView<TicTacToe>['room'] & object): string =>
-  Object.entries(room.seats)
-    .flatMap(([mark, playerId]) => {
-      const absence = playerId && playerId !== view.playerId ? room.absent[playerId] : undefined
-      return absence === 'away' ? [` ${mark} stepped away.`] : absence === 'offline' ? [` ${mark} lost the connection. Their seat is held.`] : []
-    })
-    .join('')
+// Who the match waits for, for the status line. Not this tab's own player: it is here.
+const pauseNote = (view: SessionView<TicTacToe>, room: SessionView<TicTacToe>['room'] & object): string | null => {
+  const others = room.game.waitingFor.filter(mark => room.seats[mark] !== view.playerId)
+  const why = others.map(mark => {
+    const absence = room.absent[room.seats[mark] ?? '']
+    return absence === 'away' ? `${mark} stepped away.` : `${mark} lost the connection.`
+  })
+
+  return others.length > 0 ? `Paused. ${why.join(' ')} The game waits for them to come back.` : null
+}
 
 const describe = (current: Visit): string => {
   const {view} = current
@@ -132,6 +134,11 @@ const describe = (current: Visit): string => {
   const {game} = view.room
   const seat = seatOf(view.room, view.playerId)
 
+  if (game.abandonedBy) {
+    const over = game.abandonedBy === seat ? 'You were gone too long, so the match is over.' : `${game.abandonedBy} left, so the match is over.`
+    return isFull(view.room) ? over : `${over} Waiting for a new player to start another one.`
+  }
+
   if (!isFull(view.room)) {
     return seat ? 'Waiting for a second player. Send them the code.' : 'Waiting for players.'
   }
@@ -144,9 +151,13 @@ const describe = (current: Visit): string => {
     return game.winner === seat ? 'You win!' : `${game.winner} wins.`
   }
 
-  const turn = !seat ? `You are watching. ${game.turn} to move.` : game.turn === seat ? `Your turn. You are ${seat}.` : `You are ${seat}. ${game.turn} to move.`
+  const pause = pauseNote(view, view.room)
 
-  return `${turn}${absentNote(view, view.room)}`
+  if (pause) {
+    return pause
+  }
+
+  return !seat ? `You are watching. ${game.turn} to move.` : game.turn === seat ? `Your turn. You are ${seat}.` : `You are ${seat}. ${game.turn} to move.`
 }
 
 const render = (current: Visit) => {
@@ -157,7 +168,7 @@ const render = (current: Visit) => {
   // Moves and rematches need the host, a full room, a seat and the tab that controls the player.
   // Otherwise the board is read-only.
   const isLive = Boolean(room && seat && view?.inControl && !view?.hostLeft && !view?.switchingHost && isFull(room))
-  const canMove = isLive && game?.winner === null && game.turn === seat
+  const canMove = isLive && game && !ticTacToe.isOver(game) && game.waitingFor.length === 0 && game.turn === seat
 
   statusText.textContent = describe(current)
   hostBadge.hidden = !view?.isHost
