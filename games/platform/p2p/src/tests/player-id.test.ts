@@ -13,12 +13,21 @@ describe('playerIdFrom', () => {
     const first = playerIdFrom(() => kept)
 
     assert.match(first, /^[0-9a-f-]{36}$/)
-    assert.equal(playerIdFrom(() => kept), first)
-    assert.notEqual(playerIdFrom(() => storage()), first)
+    assert.equal(
+      playerIdFrom(() => kept),
+      first
+    )
+    assert.notEqual(
+      playerIdFrom(() => storage()),
+      first
+    )
   })
 
   it('gives a fresh ID when there is no storage or it throws', () => {
-    assert.match(playerIdFrom(() => null), /^[0-9a-f-]{36}$/)
+    assert.match(
+      playerIdFrom(() => null),
+      /^[0-9a-f-]{36}$/
+    )
     assert.match(
       playerIdFrom(() => {
         throw new Error('sandboxed')

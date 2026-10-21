@@ -1,5 +1,3 @@
-// A tiny two-player game for testing the platform without a real title: players take turns
-// adding 1 or 2 to the total, and whoever reaches 5 wins.
 import type {GameRules} from '../room-state.ts'
 
 type Player = 'A' | 'B'
@@ -27,8 +25,8 @@ const isRace = (value: unknown): value is Race => {
 export const race: GameRules<Race, number> = {
   seats: ['A', 'B'],
   createState: () => ({total: 0, turn: 'A', winner: null}),
-  applyMove: (state, seat, step) => {
-    if (state.winner || seat !== state.turn || !isStep(step)) {
+  applyMove: (state, seat, step, {occupiedSeats}) => {
+    if (occupiedSeats.length < 2 || state.winner || seat !== state.turn || !isStep(step)) {
       return null
     }
 

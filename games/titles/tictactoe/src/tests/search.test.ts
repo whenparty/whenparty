@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
 import type {SessionView} from '@whenparty/p2p'
-import {canStartRoom, lostRoom, searchOf} from '../search.ts'
+import {lostRoom, searchOf} from '../search.ts'
 
 const view = (changes: Partial<SessionView<unknown>> = {}): SessionView<unknown> => ({
   selfId: 'self',
@@ -9,13 +9,22 @@ const view = (changes: Partial<SessionView<unknown>> = {}): SessionView<unknown>
   isHost: false,
   inControl: true,
   room: null,
-  switchingHost: false,
+  waitingForHost: false,
   hostLeft: false,
   unreachable: false,
   ...changes
 })
 
-const room = {members: [{playerId: 'host', peerId: 'host'}], term: 0, origin: 'original' as const, seats: {}, game: {}, handled: {}, absent: {}}
+const room = {
+  members: [{playerId: 'host', peerId: 'host'}],
+  term: 0,
+  hostId: 'host',
+  seats: {},
+  game: {},
+  handled: {},
+  clock: 0,
+  reservations: {}
+}
 
 describe('searchOf', () => {
   it('is looking until the hint time has passed', () => {
@@ -29,22 +38,6 @@ describe('searchOf', () => {
   it('tells a dead signaling connection from nobody hosting', () => {
     assert.equal(searchOf({view: view(), hostIsLate: true, signalingOpen: false}), 'offline')
     assert.equal(searchOf({view: view(), hostIsLate: true, signalingOpen: true}), 'nobody')
-  })
-})
-
-describe('canStartRoom', () => {
-  it('offers to start the room only when nobody hosts it', () => {
-    assert.equal(canStartRoom({view: view(), hostIsLate: true, signalingOpen: true}), true)
-
-    for (const state of [
-      {view: view(), hostIsLate: false, signalingOpen: true},
-      {view: view(), hostIsLate: true, signalingOpen: false},
-      {view: view({unreachable: true}), hostIsLate: true, signalingOpen: true},
-      {view: view({room}), hostIsLate: true, signalingOpen: true},
-      {view: view({hostLeft: true}), hostIsLate: true, signalingOpen: true}
-    ]) {
-      assert.equal(canStartRoom(state), false, JSON.stringify(state))
-    }
   })
 })
 

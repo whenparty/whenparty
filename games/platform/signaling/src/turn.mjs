@@ -19,7 +19,10 @@ export const turnFromEnv = env => {
 
   return {
     secret: env.TURN_SECRET,
-    urls: (env.TURN_URLS ?? '').split(',').map(url => url.trim()).filter(Boolean),
+    urls: (env.TURN_URLS ?? '')
+      .split(',')
+      .map(url => url.trim())
+      .filter(Boolean),
     // Longer than a game: coturn checks the expiry again whenever the browser refreshes its
     // allocation, every few minutes, so a session outlives its credentials only by that much
     ttlSeconds: Number(env.TURN_TTL_SECONDS ?? 86_400)

@@ -25,12 +25,5 @@ export const searchOf = ({view, hostIsLate, signalingOpen}: SearchState): Search
   return signalingOpen ? 'nobody' : 'offline'
 }
 
-// Only on the player's word: a mistyped code would otherwise start an empty room. If the room was
-// there after all, this one is fresh and folds into it (see winsTie in @whenparty/p2p).
-export const canStartRoom = (state: SearchState): boolean =>
-  !state.view?.room && !state.view?.hostLeft && searchOf(state) === 'nobody'
-
-// A tab that had a room and has none now is joining it again (after a dropped link, a cancelled
-// unload or the back-forward cache). Its hint starts over, so it says "looking" while it does.
 export const lostRoom = (previous: SessionView<unknown> | null, next: SessionView<unknown>): boolean =>
   Boolean(previous?.room) && !next.room

@@ -9,7 +9,7 @@ const room = applyIntent(race, joinPlayer(createRoomState(race, tab('host')), ta
 
 describe('snapshots', () => {
   it('survive the round trip', () => {
-    const marked = {...room, absent: {guest: 'away' as const}}
+    const marked = {...room, clock: 100, reservations: {guest: 60100}}
 
     assert.deepEqual(decodeSnapshot(race, encode(room)), room)
     assert.deepEqual(decodeSnapshot(race, encode(marked)), marked)
@@ -31,8 +31,7 @@ describe('snapshots', () => {
     }
   })
 
-  it('reject bad members, terms, marks and handled intents', () => {
-    const {origin: _, ...unmarked} = room
+  it('reject bad members, host identity, terms and handled intents', () => {
     const malformed = [
       {...room, members: undefined},
       {...room, members: []},
@@ -44,15 +43,19 @@ describe('snapshots', () => {
       {...room, term: -1},
       {...room, term: 1.5},
       {...room, term: '1'},
-      unmarked,
-      {...room, origin: 'later'},
+      {...room, hostId: undefined},
+      {...room, hostId: 'stranger'},
       {...room, handled: []},
       {...room, handled: {host: 0}},
       {...room, handled: {host: 'one'}},
-      {...room, absent: undefined},
-      {...room, absent: ['guest']},
-      {...room, absent: {stranger: 'away'}},
-      {...room, absent: {guest: 'gone'}}
+      {...room, clock: -1},
+      {...room, clock: 1.5},
+      {...room, clock: undefined},
+      {...room, reservations: undefined},
+      {...room, reservations: []},
+      {...room, reservations: {stranger: 60000}},
+      {...room, reservations: {guest: -1}},
+      {...room, reservations: {guest: 'soon'}}
     ]
 
     for (const value of malformed) {

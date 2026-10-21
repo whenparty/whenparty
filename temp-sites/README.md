@@ -20,7 +20,7 @@ temp-sites/
 
 The wildcard nginx config for `*.when.party` lives with the other nginx configs in `infra/nginx/conf.d/temp-sites.conf`. Adding a project never touches nginx.
 
-The peer-to-peer games and their signaling server live in [`games/`](../games/README.md) at the top of the repo. They are routed by this Traefik and the same nginx config.
+The peer-to-peer games and their signaling server live in [`games/`](../games/AGENTS.md) at the top of the repo. They are routed by this Traefik and the same nginx config.
 
 ## Deployment
 

@@ -4,21 +4,13 @@ import {isAllowedOrigin} from '../origin.mjs'
 
 describe('isAllowedOrigin', () => {
   it('allows when.party and its subdomains over https', () => {
-    for (const origin of [
-      'https://when.party',
-      'https://chess.when.party',
-      'https://dev.chess.when.party'
-    ]) {
+    for (const origin of ['https://when.party', 'https://chess.when.party', 'https://dev.chess.when.party']) {
       assert.equal(isAllowedOrigin(origin), true, origin)
     }
   })
 
   it('allows localhost and 127.0.0.1 over http for local development', () => {
-    for (const origin of [
-      'http://localhost',
-      'http://localhost:5173',
-      'http://127.0.0.1:8000'
-    ]) {
+    for (const origin of ['http://localhost', 'http://localhost:5173', 'http://127.0.0.1:8000']) {
       assert.equal(isAllowedOrigin(origin), true, origin)
     }
   })

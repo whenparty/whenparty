@@ -63,7 +63,7 @@ See [temp-sites/README.md](temp-sites/README.md) for adding a project.
 - On push, `games.yml` tests the whole workspace, then deploys only the projects a change reaches. A change in a shared platform library redeploys every title.
 - Games run behind the temp-sites Traefik router and the `*.when.party` nginx config, so they get the same CSP as temp sites.
 
-See [games/README.md](games/README.md).
+See [games/AGENTS.md](games/AGENTS.md).
 
 ## Prerequisites
 

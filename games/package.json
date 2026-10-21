@@ -12,10 +12,13 @@
   },
   "scripts": {
     "test": "npm test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write \"platform/*/src/**/*.{ts,mjs}\" \"titles/*/src/**/*.ts\"",
+    "format:check": "prettier --check \"platform/*/src/**/*.{ts,mjs}\" \"titles/*/src/**/*.ts\""
   },
   "devDependencies": {
     "@types/node": "24.19.1",
+    "prettier": "3.9.10",
     "typescript": "7.0.2",
     "vite": "8.3.4"
   }

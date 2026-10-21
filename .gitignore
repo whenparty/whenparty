@@ -11,3 +11,6 @@ docker-compose.override.yml
 infra/nginx/conf.d/cloudflare_real_ip.conf
 
 .vscode/
+
+# Claude desktop session files
+.claude/

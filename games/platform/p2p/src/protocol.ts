@@ -1,6 +1,5 @@
-// The wire format. Peers send JSON strings, and everything received is checked before use,
-// because any browser that knows the room code can join and send anything.
-import type {Absence, GameRules, Member, NumberedIntent, Origin, RoomState} from './room-state.ts'
+// The wire format. Anyone with the room code can send anything, so every message is checked before use.
+import type {GameRules, Member, NumberedIntent, RoomState} from './room-state.ts'
 
 export const encode = (value: unknown): string => JSON.stringify(value)
 
@@ -16,15 +15,13 @@ const parse = (data: unknown): unknown => {
   }
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
 const isIntentId = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) > 0
 
 const isMember = (value: unknown): value is Member =>
   isRecord(value) && typeof value.playerId === 'string' && typeof value.peerId === 'string'
 
-// Every player once, and every connection once
 const isMembers = (value: unknown): value is Member[] =>
   Array.isArray(value) &&
   value.length > 0 &&
@@ -32,7 +29,6 @@ const isMembers = (value: unknown): value is Member[] =>
   new Set(value.map(member => member.playerId)).size === value.length &&
   new Set(value.map(member => member.peerId)).size === value.length
 
-// Every seat of the game, each free or held by a member
 const isSeats = (value: unknown, seats: readonly string[], members: Member[]): value is Record<string, string | null> => {
   if (!isRecord(value) || Object.keys(value).length !== seats.length) {
     return false
@@ -44,17 +40,13 @@ const isSeats = (value: unknown, seats: readonly string[], members: Member[]): v
   })
 }
 
-const isOrigin = (value: unknown): value is Origin => value === 'original' || value === 'resumed' || value === 'fresh'
+const isHandled = (value: unknown): value is Record<string, number> => isRecord(value) && Object.values(value).every(isIntentId)
 
-const isHandled = (value: unknown): value is Record<string, number> =>
-  isRecord(value) && Object.values(value).every(isIntentId)
+const isRoomTime = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 0
 
-// Members only, each away or offline
-const isAbsent = (value: unknown, members: Member[]): value is Record<string, Absence> =>
+const isReservations = (value: unknown, members: Member[]): value is Record<string, number> =>
   isRecord(value) &&
-  Object.entries(value).every(
-    ([playerId, absence]) => members.some(member => member.playerId === playerId) && (absence === 'away' || absence === 'offline')
-  )
+  Object.entries(value).every(([playerId, until]) => members.some(member => member.playerId === playerId) && isRoomTime(until))
 
 export const decodeSnapshot = <State, Move>(rules: GameRules<State, Move>, data: unknown): RoomState<State> | null => {
   const value = parse(data)
@@ -63,19 +55,21 @@ export const decodeSnapshot = <State, Move>(rules: GameRules<State, Move>, data:
     return null
   }
 
-  const {members, term, origin, seats, game, handled, absent} = value
+  const {hostId, members, term, seats, game, handled, clock, reservations} = value
 
   if (
-    !isOrigin(origin) ||
+    typeof hostId !== 'string' ||
+    !members.some(member => member.playerId === hostId) ||
     !isSeats(seats, rules.seats, members) ||
     !rules.isState(game) ||
     !isHandled(handled) ||
-    !isAbsent(absent, members)
+    !isRoomTime(clock) ||
+    !isReservations(reservations, members)
   ) {
     return null
   }
 
-  return {members, term: Number(term), origin, seats, game, handled, absent}
+  return {hostId, members, term: Number(term), seats, game, handled, clock, reservations}
 }
 
 export const decodeIntent = <State, Move>(rules: GameRules<State, Move>, data: unknown): NumberedIntent<Move> | null => {
@@ -92,7 +86,6 @@ export const decodeIntent = <State, Move>(rules: GameRules<State, Move>, data: u
   return value.type === 'move' && rules.isMove(value.move) ? {type: 'move', move: value.move, id: value.id} : null
 }
 
-// What a connection says about itself: whose it is, and whether its page is hidden
 export interface Presence {
   playerId: string
   away: boolean

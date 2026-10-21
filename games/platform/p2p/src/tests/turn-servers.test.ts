@@ -8,8 +8,6 @@ const credentials = {
   credential: 'c2VjcmV0',
   ttlSeconds: 86_400
 }
-
-// A fetch that answers with the given responses in turn, and counts its calls
 const fakeFetch = (...answers: Array<() => Promise<Response>>) => {
   let calls = 0
   const fetch = (async () => {
@@ -21,16 +19,17 @@ const fakeFetch = (...answers: Array<() => Promise<Response>>) => {
   return {fetch, calls: () => calls}
 }
 
-const json = (body: unknown, status = 200) => async () => new Response(JSON.stringify(body), {status})
+const json =
+  (body: unknown, status = 200) =>
+  async () =>
+    new Response(JSON.stringify(body), {status})
 
 describe('turnServerLoader', () => {
   it('gives the TURN servers with their credentials', async () => {
     const {fetch} = fakeFetch(json(credentials))
     const load = turnServerLoader('https://signaling.example/turn-credentials', {fetch})
 
-    assert.deepEqual(await load(), [
-      {urls: credentials.urls, username: credentials.username, credential: credentials.credential}
-    ])
+    assert.deepEqual(await load(), [{urls: credentials.urls, username: credentials.username, credential: credentials.credential}])
   })
 
   it('asks again only after half the credentials lifetime, and shares one request', async () => {
@@ -78,11 +77,20 @@ describe('turnServerLoader', () => {
     assert.equal(calls(), 2)
   })
 
-  it('gives up after timeoutMs, so a slow server delays a join only that long', async () => {
+  it('falls back to direct connections when the credential request times out', async t => {
+    const controller = new AbortController()
+    const timeouts: number[] = []
+    t.mock.method(AbortSignal, 'timeout', (milliseconds: number) => {
+      timeouts.push(milliseconds)
+      return controller.signal
+    })
     const fetch = ((_url: string, init?: RequestInit) =>
       new Promise((_, reject) => init?.signal?.addEventListener('abort', () => reject(init.signal?.reason)))) as typeof globalThis.fetch
     const load = turnServerLoader('https://signaling.example/turn-credentials', {fetch, timeoutMs: 20})
+    const pending = load()
 
-    assert.deepEqual(await load(), [])
+    assert.deepEqual(timeouts, [20])
+    controller.abort(new DOMException('Credential request timed out', 'TimeoutError'))
+    assert.deepEqual(await pending, [])
   })
 })

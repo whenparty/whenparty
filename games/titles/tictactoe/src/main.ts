@@ -1,20 +1,24 @@
 import './style.css'
-import {ROOM_CODE_LENGTH, createRoomCode, isFull, normalizeRoomCode, playerIdFrom, roomCodeFromHash, seatOf, startSession} from '@whenparty/p2p'
+import {
+  ROOM_CODE_LENGTH,
+  createRoomCode,
+  isFull,
+  normalizeRoomCode,
+  playerIdFrom,
+  roomCodeFromHash,
+  seatOf,
+  startSession
+} from '@whenparty/p2p'
 import type {Session, SessionOptions, SessionView} from '@whenparty/p2p'
-import {canStartRoom, lostRoom, searchOf, type SearchState} from './search.ts'
+import {lostRoom, searchOf, type SearchState} from './search.ts'
 import {ticTacToe, type TicTacToe} from './tictactoe.ts'
 
 const appId = 'when.party/tictactoe'
-// The same in every tab of this browser, so a reload comes back to its seat and a second tab takes it over
 const playerId = playerIdFrom(() => localStorage)
-// A guest that has not heard from a host by then gets a hint: check the code or the connection
 const hostHintMs = 10_000
-// How often the hint checks the connection to the signaling server again
 const hintRefreshMs = 2_000
-// The room this tab hosts, so that it hosts it again after a reload if nobody else is there
 const hostingKey = 'tictactoe:hosting'
 
-// The room this tab is in
 interface Visit {
   code: string
   session: Session<number> | null
@@ -25,7 +29,6 @@ interface Visit {
 
 let visit: Visit | null = null
 
-// sessionStorage lives as long as the tab and survives a reload. It may be unavailable.
 const hostedRoom = (): string | null => {
   try {
     return sessionStorage.getItem(hostingKey)
@@ -41,13 +44,10 @@ const rememberHosting = (code: string | null) => {
     } else {
       sessionStorage.removeItem(hostingKey)
     }
-  } catch {
-    // Without storage, a reloaded host just comes back as a guest
-  }
+  } catch {}
 }
 
-const isReload = () =>
-  performance.getEntriesByType('navigation').some(entry => (entry as PerformanceNavigationTiming).type === 'reload')
+const isReload = () => performance.getEntriesByType('navigation').some(entry => (entry as PerformanceNavigationTiming).type === 'reload')
 
 const find = <T extends Element>(selector: string): T => {
   const found = document.querySelector<T>(selector)
@@ -68,7 +68,6 @@ const copyLink = find<HTMLButtonElement>('#copy-link')
 const statusText = find<HTMLElement>('#status')
 const hostBadge = find<HTMLElement>('#host-badge')
 const restartButton = find<HTMLButtonElement>('#restart')
-const startRoomButton = find<HTMLButtonElement>('#start-room')
 
 const cells = Array.from({length: 9}, (_, index) => {
   const cell = document.createElement('button')
@@ -85,7 +84,6 @@ const searchStateOf = ({session, view, hostIsLate}: Visit): SearchState => ({
   signalingOpen: session?.isSignalingOpen() ?? true
 })
 
-// Why a guest has not found its room yet
 const describeSearch = (current: Visit): string => {
   const {code} = current
 
@@ -95,18 +93,16 @@ const describeSearch = (current: Visit): string => {
     case 'offline':
       return 'Cannot reach the game server. Check your internet connection.'
     case 'nobody':
-      return `Nobody is hosting ${code} yet. Check the code, or start the room yourself.`
+      return `Nobody is hosting ${code}. Check the code with the room creator.`
     default:
       return `Looking for room ${code}…`
   }
 }
 
-// Who the match waits for, for the status line. Not this tab's own player: it is here.
 const pauseNote = (view: SessionView<TicTacToe>, room: SessionView<TicTacToe>['room'] & object): string | null => {
   const others = room.game.waitingFor.filter(mark => room.seats[mark] !== view.playerId)
   const why = others.map(mark => {
-    const absence = room.absent[room.seats[mark] ?? '']
-    return absence === 'away' ? `${mark} stepped away.` : `${mark} lost the connection.`
+    return `${mark} is away.`
   })
 
   return others.length > 0 ? `Paused. ${why.join(' ')} The game waits for them to come back.` : null
@@ -119,8 +115,8 @@ const describe = (current: Visit): string => {
     return 'The host left, so the game is over.'
   }
 
-  if (view?.switchingHost) {
-    return 'The host left. The next player takes over in a moment…'
+  if (view?.waitingForHost) {
+    return view.room ? 'Waiting for the room creator. The room closes if they are away for two minutes.' : 'Restoring your room…'
   }
 
   if (!view?.room) {
@@ -135,7 +131,8 @@ const describe = (current: Visit): string => {
   const seat = seatOf(view.room, view.playerId)
 
   if (game.abandonedBy) {
-    const over = game.abandonedBy === seat ? 'You were gone too long, so the match is over.' : `${game.abandonedBy} left, so the match is over.`
+    const over =
+      game.abandonedBy === seat ? 'You were gone too long, so the match is over.' : `${game.abandonedBy} left, so the match is over.`
     return isFull(view.room) ? over : `${over} Waiting for a new player to start another one.`
   }
 
@@ -157,7 +154,11 @@ const describe = (current: Visit): string => {
     return pause
   }
 
-  return !seat ? `You are watching. ${game.turn} to move.` : game.turn === seat ? `Your turn. You are ${seat}.` : `You are ${seat}. ${game.turn} to move.`
+  return !seat
+    ? `You are watching. ${game.turn} to move.`
+    : game.turn === seat
+      ? `Your turn. You are ${seat}.`
+      : `You are ${seat}. ${game.turn} to move.`
 }
 
 const render = (current: Visit) => {
@@ -165,9 +166,7 @@ const render = (current: Visit) => {
   const room = view?.room ?? null
   const seat = view && room ? seatOf(room, view.playerId) : null
   const game = room?.game
-  // Moves and rematches need the host, a full room, a seat and the tab that controls the player.
-  // Otherwise the board is read-only.
-  const isLive = Boolean(room && seat && view?.inControl && !view?.hostLeft && !view?.switchingHost && isFull(room))
+  const isLive = Boolean(room && seat && view?.inControl && !view?.hostLeft && !view?.waitingForHost && isFull(room))
   const canMove = isLive && game && !ticTacToe.isOver(game) && game.waitingFor.length === 0 && game.turn === seat
 
   statusText.textContent = describe(current)
@@ -179,13 +178,8 @@ const render = (current: Visit) => {
     cell.classList.toggle('win', game?.line.includes(index) ?? false)
   })
   restartButton.hidden = !(isLive && game && ticTacToe.isOver(game))
-  startRoomButton.hidden = !canStartRoom(searchStateOf(current))
-  startRoomButton.textContent = `Start room ${current.code}`
 }
 
-// The hint waits hostHintMs, then checks the connection to the signaling server again every
-// hintRefreshMs: that can drop and come back without an event. It starts over when the tab has no
-// room again.
 const startHint = (entry: Visit, refresh: () => void) => {
   entry.stopHint()
   entry.hostIsLate = false
@@ -201,11 +195,9 @@ const startHint = (entry: Visit, refresh: () => void) => {
   }
 }
 
-type Entry = Pick<SessionOptions<TicTacToe, number>, 'isHost' | 'rejoinAsHost' | 'provisional'>
+type Entry = Pick<SessionOptions<TicTacToe, number>, 'isHost' | 'rejoinAsHost'>
 
-// rejoinAsHost: this tab hosted the room before it reloaded. provisional: it starts a room under a
-// code someone gave it. See SessionOptions.
-const enterRoom = (code: string, {isHost, rejoinAsHost = false, provisional = false}: Entry) => {
+const enterRoom = (code: string, {isHost, rejoinAsHost = false}: Entry) => {
   const entry: Visit = {code, session: null, view: null, hostIsLate: false, stopHint: () => {}}
   const refresh = () => {
     if (visit === entry) {
@@ -214,7 +206,6 @@ const enterRoom = (code: string, {isHost, rejoinAsHost = false, provisional = fa
   }
 
   visit = entry
-  // The code stays in the URL, so a reload rejoins the room. It goes on under another host meanwhile.
   history.replaceState(null, '', `#${code}`)
   entry.session = startSession({
     appId,
@@ -222,7 +213,6 @@ const enterRoom = (code: string, {isHost, rejoinAsHost = false, provisional = fa
     playerId,
     isHost,
     rejoinAsHost,
-    provisional,
     rules: ticTacToe,
     onChange: view => {
       if (lostRoom(entry.view, view)) {
@@ -287,19 +277,8 @@ copyLink.addEventListener('click', () => {
 })
 
 restartButton.addEventListener('click', () => visit?.session?.send({type: 'restart'}))
-startRoomButton.addEventListener('click', () => {
-  const code = visit?.code
-
-  if (code) {
-    leaveRoom()
-    enterRoom(code, {isHost: true, provisional: true})
-  }
-})
 find('#leave').addEventListener('click', leaveRoom)
 
-// An invite link (https://tictactoe.when.party/#K7MXQ) joins straight away. Opened in a tab that
-// already shows the game, only the hash changes and the page does not reload, so listen for that too.
-// enterRoom and leaveRoom set the hash with replaceState, which fires no hashchange.
 const joinLinkedRoom = (rejoinAsHost: boolean) => {
   const code = roomCodeFromHash(location.hash)
 
@@ -315,6 +294,5 @@ const joinLinkedRoom = (rejoinAsHost: boolean) => {
 }
 
 addEventListener('hashchange', () => joinLinkedRoom(false))
-// A host that reloads comes back with the code in the URL
 const linkedCode = roomCodeFromHash(location.hash)
 joinLinkedRoom(linkedCode !== null && isReload() && hostedRoom() === linkedCode)
