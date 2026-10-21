@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
-import {applyIntent, createRoomState, joinPlayer, type RoomState} from '../room-state.ts'
+import {applyIntent, createRoomState, joinPlayer, type RoomState, type SeatPresence} from '../room-state.ts'
 import {acceptsSnapshot, hostAlone, promote, successorOf, winsTie} from '../succession.ts'
 import {playersOf, tab} from './members.ts'
 import {race, type Race} from './race.ts'
 
-const forfeit = {...race, onSeatLeft: (state: Race, seat: string): Race => ({...state, winner: seat === 'A' ? 'B' : 'A'})}
+const forfeit = {
+  ...race,
+  onPresence: (state: Race, seat: string, presence: SeatPresence): Race =>
+    presence === 'left' ? {...state, winner: seat === 'A' ? 'B' : 'A'} : state
+}
 
 // host (A), guest (B) and a spectator, in that order, after the host's first move
 const room: RoomState<Race> = applyIntent(

@@ -73,7 +73,7 @@ const playRoom = async (seed: number) => {
         rejoinAsHost,
         rules: race,
         takeoverDelayMs,
-        awayHoldMs: takeoverDelayMs * 10,
+        seatHoldMs: takeoverDelayMs * 10,
         onChange: view => views.set(id, view)
       },
       network.transport(id),

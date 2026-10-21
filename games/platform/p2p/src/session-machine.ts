@@ -4,7 +4,7 @@
 // The deadlines a model waits for are part of it (see timersOf): a state that is left takes its
 // timers with it, so no timer outlives the state that set it. session.ts runs it.
 import {decodeIntent, decodePresence, decodeSnapshot, encode} from './protocol.ts'
-import {applyIntent, createRoomState, dropPlayer, hostOf, joinPlayer, memberByPeer, memberByPlayer} from './room-state.ts'
+import {applyIntent, createRoomState, dropPlayer, hostOf, joinPlayer, memberByPeer, memberByPlayer, withAbsent} from './room-state.ts'
 import type {Absence, GameRules, Intent, Member, NumberedIntent, RoomState} from './room-state.ts'
 import {acceptsSnapshot, hostAlone, promote, successorOf, winsTie} from './succession.ts'
 import type {PageEvent} from './transport.ts'
@@ -13,7 +13,7 @@ export interface Config<State, Move> {
   self: Member
   rules: GameRules<State, Move>
   takeoverDelayMs: number
-  awayHoldMs: number
+  seatHoldMs: number
 }
 
 // A host's hold on the place and seat of a member whose link dropped. held: the member is gone,
@@ -272,13 +272,6 @@ const connectedMembers = <State, Move>(draft: Draft<State, Move>): Member[] =>
 const wasJustAway = <State, Move>(draft: Draft<State, Move>) =>
   draft.page.hidden || draft.env.now - draft.page.backAt < draft.config.takeoverDelayMs * 12
 
-// Whether a peer's page is hidden: it said so to this tab, or the host this tab took over from
-// marked it so in its last snapshot, when the word reached that host but not this tab
-const isAway = <State, Move>(draft: Draft<State, Move>, room: RoomState<State>, peerId: string) => {
-  const member = memberByPeer(room, peerId)
-  return draft.peers[peerId]?.away === true || (member !== null && room.absent[member.playerId] === 'away')
-}
-
 // The players that are not here, as the host sees them: whose page is hidden (they said so), or
 // whose link dropped and whose place the host holds
 const absentOf = <State, Move>(draft: Draft<State, Move>, room: RoomState<State>): Record<string, Absence> => {
@@ -311,9 +304,10 @@ const settle = <State, Move>(draft: Draft<State, Move>, room: RoomState<State>) 
 }
 
 // The host broadcasts every new state, even when nothing changed: it puts a guest with a stale
-// view right again. A room that names another host (this player's newer tab) hands it over.
+// view right again. The game hears who went and who came back. A room that names another host
+// (this player's newer tab) hands it over.
 const commit = <State, Move>(draft: Draft<State, Move>, room: RoomState<State>) => {
-  const next = {...room, absent: absentOf(draft, room)}
+  const next = withAbsent(draft.config.rules, room, absentOf(draft, room))
   send(draft, 'snapshot', encode(next))
   settle(draft, next)
 }
@@ -420,21 +414,21 @@ const dropMember = <State, Move>(draft: Draft<State, Move>, peerId: string) => {
   draft.phase = {...draft.phase, room: next, holds: rest}
 }
 
-// A host holds a member whose link dropped for twice the takeover pause: if that member is next
-// in line and takes over meanwhile, its snapshot reaches the others while they still count it as
-// next in line. A member that stepped away is held for awayHoldMs: a phone freezes a hidden page,
-// its links drop, and it comes back when the player returns. A member that said goodbye is
-// dropped at once. Without broadcasting: the caller commits.
+// A host holds a member whose link dropped for seatHoldMs: a reload, a phone that froze a hidden
+// page or a switch from Wi-Fi to mobile data all drop the links, and the player comes back. At
+// least twice the takeover pause: if that member is next in line and takes over meanwhile, its
+// snapshot reaches the others while they still count it as next in line. A member that said
+// goodbye is dropped at once. Without broadcasting: the caller commits.
 const holdOrDrop = <State, Move>(draft: Draft<State, Move>, peerId: string) => {
   if (draft.phase.name !== 'hosting' || !memberByPeer(draft.phase.room, peerId)) {
     return
   }
 
-  const {room, holds} = draft.phase
+  const {holds} = draft.phase
   const {now} = draft.env
-  const {takeoverDelayMs, awayHoldMs} = draft.config
+  const {takeoverDelayMs, seatHoldMs} = draft.config
   const since = holds[peerId]?.since ?? now
-  const until = since + (isAway(draft, room, peerId) ? awayHoldMs : takeoverDelayMs * 2)
+  const until = since + Math.max(seatHoldMs, takeoverDelayMs * 2)
 
   if (draft.peers[peerId]?.bye || until <= now) {
     dropMember(draft, peerId)
@@ -446,8 +440,7 @@ const holdOrDrop = <State, Move>(draft: Draft<State, Move>, peerId: string) => {
 
 // The new host starts from the last snapshot: with the peers it is linked to, and with its own
 // unhandled intent applied. The old host stays a member with its seat, last in line, and is held
-// like any member whose link dropped: for the usual wait, longer if it stepped away, and not at
-// all if it said goodbye. So are the members this tab lost meanwhile.
+// like any member whose link dropped, and not at all if it said goodbye. So are the members this tab lost meanwhile.
 const takeOver = <State, Move>(draft: Draft<State, Move>, room: RoomState<State>) => {
   const promoted = promote(room, selfId(draft))
   draft.phase = {name: 'hosting', room: withPending(draft, connectedMembers(draft).reduce(joinPlayer, promoted)), holds: {}}

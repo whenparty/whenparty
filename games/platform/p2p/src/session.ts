@@ -38,9 +38,10 @@ export interface SessionOptions<State, Move> {
   // How long the next member waits before it takes over from a host whose link dropped.
   // A host that comes back within it keeps the room.
   takeoverDelayMs?: number
-  // How long the room holds the place and seat of a member that stepped away (its page was hidden)
-  // and then lost its link. Default 2 minutes.
-  awayHoldMs?: number
+  // How long the room holds the place and seat of a member whose link dropped: it reloaded, its
+  // network changed, a phone froze its hidden page. Default 1 minute. The game hears of it
+  // (rules.onPresence) and decides whether the match waits.
+  seatHoldMs?: number
 }
 
 export interface Session<Move> {
@@ -52,7 +53,7 @@ export interface Session<Move> {
 }
 
 const defaultTakeoverDelayMs = 2500
-const defaultAwayHoldMs = 120_000
+const defaultSeatHoldMs = 60_000
 
 interface Connection {
   room: SessionRoom
@@ -73,7 +74,7 @@ export const startSession = <State, Move>(
     self: {playerId, peerId: transport.selfId},
     rules,
     takeoverDelayMs: options.takeoverDelayMs ?? defaultTakeoverDelayMs,
-    awayHoldMs: options.awayHoldMs ?? defaultAwayHoldMs
+    seatHoldMs: options.seatHoldMs ?? defaultSeatHoldMs
   }
   const start = {isHost: options.isHost, rejoinAsHost: options.rejoinAsHost ?? false, provisional: options.provisional ?? false}
   let model = initialModel<State, Move>(config, start, Date.now())
