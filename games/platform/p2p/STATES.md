@@ -119,10 +119,12 @@ A link that comes up forgets the peer's player and `bye` until it says them agai
 
 | State | Entry | Deadline | Exits |
 | --- | --- | --- | --- |
-| `held` | a member's link drops; `since` kept if still settling | `since + awayHoldMs` if away (its presence or the last `absent`), else `since + 2T`; dropped at once after `bye` or if already past | deadline → drop (or move the player to its other tab); link back → `settling`; `bye` → drop |
+| `held` | a member's link drops; `since` kept if still settling | `since + max(seatHoldMs, 2T)`; dropped at once after `bye` or if already past | deadline → drop (or move the player to its other tab); link back → `settling`; `bye` → drop |
 | `settling` | link back | `+2T` | deadline → forgotten; link drops → `held`, same `since` |
 
 `held` shows as `offline` in `absent`. Holds end with `hosting`.
+
+Every commit works `absent` out again (`withAbsent`), and tells the game (`rules.onPresence`) of each seat whose player went (`lost`) or came back (`back`). A member that is dropped tells it `left` (`dropPlayer`).
 
 ## Pending Intent (guest)
 

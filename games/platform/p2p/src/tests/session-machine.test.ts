@@ -7,7 +7,7 @@ import {tab} from './members.ts'
 import {race, type Race} from './race.ts'
 
 const takeoverDelayMs = 100
-const config = {self: tab('b'), rules: race, takeoverDelayMs, awayHoldMs: 1000}
+const config = {self: tab('b'), rules: race, takeoverDelayMs, seatHoldMs: 1000}
 const guest = (now = 0) => initialModel(config, {isHost: false, rejoinAsHost: false, provisional: false}, now)
 const host = (now = 0) => initialModel({...config, self: tab('a')}, {isHost: true, rejoinAsHost: false, provisional: false}, now)
 
@@ -52,8 +52,8 @@ describe('step', () => {
 
     assert.equal(hosting.phase.name, 'hosting')
     assert.equal(hosting.phase.name === 'hosting' && hosting.phase.room.term, 1)
-    // a is held for twice the pause, and is the only deadline left
-    assert.deepEqual([...timersOf(hosting)], [['hold:a', 10 + takeoverDelayMs + takeoverDelayMs * 2]])
+    // a is held for seatHoldMs, and is the only deadline left
+    assert.deepEqual([...timersOf(hosting)], [['hold:a', 10 + takeoverDelayMs + config.seatHoldMs]])
   })
 
   it('ignores a deadline it no longer waits for, or that is not due yet', () => {

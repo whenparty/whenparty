@@ -11,10 +11,16 @@ export interface GameRules<State, Move> {
   isOver: (state: State) => boolean
   isMove: (value: unknown) => value is Move
   isState: (value: unknown) => value is State
-  // Called when the player in a seat leaves (the host too), for example to skip their turn or
-  // end the game. Then the seat goes to the first member without one, or stays free.
-  onSeatLeft?: (state: State, seat: string) => State
+  // Called when the presence of the player in a seat changes (the host's too), so the game decides
+  // what to do with the match: wait, skip their turn, end it. The platform itself never stops a
+  // game. After left, the seat goes to the first member without one, or stays free.
+  onPresence?: (state: State, seat: string, presence: SeatPresence) => State
 }
+
+// lost: the player is not here (its page is hidden, or its link dropped and the host holds its
+// seat). back: it is here again, on the same connection or a new one. left: it is gone for good
+// (it left, or its seat was held for as long as the room holds it), and the seat is free.
+export type SeatPresence = 'lost' | 'back' | 'left'
 
 // A player in the room, with the connection that controls it. The player stays the same across
 // tabs, reloads and connections (see player-id.ts); the peer is one tab's connection to the room.
@@ -155,9 +161,38 @@ export const dropPlayer = <State, Move>(
   }
 
   // The game sees the seat left before it goes to someone else
-  const game = rules.onSeatLeft ? rules.onSeatLeft(room.game, seat) : room.game
+  const game = rules.onPresence ? rules.onPresence(room.game, seat, 'left') : room.game
 
   return fillSeats({...room, members, handled, absent, game, seats: {...room.seats, [seat]: null}})
+}
+
+// The seats whose player is absent
+const absentSeats = (room: RoomState<unknown>, absent: Record<string, Absence>): string[] =>
+  Object.keys(room.seats).filter(seat => {
+    const playerId = room.seats[seat]
+    return playerId !== null && playerId !== undefined && absent[playerId] !== undefined
+  })
+
+// The room with who is absent now, as the host sees it. The game hears of every seat whose
+// player was absent and is no more, or the other way round.
+export const withAbsent = <State, Move>(
+  rules: GameRules<State, Move>,
+  room: RoomState<State>,
+  absent: Record<string, Absence>
+): RoomState<State> => {
+  const {onPresence} = rules
+
+  if (!onPresence) {
+    return {...room, absent}
+  }
+
+  const before = new Set(absentSeats(room, room.absent))
+  const after = new Set(absentSeats(room, absent))
+  const game = Object.keys(room.seats)
+    .filter(seat => before.has(seat) !== after.has(seat))
+    .reduce((state, seat) => onPresence(state, seat, after.has(seat) ? 'lost' : 'back'), room.game)
+
+  return {...room, absent, game}
 }
 
 const applyToGame = <State, Move>(
@@ -166,8 +201,15 @@ const applyToGame = <State, Move>(
   seat: string,
   intent: Intent<Move>
 ): State => {
+  // A new game starts knowing who is not here
   if (intent.type === 'restart') {
-    return rules.isOver(room.game) ? rules.createState() : room.game
+    if (!rules.isOver(room.game)) {
+      return room.game
+    }
+
+    const {onPresence} = rules
+    const fresh = rules.createState()
+    return onPresence ? absentSeats(room, room.absent).reduce((state, each) => onPresence(state, each, 'lost'), fresh) : fresh
   }
 
   return rules.applyMove(room.game, seat, intent.move) ?? room.game
