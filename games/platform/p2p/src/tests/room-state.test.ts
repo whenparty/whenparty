@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
-import {applyIntent, createRoomState, dropPlayer, joinPlayer, seatOf, type RoomState} from '../room-state.ts'
+import {applyIntent, createRoomState, dropPlayer, joinPlayer, seatOf, withAbsent, type GameRules, type RoomState, type SeatPresence} from '../room-state.ts'
 import {playersOf, tab} from './members.ts'
 import {race, type Race} from './race.ts'
 
 // The player who stays wins when the other one leaves
-const forfeit = {...race, onSeatLeft: (state: Race, seat: string): Race => ({...state, winner: seat === 'A' ? 'B' : 'A'})}
+const forfeit = {
+  ...race,
+  onPresence: (state: Race, seat: string, presence: SeatPresence): Race =>
+    presence === 'left' ? {...state, winner: seat === 'A' ? 'B' : 'A'} : state
+}
 
 const fullRoom = (): RoomState<Race> => joinPlayer(createRoomState(race, tab('host')), tab('guest'))
 
@@ -144,6 +148,51 @@ describe('dropPlayer', () => {
 
     assert.equal(seatOf(rejoined, 'new-guest'), 'B')
     assert.equal(rejoined.game.total, 2)
+  })
+})
+
+// Writes down what the game hears
+const listening = () => {
+  const heard: string[] = []
+  const rules: GameRules<Race, number> = {
+    ...race,
+    onPresence: (state, seat, presence) => {
+      heard.push(`${seat} ${presence}`)
+      return {...state}
+    }
+  }
+
+  return {heard, rules}
+}
+
+describe('withAbsent', () => {
+  it('tells the game when a seated player goes and when it comes back', () => {
+    const {heard, rules} = listening()
+    const lost = withAbsent(rules, fullRoom(), {guest: 'offline'})
+    const still = withAbsent(rules, lost, {guest: 'away'})
+    const back = withAbsent(rules, still, {})
+
+    assert.deepEqual(heard, ['B lost', 'B back'])
+    assert.deepEqual(lost.absent, {guest: 'offline'})
+    assert.equal(still.game, lost.game)
+    assert.deepEqual(back.absent, {})
+  })
+
+  it('tells the game nothing about spectators', () => {
+    const {heard, rules} = listening()
+    const room = joinPlayer(fullRoom(), tab('spectator'))
+
+    assert.equal(withAbsent(rules, room, {spectator: 'away'}).game, room.game)
+    assert.deepEqual(heard, [])
+  })
+
+  it('starts a rematch knowing who is not here', () => {
+    const {heard, rules} = listening()
+    const over = {...withAbsent(rules, fullRoom(), {guest: 'offline'}), game: {total: 5, turn: 'B' as const, winner: 'A' as const}}
+
+    applyIntent(rules, over, 'host', {type: 'restart', id: ++intentId})
+
+    assert.deepEqual(heard, ['B lost', 'B lost'])
   })
 })
 
