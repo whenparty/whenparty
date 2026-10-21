@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
 import {createGame, isTicTacToe, notePresence, play, ticTacToe, type TicTacToe} from '../tictactoe.ts'
 
-// Plays the cells in order, X first, and fails the test on any rejected move
+const seated = (occupiedSeats: string[]) => ({occupiedSeats, absentSeats: [], now: 0})
 const playAll = (cells: number[]): TicTacToe =>
   cells.reduce((game, cell) => {
     const next = play(game, game.turn, cell)
@@ -12,7 +12,9 @@ const playAll = (cells: number[]): TicTacToe =>
 
 describe('createGame', () => {
   it('starts with an empty board and X to move', () => {
-    assert.deepEqual(createGame(), {
+    const game = createGame()
+    assert.equal(ticTacToe.isOver(game), false)
+    assert.deepEqual(game, {
       board: [null, null, null, null, null, null, null, null, null],
       turn: 'X',
       winner: null,
@@ -55,6 +57,7 @@ describe('play', () => {
   it('detects a row', () => {
     const game = playAll([0, 3, 1, 4, 2])
 
+    assert.equal(ticTacToe.isOver(game), true)
     assert.equal(game.winner, 'X')
     assert.deepEqual(game.line, [0, 1, 2])
   })
@@ -62,6 +65,7 @@ describe('play', () => {
   it('detects a column', () => {
     const game = playAll([0, 1, 3, 4, 8, 7])
 
+    assert.equal(ticTacToe.isOver(game), true)
     assert.equal(game.winner, 'O')
     assert.deepEqual(game.line, [1, 4, 7])
   })
@@ -69,6 +73,7 @@ describe('play', () => {
   it('detects a diagonal', () => {
     const game = playAll([2, 0, 4, 1, 6])
 
+    assert.equal(ticTacToe.isOver(game), true)
     assert.equal(game.winner, 'X')
     assert.deepEqual(game.line, [2, 4, 6])
   })
@@ -76,6 +81,7 @@ describe('play', () => {
   it('calls a full board without a line a draw', () => {
     const game = playAll([0, 1, 2, 4, 3, 5, 7, 6, 8])
 
+    assert.equal(ticTacToe.isOver(game), true)
     assert.equal(game.winner, 'draw')
     assert.deepEqual(game.line, [])
   })
@@ -83,6 +89,7 @@ describe('play', () => {
   it('counts a line made with the last free cell as a win', () => {
     const game = playAll([0, 2, 1, 3, 4, 6, 5, 7, 8])
 
+    assert.equal(ticTacToe.isOver(game), true)
     assert.equal(game.winner, 'X')
     assert.deepEqual(game.line, [0, 4, 8])
   })
@@ -120,8 +127,12 @@ describe('notePresence', () => {
     assert.equal(play(left, 'O', 4), null)
   })
 
-  it('lets the seat go to the next player before the first move', () => {
-    assert.equal(notePresence(createGame(), 'O', 'left').abandonedBy, null)
+  it('ends a match once both players joined, even before the first move', () => {
+    assert.equal(notePresence(createGame(), 'O', 'left').abandonedBy, 'O')
+  })
+
+  it('keeps the lobby open while the second seat has never been filled', () => {
+    assert.equal(notePresence(createGame(), 'X', 'left', ['X']).abandonedBy, null)
   })
 
   it('keeps the result of a match that was over', () => {
@@ -162,10 +173,6 @@ describe('isTicTacToe', () => {
 })
 
 describe('ticTacToe rules', () => {
-  it('seats X and O', () => {
-    assert.deepEqual(ticTacToe.seats, ['X', 'O'])
-  })
-
   it('accepts board cells as moves', () => {
     assert.equal(ticTacToe.isMove(0), true)
     assert.equal(ticTacToe.isMove(8), true)
@@ -175,21 +182,16 @@ describe('ticTacToe rules', () => {
     }
   })
 
-  it('lets only the seat whose turn it is move', () => {
-    assert.ok(ticTacToe.applyMove(createGame(), 'X', 0))
-    assert.equal(ticTacToe.applyMove(createGame(), 'O', 0), null)
-    assert.equal(ticTacToe.applyMove(createGame(), 'spectator', 0), null)
-  })
-
-  it('is over once there is a winner or a draw', () => {
-    assert.equal(ticTacToe.isOver(createGame()), false)
-    assert.equal(ticTacToe.isOver(playAll([0, 3, 1, 4, 2])), true)
+  it('requires both seated players and rejects spectators', () => {
+    assert.ok(ticTacToe.applyMove(createGame(), 'X', 0, seated(['X', 'O'])))
+    assert.equal(ticTacToe.applyMove(createGame(), 'spectator', 0, seated(['X', 'O'])), null)
+    assert.equal(ticTacToe.applyMove(createGame(), 'X', 0, seated(['X'])), null)
   })
 
   it('hears only about its own seats', () => {
     const game = createGame()
 
-    assert.equal(ticTacToe.onPresence?.(game, 'spectator', 'lost'), game)
-    assert.deepEqual(ticTacToe.onPresence?.(game, 'O', 'lost').waitingFor, ['O'])
+    assert.deepEqual(ticTacToe.onPresence?.(game, 'spectator', 'lost', seated(['X', 'O'])), game)
+    assert.deepEqual(ticTacToe.onPresence?.(game, 'O', 'lost', seated(['X', 'O'])).waitingFor, ['O'])
   })
 })

@@ -1,6 +1,6 @@
 // Who this browser is: a random ID kept in localStorage, so every tab of one browser is the same
-// player, before and after a reload. A room keeps a player's place and seat across its connections
-// (see README.md). Without storage, each page load is a new player.
+// player, before and after a reload. A room keeps a player's place and seat across its connections.
+// Without storage, each page load is a new player.
 const key = 'whenparty:player'
 
 // getStorage: () => localStorage. Reading it, or the storage, may throw in a sandboxed page.

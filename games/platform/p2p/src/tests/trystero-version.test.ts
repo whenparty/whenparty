@@ -11,8 +11,6 @@ const trysteroVersion = (manifestPath: string) => {
 
   return manifest.dependencies?.['@trystero-p2p/ws-relay']
 }
-
-// The games and the signaling server must speak the same Trystero protocol
 it('uses the same Trystero version as the signaling server', () => {
   const version = trysteroVersion('../../package.json')
 

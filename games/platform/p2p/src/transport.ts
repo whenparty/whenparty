@@ -21,10 +21,4 @@ export interface Transport {
   onPageEvent?: (callback: (event: PageEvent) => void) => () => void
 }
 
-// leaving: beforeunload. The page may still stay: the user can cancel, and a slow navigation
-// keeps it a while. gone: pagehide, the page goes away or into the back-forward cache. Mobile
-// browsers often skip beforeunload (iOS Safari always does), but fire pagehide. shown: the page
-// is back from the back-forward cache. away and back: the page was hidden (minimized, another tab
-// or app, the screen off) and shown again. A hidden page keeps running, but a phone soon freezes
-// it, and its links drop.
-export type PageEvent = 'leaving' | 'gone' | 'shown' | 'away' | 'back'
+export type PageEvent = 'gone' | 'shown' | 'away' | 'back'

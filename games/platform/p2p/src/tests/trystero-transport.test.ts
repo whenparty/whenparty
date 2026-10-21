@@ -6,7 +6,7 @@ import {onPageEvents} from '../trystero-transport.ts'
 describe('onPageEvents', () => {
   const pageShow = (persisted: boolean) => Object.assign(new Event('pageshow'), {persisted})
 
-  it('reports beforeunload, pagehide and a page back from the back-forward cache, until it is stopped', () => {
+  it('reports pagehide and a page back from the back-forward cache, until it is stopped', () => {
     const page = new EventTarget()
     const events: PageEvent[] = []
     const stop = onPageEvents(page, () => false)(event => events.push(event))
@@ -19,20 +19,20 @@ describe('onPageEvents', () => {
     page.dispatchEvent(new Event('pagehide'))
     page.dispatchEvent(pageShow(true))
 
-    assert.deepEqual(events, ['leaving', 'gone', 'shown'])
+    assert.deepEqual(events, ['gone', 'shown'])
   })
 
-  it('reports the page going away and back as its visibility changes', () => {
+  it('reports an initially hidden page and later visibility changes', async () => {
     const page = new EventTarget()
     const events: PageEvent[] = []
-    let hidden = false
+    let hidden = true
     onPageEvents(page, () => hidden)(event => events.push(event))
 
-    hidden = true
+    await Promise.resolve()
     page.dispatchEvent(new Event('visibilitychange'))
     hidden = false
     page.dispatchEvent(new Event('visibilitychange'))
 
-    assert.deepEqual(events, ['away', 'back'])
+    assert.deepEqual(events, ['away', 'away', 'back'])
   })
 })

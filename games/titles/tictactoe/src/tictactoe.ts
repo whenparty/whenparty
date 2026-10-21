@@ -62,15 +62,19 @@ export const play = (game: TicTacToe, mark: Mark, cell: number): TicTacToe | nul
 }
 
 // The match waits for a player that is not here. One that is gone for good ends a match in
-// progress. Before the first move, its seat just goes to the next player.
-export const notePresence = (game: TicTacToe, mark: Mark, presence: SeatPresence): TicTacToe => {
+// progress, including the time before the first move once both seats are occupied.
+export const notePresence = (game: TicTacToe, mark: Mark, presence: SeatPresence, occupiedSeats: readonly string[] = marks): TicTacToe => {
+  if (isOver(game)) {
+    return game
+  }
+
   const waitingFor = game.waitingFor.filter(each => each !== mark)
 
   if (presence === 'lost') {
     return {...game, waitingFor: [...waitingFor, mark]}
   }
 
-  const started = game.board.some(Boolean)
+  const started = marks.every(each => occupiedSeats.includes(each))
 
   return {...game, waitingFor, abandonedBy: presence === 'left' && started && !isOver(game) ? mark : game.abandonedBy}
 }
@@ -99,9 +103,10 @@ export const isTicTacToe = (value: unknown): value is TicTacToe => {
 export const ticTacToe: GameRules<TicTacToe, number> = {
   seats: marks,
   createState: createGame,
-  applyMove: (game, seat, cell) => (isMark(seat) ? play(game, seat, cell) : null),
+  applyMove: (game, seat, cell, {occupiedSeats}) =>
+    marks.every(mark => occupiedSeats.includes(mark)) && isMark(seat) ? play(game, seat, cell) : null,
   isOver,
-  onPresence: (game, seat, presence) => (isMark(seat) ? notePresence(game, seat, presence) : game),
+  onPresence: (game, seat, presence, {occupiedSeats}) => (isMark(seat) ? notePresence(game, seat, presence, occupiedSeats) : game),
   isMove: isCellIndex,
   isState: isTicTacToe
 }

@@ -11,8 +11,13 @@ import {turnServerLoader, type TurnServer} from './turn-servers.ts'
 export const onPageEvents =
   (page: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>, isHidden: () => boolean) =>
   (callback: (event: PageEvent) => void): (() => void) => {
+    let stopped = false
+    if (isHidden())
+      queueMicrotask(() => {
+        if (!stopped) callback('away')
+      })
+
     const listeners: Record<string, (event: Event) => void> = {
-      beforeunload: () => callback('leaving'),
       pagehide: () => callback('gone'),
       pageshow: event => {
         if ((event as PageTransitionEvent).persisted) {
@@ -24,7 +29,10 @@ export const onPageEvents =
     }
 
     Object.entries(listeners).forEach(([type, listener]) => page.addEventListener(type, listener))
-    return () => Object.entries(listeners).forEach(([type, listener]) => page.removeEventListener(type, listener))
+    return () => {
+      stopped = true
+      Object.entries(listeners).forEach(([type, listener]) => page.removeEventListener(type, listener))
+    }
   }
 
 let loadTurnServers: (() => Promise<TurnServer[]>) | null = null
@@ -46,7 +54,6 @@ export const trystero: Transport = joinAfterLeave({
       })
     )
   },
-  isSignalingOpen: () =>
-    Object.values(getRelaySockets() as Record<string, WebSocket>).some(socket => socket.readyState === WebSocket.OPEN),
+  isSignalingOpen: () => Object.values(getRelaySockets() as Record<string, WebSocket>).some(socket => socket.readyState === WebSocket.OPEN),
   onPageEvent: onPageEvents(globalThis, () => document.visibilityState === 'hidden')
 })

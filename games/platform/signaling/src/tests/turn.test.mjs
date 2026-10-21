@@ -49,8 +49,7 @@ describe('GET /turn-credentials', () => {
 
   after(() => Promise.all([server.close(), serverWithoutTurn.close()]))
 
-  const get = (port, origin) =>
-    fetch(`http://127.0.0.1:${port}/turn-credentials`, {headers: origin ? {origin} : {}})
+  const get = (port, origin) => fetch(`http://127.0.0.1:${port}/turn-credentials`, {headers: origin ? {origin} : {}})
 
   it('hands a game page credentials that nothing may cache', async () => {
     const response = await get(server.port, 'https://tictactoe.when.party')

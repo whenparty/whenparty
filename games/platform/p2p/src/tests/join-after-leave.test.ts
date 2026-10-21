@@ -5,8 +5,6 @@ import {joinAfterLeave, joinWhenReady} from '../join-after-leave.ts'
 import type {SessionRoom, Transport} from '../transport.ts'
 
 type Handler = NonNullable<MessageAction<string>['onMessage']>
-
-// A transport whose rooms leave when the test says so, and that records joins
 const createTransport = () => {
   const joins: string[] = []
   const rooms: Array<{room: SessionRoom; handlers: Map<string, Handler>; finishLeave: (error?: Error) => void}> = []

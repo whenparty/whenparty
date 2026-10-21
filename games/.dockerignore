@@ -1,4 +1,4 @@
-# Build context of every image in games/ (see README.md)
+# Build context of every image in games/
 **/node_modules
 **/dist
 **/tests

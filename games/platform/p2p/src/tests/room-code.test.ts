@@ -3,19 +3,23 @@ import {describe, it} from 'node:test'
 import {ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, createRoomCode, normalizeRoomCode, roomCodeFromHash} from '../room-code.ts'
 
 describe('createRoomCode', () => {
-  it('makes codes of the room code length from the alphabet', () => {
-    for (let index = 0; index < 100; index++) {
-      const code = createRoomCode()
+  it('creates valid invite codes for the full random input range', () => {
+    const sources = [
+      (length: number) => new Uint32Array(length),
+      (length: number) => new Uint32Array(length).fill(0xffff_ffff),
+      (length: number) => Uint32Array.from({length}, (_, index) => index * 1_000_003)
+    ]
+
+    for (const source of sources) {
+      const code = createRoomCode(source)
 
       assert.equal(code.length, ROOM_CODE_LENGTH)
-      assert.ok([...code].every(char => ROOM_CODE_ALPHABET.includes(char)), code)
+      assert.ok(
+        [...code].every(char => ROOM_CODE_ALPHABET.includes(char)),
+        code
+      )
+      assert.equal(roomCodeFromHash(`#${code}`), code)
     }
-  })
-
-  it('picks each character from the random source', () => {
-    const counting = (length: number) => Uint32Array.from({length}, (_, index) => index)
-
-    assert.equal(createRoomCode(counting), ROOM_CODE_ALPHABET.slice(0, ROOM_CODE_LENGTH))
   })
 
   it('leaves out characters that are easy to misread', () => {

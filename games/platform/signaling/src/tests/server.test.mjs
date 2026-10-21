@@ -6,8 +6,7 @@ import {startSignalingServer} from '../server.mjs'
 
 const gameOrigin = 'https://chess.when.party'
 
-const connect = (port, options = {}) =>
-  new WebSocket(`ws://127.0.0.1:${port}`, {origin: gameOrigin, ...options})
+const connect = (port, options = {}) => new WebSocket(`ws://127.0.0.1:${port}`, {origin: gameOrigin, ...options})
 
 const openSocket = async (port, options) => {
   const socket = connect(port, options)
@@ -20,6 +19,13 @@ const send = (socket, message) => socket.send(JSON.stringify(message))
 const nextMessage = async socket => {
   const [data] = await once(socket, 'message')
   return JSON.parse(data.toString())
+}
+
+const subscribe = async (socket, topic = 'room-1') => {
+  const ready = nextMessage(socket)
+  send(socket, {type: 'subscribe', topic})
+  send(socket, {type: 'publish', topic, payload: 'ready'})
+  assert.deepEqual(await ready, {topic, payload: 'ready'})
 }
 
 describe('signaling server', () => {
@@ -47,11 +53,7 @@ describe('signaling server', () => {
   it('delivers a published message to the subscribers of its topic', async () => {
     const subscriber = await openSocket(server.port)
     const publisher = await openSocket(server.port)
-
-    // The server echoes to every subscriber, so this echo proves the subscription is in place
-    send(subscriber, {type: 'subscribe', topic: 'room-1'})
-    send(subscriber, {type: 'publish', topic: 'room-1', payload: 'ready'})
-    await nextMessage(subscriber)
+    await subscribe(subscriber)
 
     const received = nextMessage(subscriber)
     send(publisher, {type: 'publish', topic: 'room-1', payload: {move: 'e4'}})
@@ -130,19 +132,13 @@ describe('signaling server limits', () => {
     const subscriber = await openSocket(server.port)
     const publisher = await openSocket(server.port)
     const received = []
-
-    // The subscriber spends its 3 messages on the subscription and two echoes
-    send(subscriber, {type: 'subscribe', topic: 'room-1'})
-    send(subscriber, {type: 'publish', topic: 'room-1', payload: 'ready'})
-    await nextMessage(subscriber)
+    await subscribe(subscriber)
     subscriber.on('message', data => received.push(JSON.parse(data.toString()).payload))
 
     for (const payload of [1, 2, 3, 4, 5]) {
       send(publisher, {type: 'publish', topic: 'room-1', payload})
     }
     const [code] = await once(publisher, 'close')
-
-    // The echo comes after everything the server relayed from the publisher
     send(subscriber, {type: 'publish', topic: 'room-1', payload: 'done'})
     await once(subscriber, 'message')
 
@@ -151,17 +147,22 @@ describe('signaling server limits', () => {
     subscriber.close()
   })
 
-  it('refills the message budget over time', async t => {
+  it('accepts another burst after its message budget refills', async t => {
+    let now = 0
+    t.mock.method(performance, 'now', () => now)
     const server = await startWith(t, {messageBurst: 2, messagesPerSecond: 100})
     const socket = await openSocket(server.port)
+    await subscribe(socket)
 
     for (let round = 0; round < 3; round++) {
-      send(socket, {type: 'subscribe', topic: 'room-1'})
-      send(socket, {type: 'unsubscribe', topic: 'room-1'})
-      await new Promise(resolve => setTimeout(resolve, 50))
+      now += 20
+      for (const payload of [1, 2]) {
+        const received = nextMessage(socket)
+        send(socket, {type: 'publish', topic: 'room-1', payload})
+        assert.deepEqual(await received, {topic: 'room-1', payload})
+      }
     }
 
-    assert.equal(socket.readyState, WebSocket.OPEN)
     socket.close()
   })
 })

@@ -1,6 +1,6 @@
 name: games-turn
 
-# coturn for the P2P games (see README.md). It listens on the host's network: relaying needs a
+# coturn for the P2P games (see AGENTS.md). It listens on the host's network: relaying needs a
 # port per allocation, and publishing a range of ports through Docker is slow and hides the
 # clients' real addresses. The firewall opens 3478/udp, 3478/tcp and 49152-49407/udp.
 services:
