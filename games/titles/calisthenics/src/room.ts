@@ -16,7 +16,11 @@ export interface Visit {
   code: string
   view: SessionView<Championship> | null
   search: Search
+  receivedAt: number
 }
+
+export const visitNow = (visit: Visit | null) =>
+  (visit?.view?.room?.clock ?? 0) + (visit ? Math.max(0, performance.now() - visit.receivedAt) : 0)
 
 export interface Room {
   create: () => void
@@ -42,14 +46,13 @@ const rememberHosting = (code: string | null) => {
   } catch {}
 }
 
-const isReload = () => performance.getEntriesByType('navigation').some(entry => (entry as PerformanceNavigationTiming).type === 'reload')
-
 interface Current {
   code: string
   session: Session<Move> | null
   view: SessionView<Championship> | null
   hostIsLate: boolean
   stopHint: () => void
+  receivedAt: number
 }
 
 const searchOf = ({session, view, hostIsLate}: Current): Search => {
@@ -71,7 +74,7 @@ export const openRoom = (onChange: (visit: Visit | null) => void): Room => {
 
   const publish = (entry: Current) => {
     if (current === entry) {
-      onChange({code: entry.code, view: entry.view, search: searchOf(entry)})
+      onChange({code: entry.code, view: entry.view, search: searchOf(entry), receivedAt: entry.receivedAt})
     }
   }
 
@@ -91,7 +94,7 @@ export const openRoom = (onChange: (visit: Visit | null) => void): Room => {
   }
 
   const enter = (code: string, isHost: boolean, rejoinAsHost = false) => {
-    const entry: Current = {code, session: null, view: null, hostIsLate: false, stopHint: () => {}}
+    const entry: Current = {code, session: null, view: null, hostIsLate: false, stopHint: () => {}, receivedAt: performance.now()}
 
     current = entry
     history.replaceState(null, '', `#${code}`)
@@ -103,6 +106,7 @@ export const openRoom = (onChange: (visit: Visit | null) => void): Room => {
       rejoinAsHost,
       rules: calisthenics,
       onChange: view => {
+        if (entry.view?.room !== view.room) entry.receivedAt = performance.now()
         if (entry.view?.room && !view.room) {
           startHint(entry)
         }
@@ -145,7 +149,7 @@ export const openRoom = (onChange: (visit: Visit | null) => void): Room => {
 
   addEventListener('hashchange', () => joinLinked(false))
   const linked = roomCodeFromHash(location.hash)
-  joinLinked(linked !== null && isReload() && hostedRoom() === linked)
+  joinLinked(linked !== null && hostedRoom() === linked)
 
   return {
     create: () => enter(createRoomCode(), true),

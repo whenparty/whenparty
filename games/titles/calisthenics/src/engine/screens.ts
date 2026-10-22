@@ -50,14 +50,23 @@ export const athletesOf = (state: Championship): AthleteRow[] =>
     left
   }))
 
-export const standingsOf = (state: Championship): AthleteRow[] => athletesOf(state).sort((a, b) => b.points - a.points)
+export const standingsOf = (state: Championship): AthleteRow[] =>
+  state.performance ? [] : athletesOf(state).sort((a, b) => b.points - a.points)
+
+export const podiumOf = (state: Championship): (AthleteRow & {place: number | null})[] => {
+  const rows = standingsOf(state)
+  const totals = [...new Set(rows.map(row => row.points))].slice(0, 3)
+  return rows.map(row => ({...row, place: totals.includes(row.points) ? totals.indexOf(row.points) + 1 : null}))
+}
 
 export const resultsOf = (state: Championship): ResultRow[] =>
-  state.athletes.flatMap(({seat, profile, result}) =>
-    result
-      ? [{seat, profile, trained: result.trained, score: result.score, completion: completionOf(result.score), short: result.short}]
-      : []
-  )
+  state.athletes
+    .slice(0, state.performance?.index ?? state.athletes.length)
+    .flatMap(({seat, profile, result}) =>
+      result
+        ? [{seat, profile, trained: result.trained, score: result.score, completion: completionOf(result.score), short: result.short}]
+        : []
+    )
 
 export const previewOf = (state: Championship, athlete: Athlete, plan: Plan): Preview => ({
   challenge: currentChallenge(state).name,

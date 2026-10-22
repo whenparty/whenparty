@@ -1,0 +1,13 @@
+Calisthenics character and animation assets
+
+Source: Mesh2Motion / Quaternius, CC0.
+https://github.com/Mesh2Motion/mesh2motion-app
+https://mesh2motion.org/#features
+https://quaternius.com/
+
+The athlete.glb model is repacked from static/animations/human-addon-animations.glb.
+Included clips: Idle_Subtle, Pushup, Kneeling Tired, Victory Fist Pump,
+Confused, Tired Hunched and Death_B. Unused animation buffers and texture references are removed.
+
+The application supplies its own face, hair, clothing colors and muscle morphs.
+Three.js is distributed through the package manager under the MIT license.
