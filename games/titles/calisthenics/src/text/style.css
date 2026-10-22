@@ -194,3 +194,21 @@ ol.list {
   margin-left: 1rem;
   text-align: right;
 }
+
+.performance-card {
+  padding: 18px;
+  border: 1px solid #b9c9dc;
+  border-radius: 10px;
+  background: #e9eef4;
+  margin: 18px 0;
+}
+.performance-card h3 {
+  margin: 8px 0;
+  font-size: 23px;
+}
+#performance-clock {
+  font-variant-numeric: tabular-nums;
+}
+#next-athlete {
+  width: 100%;
+}
