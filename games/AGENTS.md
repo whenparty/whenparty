@@ -3,9 +3,10 @@
 - [platform/p2p](platform/p2p/AGENTS.md) owns browser connections and room state.
 - [platform/signaling](platform/signaling/AGENTS.md) discovers peers and issues TURN credentials.
 - [platform/turn](platform/turn/AGENTS.md) relays WebRTC traffic when direct connections fail.
-- [titles/tictactoe](titles/tictactoe/AGENTS.md) contains the first game and its rules.
 
-Games own match rules and results. Shared platform code owns transport and participant lifecycle. Keep title-specific decisions inside the title. Each title needs a unique `appId` and deployment name.
+[titles/](titles/AGENTS.md) holds the games and lists them.
+
+Games own match rules and results. Shared platform code owns transport and participant lifecycle.
 
 ## Verification
 
