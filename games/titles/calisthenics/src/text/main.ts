@@ -103,16 +103,28 @@ const item = (title: string, detail = '') => {
   return li
 }
 
+const playerRow = (label: string, tags: string, value: string) => {
+  const li = item(label, tags)
+  const right = document.createElement('span')
+  right.className = 'value'
+  right.textContent = value
+  li.classList.add('split')
+  li.prepend(right)
+  return li
+}
+
 const entry = find<HTMLElement>('#entry')
 const codeInput = find<HTMLInputElement>('#code')
 const joinError = find<HTMLElement>('#join-error')
 const gameSection = find<HTMLElement>('#game')
+const roomInfo = find<HTMLElement>('#room-info')
 const roomCode = find<HTMLElement>('#room-code')
 const copyLink = find<HTMLButtonElement>('#copy-link')
 const hostBadge = find<HTMLElement>('#host-badge')
 const statusText = find<HTMLElement>('#status')
 
 const lobby = find<HTMLElement>('#lobby')
+const playersTitle = find<HTMLElement>('#players-title')
 const players = find<HTMLElement>('#players')
 const nameForm = find<HTMLFormElement>('#name-form')
 const nameInput = find<HTMLInputElement>('#name')
@@ -274,10 +286,11 @@ const describe = ({code, view, search}: Visit): string => {
 }
 
 const renderLobby = (state: Championship, occupied: string[], seat: string | null, isHost: boolean) => {
+  playersTitle.textContent = `Players: ${occupied.length} of ${seats.length}`
   players.replaceChildren(
     ...occupied.map(each => {
       const tags = [isHostSeat(each) ? 'host' : '', each === seat ? 'you' : ''].filter(Boolean)
-      return item(state.profiles[each]?.name ?? 'Entering a name…', tags.join(', '))
+      return playerRow(`Player ${each}`, tags.join(', '), state.profiles[each]?.name ?? 'Entering a name…')
     })
   )
   nameForm.hidden = !seat
@@ -372,6 +385,7 @@ const render = () => {
   statusText.textContent = describe(visit)
   hostBadge.hidden = !isHost
   lobby.hidden = !live || state?.stage !== 'lobby'
+  roomInfo.hidden = Boolean(state && state.stage !== 'lobby')
   announcement.hidden = !live || state?.stage !== 'announcement'
   preparation.hidden = !live || state?.stage !== 'preparation'
   results.hidden = !live || state?.stage !== 'results'
@@ -447,4 +461,3 @@ confirmButton.addEventListener('click', () => room.send({type: 'confirm', plan: 
 performButton.addEventListener('click', () => room.send({type: 'perform'}))
 trainButton.addEventListener('click', () => room.send({type: 'train'}))
 nextButton.addEventListener('click', () => room.send({type: 'next'}))
-find('#leave').addEventListener('click', () => room.leave())

@@ -21,7 +21,6 @@ export interface Visit {
 export interface Room {
   create: () => void
   join: (code: string) => void
-  leave: () => void
   send: (move: Move) => void
 }
 
@@ -151,7 +150,6 @@ export const openRoom = (onChange: (visit: Visit | null) => void): Room => {
   return {
     create: () => enter(createRoomCode(), true),
     join: code => enter(code, false),
-    leave,
     send: move => current?.session?.send({type: 'move', move})
   }
 }
