@@ -13,5 +13,3 @@ coturn at `turn.when.party` relays WebRTC traffic when direct connections fail. 
 ## Verification
 
 Run `sh games/platform/turn/tests/smoke.sh` from the repository root when changing TURN configuration, startup or image. It needs Docker and checks the deployed configuration with coturn's client. [The test](tests/smoke.sh) covers public and private peers, two relayed clients, credentials and secret exposure; [games CI](../../../.github/workflows/games.yml) runs it before deployment.
-
-Report real network checks separately. Check a room between mobile data and Wi-Fi after deployment; `docker logs turn` shows allocations.
