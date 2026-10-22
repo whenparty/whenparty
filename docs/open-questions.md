@@ -26,7 +26,7 @@ The checks in the root [AGENTS.md](../AGENTS.md) say "affected fast tests", "ful
 
 ## Rules for non-module AGENTS.md files
 
-[index.md](conventions/index.md) says which conventions file covers each kind of file, but not which one covers the root `AGENTS.md` and `games/AGENTS.md`. Module `AGENTS.md` files also hold testing, formatting and deployment instructions, not only what the specification rules describe.
+[index.md](conventions/index.md) says which conventions file covers each kind of file, but not which one covers the root `AGENTS.md`, `games/AGENTS.md` and `games/titles/AGENTS.md`. Module `AGENTS.md` files also hold testing, formatting and deployment instructions, not only what the specification rules describe.
 
 ## Link to open questions in the documentation conventions
 
@@ -38,7 +38,7 @@ The [specification rules](conventions/specs.md) say to describe the behaviour im
 
 ## Rules outside games
 
-A [module](glossary.md#module) is a folder listed in `games/AGENTS.md`. `www/`, `nii-au/`, `infra/` and `temp-sites/` are not modules, so the root `AGENTS.md` stops before any code change there and asks whether to set up a specification. Decide whether and how the specification and testing rules extend to the rest of the repository.
+`www/`, `nii-au/`, `infra/` and `temp-sites/` are not [modules](glossary.md#module), so the root `AGENTS.md` stops before any code change there and asks whether to set up a specification. Decide whether and how the specification and testing rules extend to the rest of the repository.
 
 ## Testing the TURN module
 
