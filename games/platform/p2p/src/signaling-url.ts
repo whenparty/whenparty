@@ -1,5 +1,5 @@
 // The Trystero signaling server (games/platform/signaling). Pages on localhost use one
-// running locally: npm start --workspace platform/signaling
+// running locally: pnpm --filter @whenparty/signaling start
 const productionServer = 'wss://signaling.when.party'
 const localServer = 'ws://localhost:8080'
 const localHosts = new Set(['localhost', '127.0.0.1'])

@@ -6,10 +6,10 @@ The service at `signaling.when.party` handles peer discovery and WebRTC negotiat
 
 `GET /health` is the container health check. `GET /turn-credentials` returns uncached credentials for allowed origins, or 404 when TURN is disabled. [src/turn.mjs](src/turn.mjs) defines their format and lifetime; follow the [TURN instructions](../turn/AGENTS.md) for shared configuration. Keep secrets on the server.
 
-Keep `@trystero-p2p/ws-relay` pinned to the same version here and in P2P. Update both manifests and the workspace lockfile together.
+Signaling and P2P take `@trystero-p2p/ws-relay` from the catalog in [pnpm-workspace.yaml](../../pnpm-workspace.yaml), so both speak the same Trystero protocol. Change its version there and update `pnpm-lock.yaml` in the same commit.
 
 ## Verification
 
-Run `npm test --workspace platform/signaling` from `games/`. [Tests](src/tests/) cover allowed origins, HTTP responses, WebSocket limits, heartbeat and credentials. Dependency updates also require the full workspace tests and typecheck.
+Run `pnpm --filter @whenparty/signaling test` from `games/`. [Tests](src/tests/) cover allowed origins, HTTP responses, WebSocket limits, heartbeat and credentials. Dependency updates also require the full workspace tests and typecheck.
 
-Start locally with `npm start --workspace platform/signaling`; P2P uses `ws://localhost:8080`. The [Dockerfile](Dockerfile) uses `games/` as its build context. [compose.yml](compose.yml) defines production settings; shared deployment rules are in [games/AGENTS.md](../../AGENTS.md).
+Start locally with `pnpm --filter @whenparty/signaling start`; P2P uses `ws://localhost:8080`. The [Dockerfile](Dockerfile) uses `games/` as its build context. [compose.yml](compose.yml) defines production settings; shared deployment rules are in [games/AGENTS.md](../../AGENTS.md).

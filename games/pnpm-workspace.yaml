@@ -1,0 +1,6 @@
+packages:
+  - platform/*
+  - titles/*
+
+catalog:
+  '@trystero-p2p/ws-relay': 0.26.0
