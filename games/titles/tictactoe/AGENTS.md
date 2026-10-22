@@ -6,4 +6,4 @@ X and O are admitted players; additional visitors watch. A match starts when bot
 
 The match pauses on `lost` and resumes on `back` with the same board and turn. `left` ends it without a winner. Finished matches stay finished; a replacement may take a free seat for an explicit rematch once both seats are occupied. The room's lifetime follows the [platform rules](../../platform/p2p/STATES.md).
 
-[Game tests](src/tests/tictactoe.test.ts) cover rules; [lifecycle tests](src/tests/lifecycle.test.ts) check their public platform contract. For real WebRTC checks, verify reload, creator absence and explicit leave. The production `appId` is `when.party/tictactoe`; deployment uses `compose.yml` and `Dockerfile`.
+[Game tests](src/tests/tictactoe.test.ts) cover rules; [lifecycle tests](src/tests/lifecycle.test.ts) check their public platform contract. The production `appId` is `when.party/tictactoe`; deployment uses `compose.yml` and `Dockerfile`.

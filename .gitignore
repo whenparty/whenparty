@@ -12,5 +12,7 @@ infra/nginx/conf.d/cloudflare_real_ip.conf
 
 .vscode/
 
-# Claude desktop session files
-.claude/
+# Claude desktop session files. Project settings and hooks are shared.
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
