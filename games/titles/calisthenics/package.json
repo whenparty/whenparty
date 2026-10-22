@@ -11,6 +11,10 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@whenparty/p2p": "workspace:*"
+    "@whenparty/p2p": "workspace:*",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.180.0"
   }
 }

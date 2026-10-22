@@ -1,8 +1,18 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
 import {applyIntent, createRoomState, dropPlayer, joinPlayer, seatOf, syncPresence, type RoomState} from '@whenparty/p2p'
-import {announcementOf, calisthenics, isFinished, resultsOf, standingsOf, type Championship, type Move, type Plan} from '../engine/index.ts'
-import {perfectPlans, plan, rests} from './championship.ts'
+import {
+  announcementOf,
+  calisthenics,
+  isFinished,
+  resultsOf,
+  standingsOf,
+  performanceKey,
+  type Championship,
+  type Move,
+  type Plan
+} from '../engine/index.ts'
+import {contextOf, finishPerformances, perfectPlans, performing as performingState, plan, rests, started} from './championship.ts'
 
 type Room = RoomState<Championship>
 
@@ -22,7 +32,11 @@ const back = (room: Room, player: string) => {
   const {[player]: _, ...reservations} = room.reservations
   return syncPresence(calisthenics, room, {...room, reservations})
 }
-const performed = (room: Room, plans: Record<string, Plan> = {}) => act(confirmed(room, plans), 'a', {type: 'perform'})
+const performing = (room: Room, plans: Record<string, Plan> = {}) => act(confirmed(room, plans), 'a', {type: 'perform'})
+const performed = (room: Room, plans: Record<string, Plan> = {}) => {
+  const next = performing(room, plans)
+  return {...next, game: finishPerformances(next.game)}
+}
 const nameOf = (room: Room, player: string) => room.game.profiles[seatOf(room, player) ?? '']?.name
 
 describe('3-match', () => {
@@ -166,5 +180,73 @@ describe('3-match', () => {
     assert.equal(attempt.game.athletes[1]?.left, true)
     assert.equal(attempt.game.athletes[1]?.plan, null)
     assert.equal(act(attempt, 'a', {type: 'perform'}).game.stage, 'preparation')
+  })
+
+  it('3-5 gives each athlete twelve seconds, reveals one result at a time and waits for all turns before showing standings', () => {
+    const first = performing(startedRoom(), {a: plan({arms: 1, chest: 1, stamina: 1})})
+    const key = performanceKey(first.game)
+    const tick = (game: Championship, deadline: string, now: number) =>
+      calisthenics.onDeadline!(game, deadline, {occupiedSeats: ['1', '2'], absentSeats: [], now})
+    assert.equal(first.game.performance?.index, 0)
+    assert.deepEqual(resultsOf(first.game), [])
+    assert.deepEqual(standingsOf(first.game), [])
+    assert.deepEqual(act(first, 'a', {type: 'next'}).game, first.game)
+    assert.equal(tick(first.game, key, 11999), first.game)
+    const second = tick(first.game, key, 12000)
+    assert.equal(second.performance?.index, 1)
+    assert.equal(second.performance?.endsAt, 24000)
+    assert.deepEqual(
+      resultsOf(second).map(r => [r.profile.name, r.score]),
+      [['a', 100]]
+    )
+    assert.deepEqual(standingsOf(second), [])
+    assert.equal(tick(second, key, 24000), second, 'an old deadline cannot skip the next athlete')
+    const done = tick(second, performanceKey(second), 24000)
+    assert.equal(done.performance, null)
+    assert.equal(resultsOf(done).length, 2)
+    assert.equal(standingsOf(done).length, 2)
+    assert.equal(act({...first, game: done}, 'a', {type: 'next'}).game.stage, 'announcement')
+    assert.deepEqual(done.athletes, first.game.athletes, 'playback never applies the plans or points a second time')
+  })
+
+  it('3-5 lets only the host end a particular turn early and preserves the queue when a player reconnects', () => {
+    const first = performing(startedRoom())
+    const move: Move = {type: 'next-athlete', challenge: 0, index: 0}
+    assert.deepEqual(act(first, 'b', move).game, first.game)
+    const next = act(first, 'a', move)
+    assert.equal(next.game.performance?.index, 1)
+    assert.deepEqual(act(next, 'a', move).game, next.game)
+    assert.deepEqual(act(next, 'a', {...move, challenge: 1}).game, next.game)
+    const reloaded = joinPlayer(next, {playerId: 'b', peerId: 'b-text'})
+    assert.deepEqual(reloaded.game.performance, next.game.performance)
+    assert.deepEqual(reloaded.game.athletes, next.game.athletes)
+  })
+
+  it('3-5 shows all twelve athletes in seat order before the final championship result', () => {
+    let state = {...performingState(started(12)), challenge: 9}
+    const athletes = state.athletes
+    for (let index = 0; index < 12; index++) {
+      assert.equal(isFinished(state), false)
+      assert.equal(state.athletes[state.performance!.index]!.seat, `${index + 1}`)
+      assert.equal(resultsOf(state).length, index)
+      state = calisthenics.onDeadline!(state, performanceKey(state), {...contextOf(12), now: state.performance!.endsAt!})
+    }
+    assert.equal(isFinished(state), true)
+    assert.equal(resultsOf(state).length, 12)
+    assert.deepEqual(state.athletes, athletes)
+  })
+
+  it('3-4 pauses the current turn with its remaining time and resumes only when every athlete is back', () => {
+    const room = performing(startedRoom())
+    const missing = syncPresence(calisthenics, room, {...room, reservations: {b: 120000}}, 2300)
+    assert.equal(missing.game.performance?.endsAt, null)
+    assert.equal(missing.game.performance?.remainingMs, 9700)
+    assert.deepEqual(calisthenics.deadlinesOf!(missing.game), {})
+    assert.deepEqual(act(missing, 'a', {type: 'next-athlete', challenge: 0, index: 0}).game, missing.game)
+    const returned = syncPresence(calisthenics, missing, {...missing, reservations: {}}, 30000)
+    assert.equal(returned.game.performance?.endsAt, 39700)
+    const left = dropPlayer(calisthenics, room, 'b', 2300)
+    assert.equal(left.game.performance?.endsAt, null)
+    assert.equal(joinPlayer(left, member('b')).game.performance?.endsAt, null)
   })
 })

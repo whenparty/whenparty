@@ -1,6 +1,16 @@
 // Championships in a given state, built through the engine's moves
 import assert from 'node:assert/strict'
-import {applyMove, createChampionship, seats, type Athlete, type Championship, type Move, type Plan} from '../engine/index.ts'
+import {
+  applyMove,
+  createChampionship,
+  onPerformanceDeadline,
+  performanceKey,
+  seats,
+  type Athlete,
+  type Championship,
+  type Move,
+  type Plan
+} from '../engine/index.ts'
 
 export const seated = (count: number) => seats.slice(0, count)
 
@@ -36,8 +46,18 @@ export const confirmAll = (state: Championship, plans: Record<string, Plan> = {}
     .reduce((each, athlete) => must(move(each, athlete.seat, {type: 'confirm', plan: plans[athlete.seat] ?? rests})), state)
 
 // Every athlete confirms its plan, then the host starts the challenge
-export const perform = (state: Championship, plans: Record<string, Plan> = {}) =>
+export const performing = (state: Championship, plans: Record<string, Plan> = {}) =>
   must(move(confirmAll(state, plans), '1', {type: 'perform'}))
+
+export const finishPerformances = (state: Championship) => {
+  let next = state
+  while (next.performance?.endsAt !== null && next.performance?.endsAt !== undefined) {
+    next = onPerformanceDeadline(next, performanceKey(next), {...contextOf(next.athletes.length), now: next.performance.endsAt})
+  }
+  return next
+}
+
+export const perform = (state: Championship, plans: Record<string, Plan> = {}) => finishPerformances(performing(state, plans))
 
 // The host opens the next challenge's announcement, then its preparation
 export const prepare = (state: Championship) => train(must(move(state, '1', {type: 'next'})))
