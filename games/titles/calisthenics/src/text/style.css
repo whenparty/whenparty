@@ -1,0 +1,190 @@
+:root {
+  --bg: #f4f3ee;
+  --fg: #23251f;
+  --muted: #6c6f64;
+  --accent: #5f7444;
+  --card: #fdfdf8;
+  --track: #e4e4dc;
+  --error: #a33f2a;
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171815;
+    --fg: #ecede6;
+    --muted: #a1a497;
+    --accent: #9db77a;
+    --card: #22241f;
+    --track: #3a3c35;
+    --error: #ff9a85;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+main {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+h2 {
+  font-size: 1.1rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+button,
+input {
+  font: inherit;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--muted);
+}
+
+button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  cursor: pointer;
+}
+
+button.quiet {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--muted);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  background: var(--card);
+  color: var(--fg);
+}
+
+#code {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+label,
+#status {
+  display: block;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.room strong {
+  letter-spacing: 0.2em;
+  margin-right: 0.5rem;
+}
+
+#host-badge {
+  color: var(--muted);
+  margin-right: 0.5rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--error);
+  min-height: 1.2em;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--track);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.energy {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.energy span,
+.energy strong {
+  display: block;
+}
+
+.slider {
+  border-top: 1px solid var(--track);
+  padding: 0.6rem 0;
+}
+
+.slider .head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.slider label {
+  margin: 0;
+}
+
+.slider input {
+  width: 100%;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+.list {
+  padding: 0;
+  list-style: none;
+}
+
+ol.list {
+  counter-reset: place;
+}
+
+.list li {
+  border-top: 1px solid var(--track);
+  padding: 0.5rem 0;
+}
+
+.list .detail {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.splash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg);
+  text-align: center;
+}
+
+.splash h2 {
+  font-size: clamp(2.5rem, 10vw, 5rem);
+  margin: 0;
+}
+
+.splash[hidden] {
+  display: none;
+}
