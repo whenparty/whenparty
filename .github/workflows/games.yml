@@ -23,7 +23,7 @@ jobs:
       - name: Test and typecheck
         run: |
           docker run --rm -v "$PWD/games:/games" -w /games node:24.22.0-alpine3.24 \
-            sh -c 'npm ci && npm test && npm run typecheck'
+            sh -c 'corepack enable && pnpm install --frozen-lockfile && pnpm test && pnpm typecheck'
 
   # coturn as deployed, against coturn's own test client: it relays to public peers and between
   # two relayed clients, and refuses private peers and bad credentials
@@ -47,7 +47,7 @@ jobs:
       # A project is games/<group>/<name> with a compose.yml. What a changed file deploys:
       # - in a project: that project
       # - in a platform library without compose.yml (games/platform/p2p): every title
-      # - at the top of games/ (package.json, package-lock.json): every project
+      # - at the top of games/ (package.json, pnpm-lock.yaml, pnpm-workspace.yaml): every project
       - name: Detect project changes
         id: changes
         env:

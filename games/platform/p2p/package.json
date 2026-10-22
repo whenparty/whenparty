@@ -12,6 +12,6 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@trystero-p2p/ws-relay": "0.26.0"
+    "@trystero-p2p/ws-relay": "catalog:"
   }
 }
