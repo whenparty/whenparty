@@ -24,7 +24,7 @@
       </section>
 
       <section id="game" hidden>
-        <p class="room">
+        <p id="room-info" class="room">
           Room <strong id="room-code"></strong>
           <span id="host-badge" hidden>you host</span>
           <button id="copy-link" type="button" class="quiet">Copy invite link</button>
@@ -32,7 +32,7 @@
         <p id="status" aria-live="polite"></p>
 
         <div id="lobby" hidden>
-          <h2>Players</h2>
+          <h2 id="players-title">Players</h2>
           <ul id="players" class="list"></ul>
           <form id="name-form" hidden>
             <label for="name">Athlete name</label>
@@ -86,9 +86,6 @@
           <button id="next-challenge" type="button" hidden>Next challenge</button>
         </div>
 
-        <div class="row">
-          <button id="leave" type="button" class="quiet">Leave room</button>
-        </div>
       </section>
     </main>
     <script type="module" src="/src/text/main.ts"></script>
