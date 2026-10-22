@@ -1,11 +1,13 @@
-# Build context: games/, so npm ci can use the workspace lockfile
+# Build context: games/, so pnpm can use the workspace lockfile
 FROM node:24.22.0-alpine3.24
 
 WORKDIR /games
 
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY platform/signaling/package.json platform/signaling/
-RUN npm ci --omit=dev --workspace platform/signaling && npm cache clean --force
+RUN corepack enable \
+  && pnpm install --frozen-lockfile --prod --filter @whenparty/signaling \
+  && rm -rf /root/.local/share/pnpm /root/.cache
 
 # games/.dockerignore keeps the tests out of the image
 COPY platform/signaling/src/ platform/signaling/src/

@@ -11,6 +11,6 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@whenparty/p2p": "*"
+    "@whenparty/p2p": "workspace:*"
   }
 }

@@ -59,7 +59,7 @@ See [temp-sites/README.md](temp-sites/README.md) for adding a project.
 ## Games
 
 - Peer-to-peer browser games: players find each other by a room code, and the game state goes directly between their browsers over WebRTC. Nothing about a game is stored on the server.
-- `games/` is one npm workspace. `games/platform/` holds what the games share, such as the `signaling` server at `signaling.when.party`. `games/titles/<name>/` holds one game each.
+- `games/` is one pnpm workspace. `games/platform/` holds what the games share, such as the `signaling` server at `signaling.when.party`. `games/titles/<name>/` holds one game each.
 - On push, `games.yml` tests the whole workspace, then deploys only the projects a change reaches. A change in a shared platform library redeploys every title.
 - Games run behind the temp-sites Traefik router and the `*.when.party` nginx config, so they get the same CSP as temp sites.
 
