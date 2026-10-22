@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "ask": [
+      "Edit(**/docs/specs/**)",
+      "Edit(**/docs/PLANNED.md)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/spec-context.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
