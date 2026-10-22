@@ -3,16 +3,13 @@
   "private": true,
   "description": "Peer-to-peer browser games on *.when.party and the platform they share",
   "type": "module",
-  "workspaces": [
-    "platform/*",
-    "titles/*"
-  ],
+  "packageManager": "pnpm@11.9.0",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "test": "npm test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
     "format": "prettier --write \"platform/*/src/**/*.{ts,mjs}\" \"titles/*/src/**/*.ts\"",
     "format:check": "prettier --check \"platform/*/src/**/*.{ts,mjs}\" \"titles/*/src/**/*.ts\""
   },
