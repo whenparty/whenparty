@@ -8,13 +8,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "node --test"
+    "test": "node --test && depcruise src"
   },
   "dependencies": {
     "@whenparty/p2p": "workspace:*",
     "three": "0.180.0"
   },
   "devDependencies": {
-    "@types/three": "0.180.0"
+    "@swc/core": "1.16.20",
+    "@types/three": "0.180.0",
+    "dependency-cruiser": "18.7.0"
   }
 }

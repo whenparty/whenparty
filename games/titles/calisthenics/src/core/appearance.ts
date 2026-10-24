@@ -13,16 +13,6 @@ export interface Appearance {
   shoes: string
 }
 
-export const defaultAppearance = (): Appearance => ({
-  bodyType: 'male',
-  hairstyle: 'short',
-  hair: '#3B2A20',
-  skin: '#D9A67E',
-  shirt: '#8FAACB',
-  shorts: '#23262A',
-  shoes: '#F7F7F4'
-})
-
 export const isAppearanceChoice = (value: unknown): value is Partial<Appearance> => {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
   return Object.entries(value).every(([key, choice]) =>
@@ -33,5 +23,3 @@ export const isAppearanceChoice = (value: unknown): value is Partial<Appearance>
         : ['hair', 'skin', 'shirt', 'shorts', 'shoes'].includes(key) && typeof choice === 'string' && /^#[0-9a-f]{6}$/i.test(choice)
   )
 }
-
-export const appearanceOf = (profile: {appearance?: Partial<Appearance>}): Appearance => ({...defaultAppearance(), ...profile.appearance})

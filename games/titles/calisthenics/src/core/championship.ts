@@ -16,7 +16,7 @@ import {
   type Plan
 } from './athlete.ts'
 import {challenges, maxScore, scoreOf, shortOf, type Challenge} from './challenges.ts'
-import {appearanceOf, isAppearanceChoice, type Appearance} from './appearance.ts'
+import {isAppearanceChoice, type Appearance} from './appearance.ts'
 
 export const seats: readonly string[] = Array.from({length: 12}, (_, index) => `${index + 1}`)
 export const minAthletes = 2
@@ -218,7 +218,7 @@ export const applyMove = (state: Championship, seat: string, move: Move, {occupi
             ...state,
             profiles: {
               ...state.profiles,
-              [seat]: {...profile, appearance: {...appearanceOf(existing ?? {name: ''}), ...profile.appearance}}
+              [seat]: {...profile, appearance: {...existing?.appearance, ...profile.appearance}}
             }
           }
         : null
@@ -226,7 +226,7 @@ export const applyMove = (state: Championship, seat: string, move: Move, {occupi
     case 'appearance': {
       if (state.stage !== 'lobby' || !isAppearanceChoice(move.appearance)) return null
       const profile = state.profiles[seat] ?? {name: ''}
-      return {...state, profiles: {...state.profiles, [seat]: {...profile, appearance: {...appearanceOf(profile), ...move.appearance}}}}
+      return {...state, profiles: {...state.profiles, [seat]: {...profile, appearance: {...profile.appearance, ...move.appearance}}}}
     }
     case 'start':
       return isHostSeat(seat) && canStart(state, occupiedSeats) ? start(state, occupiedSeats) : null

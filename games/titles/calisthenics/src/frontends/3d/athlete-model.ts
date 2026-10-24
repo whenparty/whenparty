@@ -1,7 +1,8 @@
 import * as T from 'three'
 import {clone} from 'three/addons/utils/SkeletonUtils.js'
-import {appearanceOf, type Appearance, type Levels, type Profile} from '../engine/index.ts'
-import {bodyVolume, motionAt, type Motion} from './presentation.ts'
+import {bodyVolume, type Appearance, type Levels, type Profile} from '../../core/index.ts'
+import {appearanceOf} from './appearance.ts'
+import {motionAt, type Motion} from './presentation.ts'
 import {ExerciseRig, attemptSeconds} from './exercises.ts'
 
 const material = (color: string) => new T.MeshStandardMaterial({color, roughness: 0.82})
