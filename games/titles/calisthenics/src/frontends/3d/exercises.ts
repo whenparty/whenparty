@@ -1,7 +1,6 @@
 import * as T from 'three'
-import type {Completion} from '../engine/index.ts'
+import type {Completion} from '../../core/index.ts'
 
-export const apparatus = ['mat', 'mat', 'bar', 'handles', 'mat', 'mat', 'bar', 'mat', 'bar', 'ladder'] as const
 export const barHeight = 2.45
 export const barDepth = 0.12
 export const handleHeight = 0.44

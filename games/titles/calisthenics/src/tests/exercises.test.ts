@@ -3,12 +3,12 @@ import {readFile} from 'node:fs/promises'
 import {test} from 'node:test'
 import {SkinnedMesh, Vector3} from 'three'
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'
-import {AthleteModel} from '../3d/athlete.ts'
-import {barHeight} from '../3d/exercises.ts'
-import {demonstrationMotion, performanceMotion} from '../3d/presentation.ts'
-import {startingCondition, type Completion} from '../engine/index.ts'
+import {AthleteModel} from '../frontends/3d/athlete-model.ts'
+import {barHeight} from '../frontends/3d/exercises.ts'
+import {demonstrationMotion, performanceMotion} from '../frontends/3d/presentation.ts'
+import {startingCondition, type Completion} from '../core/index.ts'
 
-const bytes = new Uint8Array(await readFile(new URL('../../public/assets/athlete.glb', import.meta.url)))
+const bytes = new Uint8Array(await readFile(new URL('../frontends/3d/assets/athlete.glb', import.meta.url)))
 const source = await new GLTFLoader().parseAsync(bytes.buffer, '')
 const point = (athlete: AthleteModel, name: string) => {
   athlete.group.updateMatrixWorld(true)

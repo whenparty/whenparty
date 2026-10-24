@@ -1,9 +1,11 @@
 import * as T from 'three'
 import {GLTFLoader, type GLTF} from 'three/addons/loaders/GLTFLoader.js'
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js'
-import {performanceMs, type Completion, type Levels, type Profile} from '../engine/index.ts'
-import {AthleteModel, disposeObject} from './athlete.ts'
-import {demonstrationMotion, effortOf, effortProgress, performanceMotion, type Motion} from './presentation.ts'
+import {performanceMs, type Completion, type Levels, type Profile} from '../../core/index.ts'
+import {AthleteModel, disposeObject} from './athlete-model.ts'
+import athleteUrl from './assets/athlete.glb?url'
+import {effortOf} from '../../core/index.ts'
+import {demonstrationMotion, effortProgress, performanceMotion, type Motion} from './presentation.ts'
 import {exerciseApparatus} from './apparatus.ts'
 
 export interface VisualAthlete {
@@ -135,7 +137,7 @@ export class ClubScene {
       }
     })
     new GLTFLoader()
-      .loadAsync('/assets/athlete.glb')
+      .loadAsync(athleteUrl)
       .then(source => {
         this.source = source
         this.rebuild()

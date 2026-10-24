@@ -1,5 +1,6 @@
 import * as T from 'three'
-import {apparatus, barDepth, barHeight, handleHeight, handleSpread, ladderGrips, ladderX} from './exercises.ts'
+import {movementOf} from '../../core/index.ts'
+import {barDepth, barHeight, handleHeight, handleSpread, ladderGrips, ladderX} from './exercises.ts'
 
 export const exerciseApparatus = (challenge: number) => {
   const group = new T.Group(),
@@ -13,7 +14,7 @@ export const exerciseApparatus = (challenge: number) => {
     group.add(mesh)
   }
   const v = (x: number, y: number, z: number) => new T.Vector3(x, y, z)
-  switch (apparatus[challenge]) {
+  switch (movementOf(challenge).apparatus) {
     case 'bar':
       for (const side of [-1, 1]) {
         rod(v(side * 0.9, 0, barDepth), v(side * 0.9, barHeight + 0.08, barDepth), 0.045)

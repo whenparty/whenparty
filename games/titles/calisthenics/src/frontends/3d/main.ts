@@ -1,9 +1,8 @@
 import './style.css'
 import {seatOf} from '@whenparty/p2p'
-import {mountControls} from '../controls.ts'
 import {
-  appearanceOf,
   athleteAt,
+  challenges,
   completionOf,
   currentChallenge,
   isFinished,
@@ -12,11 +11,21 @@ import {
   podiumOf,
   startingCondition,
   type Appearance
-} from '../engine/index.ts'
-import {visitNow, type Visit} from '../room.ts'
+} from '../../core/index.ts'
+import {openRoom, visitNow, type Visit} from '../../connection.ts'
+import {mountPanel} from '../shared/panel.ts'
+import {appearanceOf} from './appearance.ts'
+import creditsUrl from './assets/CREDITS.txt?url&no-inline'
 import {ClubScene, type SceneView, type VisualAthlete} from './scene.ts'
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
+const lobbyExtra = (element<HTMLTemplateElement>('lobby-extra').content.firstElementChild as HTMLElement).cloneNode(true) as HTMLElement
+const panel = mountPanel(
+  element('panel'),
+  {create: () => room.create(), join: code => room.join(code), send: move => room.send(move)},
+  {clock: visitNow, lobbyExtra}
+)
+element<HTMLAnchorElement>('credits-link').href = creditsUrl
 let visit: Visit | null = null
 let scene: ClubScene | null = null
 let previewSeat = ''
@@ -28,7 +37,9 @@ const colors = ['hair', 'skin', 'shirt', 'shorts', 'shoes'] as const
 const loader = element('scene-loader'),
   error = element('scene-error')
 const updateLinks = () => {
-  element<HTMLAnchorElement>('fallback-link').href = `text.html${visit ? `#${visit.code}` : ''}`
+  const hash = visit ? `#${visit.code}` : ''
+  element<HTMLAnchorElement>('fallback-link').href = `text.html${hash}`
+  element<HTMLAnchorElement>('interface-link').href = `text.html${hash}`
 }
 const fail = (message: string) => {
   loader.hidden = true
@@ -112,7 +123,7 @@ const update = (next: Visit | null) => {
       )
     }
   } else {
-    round.textContent = `CHALLENGE ${state.challenge + 1} OF 10`
+    round.textContent = `CHALLENGE ${state.challenge + 1} OF ${challenges.length}`
     title.textContent = currentChallenge(state).name
     caption.textContent =
       state.stage === 'preparation'
@@ -156,14 +167,17 @@ const update = (next: Visit | null) => {
 }
 
 update(null)
-const controls = mountControls(update)
+const room = openRoom(next => {
+  panel.render(next)
+  update(next)
+})
 previewSelect.addEventListener('change', () => {
   previewSeat = previewSelect.value
   update(visit)
 })
 const choose = (choice: Partial<Appearance>) => {
   previewSeat = ''
-  controls.send({type: 'appearance', appearance: choice})
+  room.send({type: 'appearance', appearance: choice})
 }
 hairstyle.addEventListener('change', () => choose({hairstyle: hairstyle.value as Appearance['hairstyle']}))
 bodyType.addEventListener('change', () => choose({bodyType: bodyType.value as Appearance['bodyType']}))

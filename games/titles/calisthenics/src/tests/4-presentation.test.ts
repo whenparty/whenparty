@@ -3,22 +3,23 @@ import {describe, it} from 'node:test'
 import {readFile} from 'node:fs/promises'
 import {Vector3} from 'three'
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'
-import {AthleteModel} from '../3d/athlete.ts'
-import {barDepth, barHeight, handleHeight, handleSpread, ladderGrips, ladderX} from '../3d/exercises.ts'
+import {AthleteModel} from '../frontends/3d/athlete-model.ts'
+import {barDepth, barHeight, handleHeight, handleSpread, ladderGrips, ladderX} from '../frontends/3d/exercises.ts'
 import {applyIntent, createRoomState, joinPlayer} from '@whenparty/p2p'
 import {
-  appearanceOf,
+  bodyVolume,
   calisthenics,
   challenges,
   createChampionship,
-  defaultAppearance,
+  effortOf,
   isMove,
   podiumOf,
   startingCondition,
   type Championship
-} from '../engine/index.ts'
-import {bodyVolume, demonstrationMotion, effortOf, effortProgress, motionAt, performanceMotion} from '../3d/presentation.ts'
-import {lobbyOf, move, must, plan, started} from './championship.ts'
+} from '../core/index.ts'
+import {appearanceOf, defaultAppearance} from '../frontends/3d/appearance.ts'
+import {demonstrationMotion, effortProgress, motionAt, performanceMotion} from '../frontends/3d/presentation.ts'
+import {lobbyOf, move, must, plan, started} from './fixtures.ts'
 
 describe('4-presentation', () => {
   it('4-1 defaults each unchosen part, accepts both color cases, and preserves name and previous choices', () => {
@@ -173,7 +174,7 @@ describe('4-presentation', () => {
   })
 
   it('4-8 keeps grips and planted feet on their supports while the body moves, including after seeking', async () => {
-    const bytes = new Uint8Array(await readFile(new URL('../../public/assets/athlete.glb', import.meta.url)))
+    const bytes = new Uint8Array(await readFile(new URL('../frontends/3d/assets/athlete.glb', import.meta.url)))
     const source = await new GLTFLoader().parseAsync(bytes.buffer, '')
     const athlete = new AthleteModel(source.scene, source.animations)
     const point = (athlete: AthleteModel, name: string) => {
