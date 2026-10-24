@@ -1,4 +1,4 @@
-import {challenges, shortOf, type Completion, type Levels} from '../engine/index.ts'
+import {effortOf, holdSeconds, repetitions, type Completion, type Effort, type Levels} from '../../core/index.ts'
 
 export interface Motion {
   clip: string
@@ -9,25 +9,7 @@ export interface Motion {
   sample?: {from: number; to: number}
 }
 
-export const repetitions = 5
-export const holdSeconds = 8
 const repSeconds = 1.8
-const holds = new Set([3, 5, 8, 9])
-
-export interface Effort {
-  kind: 'repetitions' | 'hold'
-  completed: number
-  hold: number
-}
-
-export const effortOf = (completion: Completion, challenge: number, levels?: Levels): Effort => {
-  const required = challenges[challenge]!,
-    ready =
-      completion === 'full' ||
-      (completion === 'partial' && levels !== undefined && shortOf(levels, required).every(each => each === 'stamina')),
-    completed = !ready ? 0 : completion === 'full' ? repetitions : 1 + Math.floor((4 * levels!.stamina) / required.requires.stamina!)
-  return {kind: holds.has(challenge) ? 'hold' : 'repetitions', completed, hold: (holdSeconds * completed) / repetitions}
-}
 
 export const effortProgress = (effort: Effort, elapsed: number, reduced = false) => {
   const done = reduced ? effort.completed : Math.min(effort.completed, Math.floor(Math.max(0, elapsed) / repSeconds))
@@ -67,8 +49,6 @@ export const performanceMotion = (completion: Completion, challenge: number | nu
   }
   return [...attempt, {clip: reaction, seconds: Infinity}]
 }
-
-export const bodyVolume = (arms: number, legs: number) => ({arms: arms / 10, legs: legs / 10})
 
 export const motionAt = (motions: Motion[], elapsed: number) => {
   let start = 0

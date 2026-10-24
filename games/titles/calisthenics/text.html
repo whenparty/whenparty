@@ -9,100 +9,10 @@
   <body>
     <main>
       <h1>Calisthenics</h1>
-      <p><a id="interface-link" data-target="./" href="./">Open 3D interface</a></p>
+      <p><a id="interface-link" href="./">Open 3D interface</a></p>
 
-      <section id="entry">
-        <p>A street workout championship for 2 to 12 players. Train your athlete for ten challenges and guess what each one needs.</p>
-        <button id="create" type="button">Create a room</button>
-        <form id="join">
-          <label for="code">Or join one with its code</label>
-          <div class="row">
-            <input
-              id="code"
-              name="code"
-              placeholder="K7MXQ"
-              maxlength="9"
-              autocomplete="off"
-              autocapitalize="characters"
-              spellcheck="false"
-              required
-            />
-            <button type="submit">Join</button>
-          </div>
-          <p id="join-error" class="error" role="alert"></p>
-        </form>
-      </section>
-
-      <section id="game" hidden>
-        <p id="room-info" class="room">
-          Room <strong id="room-code"></strong>
-          <span id="host-badge" hidden>you host</span>
-          <button id="copy-link" type="button" class="quiet">Copy invite link</button>
-        </p>
-        <p id="status" aria-live="polite"></p>
-
-        <div id="lobby" hidden>
-          <h2 id="players-title">Players</h2>
-          <ul id="players" class="list"></ul>
-          <form id="name-form" hidden>
-            <label for="name">Athlete name</label>
-            <div class="row">
-              <input id="name" name="name" maxlength="40" autocomplete="off" required />
-              <button type="submit">Save</button>
-            </div>
-            <p id="name-error" class="error" role="alert"></p>
-          </form>
-          <button id="start" type="button" hidden>Start the championship</button>
-        </div>
-
-        <div id="announcement" class="splash" hidden>
-          <p id="announce-number" class="muted"></p>
-          <h2 id="announce-name"></h2>
-          <p id="announce-note" class="muted"></p>
-          <button id="train" type="button" hidden>Start training</button>
-        </div>
-
-        <div id="preparation" hidden>
-          <h2 id="prep-title"></h2>
-          <div id="plan" class="card" hidden>
-            <div class="energy">
-              <div>
-                <span class="muted">Energy now</span>
-                <strong id="energy-now"></strong>
-              </div>
-              <div>
-                <span class="muted">After the plan</span>
-                <strong id="energy-after"></strong>
-              </div>
-            </div>
-            <p class="muted">A training raises a level by 1 and costs 25 energy. A rest restores 50 energy, up to 100.</p>
-            <div id="sliders"></div>
-            <p id="plan-count"></p>
-            <p id="plan-error" class="error" role="alert"></p>
-            <button id="confirm" type="button">Ready for the challenge</button>
-          </div>
-          <p id="plan-done" hidden>Plan confirmed. Waiting for the others.</p>
-          <h2>Athletes</h2>
-          <ul id="athletes" class="list"></ul>
-          <button id="perform" type="button" hidden>Start the challenge</button>
-        </div>
-
-        <div id="results" hidden>
-          <h2 id="results-title"></h2>
-          <div id="performance-card" class="performance-card" hidden>
-            <p class="eyebrow">NOW PERFORMING</p>
-            <h3 id="performer"></h3>
-            <p id="performance-clock" role="timer"></p>
-            <button id="next-athlete" type="button" hidden>Следующий спортсмен</button>
-          </div>
-          <ul id="scores" class="list"></ul>
-          <h2 id="standings-title">Championship standings</h2>
-          <ol id="standings" class="list"></ol>
-          <p id="next"></p>
-          <button id="next-challenge" type="button" hidden>Next challenge</button>
-        </div>
-      </section>
+      <div id="panel"></div>
     </main>
-    <script type="module" src="/src/text/main.ts"></script>
+    <script type="module" src="/src/frontends/text/main.ts"></script>
   </body>
 </html>

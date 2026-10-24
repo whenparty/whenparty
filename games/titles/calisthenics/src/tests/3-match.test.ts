@@ -11,8 +11,8 @@ import {
   type Championship,
   type Move,
   type Plan
-} from '../engine/index.ts'
-import {contextOf, finishPerformances, perfectPlans, performing as performingState, plan, rests, started} from './championship.ts'
+} from '../core/index.ts'
+import {contextOf, finishPerformances, perfectPlans, performing as performingState, plan, rests, started} from './fixtures.ts'
 
 type Room = RoomState<Championship>
 

@@ -1,4 +1,4 @@
-// Championships in a given state, built through the engine's moves
+// Championships in a given state, built through the core's moves
 import assert from 'node:assert/strict'
 import {
   applyMove,
@@ -10,7 +10,7 @@ import {
   type Championship,
   type Move,
   type Plan
-} from '../engine/index.ts'
+} from '../core/index.ts'
 
 export const seated = (count: number) => seats.slice(0, count)
 

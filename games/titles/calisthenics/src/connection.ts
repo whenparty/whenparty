@@ -1,7 +1,7 @@
 // Joining, keeping and leaving a championship room in the browser, for any interface
 import {createRoomCode, playerIdFrom, roomCodeFromHash, startSession} from '@whenparty/p2p'
 import type {Session, SessionView} from '@whenparty/p2p'
-import {calisthenics, type Championship, type Move} from './engine/index.ts'
+import {calisthenics, type Championship, type Move} from './core/index.ts'
 
 const appId = 'when.party/calisthenics'
 const hostHintMs = 10_000

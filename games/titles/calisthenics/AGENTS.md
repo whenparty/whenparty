@@ -4,15 +4,15 @@ The [specification](docs/specs/) describes the championship. Use the shared [P2P
 
 ## Architecture
 
-The text and 3D interfaces use one engine.
-
-- [src/engine/](src/engine/index.ts) owns the rules, the championship the host runs and what each screen shows. It has no page code, so every interface renders the same state and results. State that players choose and others see, such as the athlete's profile, belongs in the engine.
-- [src/room.ts](src/room.ts) joins, keeps and leaves a room in the browser for any interface.
-- Each interface has its own folder under `src/` and imports nothing from another interface. [src/3d/](src/3d/main.ts) is loaded by `index.html`; [src/text/](src/text/main.ts) is loaded by `text.html`. [src/controls.ts](src/controls.ts) supplies their shared page controls. Display names of characteristics, other wording and presentation belong to the interfaces and their shared controls.
-- The 3D character and its animation clips are in `public/assets/`; retain their attribution in `CREDITS.txt`. Appearance, the performance queue and its deadlines are shared engine state. Scene playback follows the current turn and the room clock. Replay stays local to the interface.
+- [src/core/](src/core/index.ts) is the game's mechanics: rules, championship state and what each screen shows. It holds every rule of the specification that decides state or numbers, such as podium steps (4-6) and repetitions (4-9), including rules that only the 3D interface shows, and the state players share, such as the choices in an athlete's profile. It has no browser, page or three.js code.
+- [src/connection.ts](src/connection.ts) connects a page to a room on the P2P platform: it creates and joins rooms, keeps the player across reloads and puts the room code in the address. Within the game it imports only `src/core/`.
+- Each folder in `src/frontends/` other than `shared/` is one interface from the specification: `text/` is loaded by `text.html`, `3d/` by `index.html`. Its `main.ts` connects to the room and passes the room state and the player's actions to the elements it shows. Within the game a frontend imports from `src/core/`, `src/connection.ts` and `src/frontends/shared/`, and nothing from another frontend.
+- [src/frontends/shared/](src/frontends/shared/) holds texts and page elements that more than one frontend uses. Texts are functions of `src/core/` data. Elements build their own markup inside an element the frontend gives them. Within the game it imports `src/core/` and only types from `src/connection.ts`.
+- Wording, default looks and anything else that only changes how the game looks belong to frontends, not to `src/core/`.
+- When you add or change a 3D asset, update its attribution in `CREDITS.txt`.
 
 ## Verification
 
-[Requirement tests](src/tests/) check the engine, and the platform room functions where a requirement depends on seats and presence. [src/tests/championship.ts](src/tests/championship.ts) builds championships for them. Run `pnpm --filter @whenparty/calisthenics test` and `pnpm --filter @whenparty/calisthenics typecheck` from `games/`, and `pnpm format` before committing. The production `appId` is `when.party/calisthenics`; deployment uses `compose.yml` and `Dockerfile`.
+[Requirement tests](src/tests/) check `src/core/`, and the platform room functions where a requirement depends on seats and presence. [src/tests/fixtures.ts](src/tests/fixtures.ts) builds championships for them. Run `pnpm --filter @whenparty/calisthenics test` and `pnpm --filter @whenparty/calisthenics typecheck` from `games/`, and `pnpm format` before committing. The test command also checks the architecture's import rules in [.dependency-cruiser.cjs](.dependency-cruiser.cjs). The production `appId` is `when.party/calisthenics`; deployment uses `compose.yml` and `Dockerfile`.
 
 Run `pnpm --filter @whenparty/calisthenics build` to check both entries. Verify scene loading, reduced motion, animation transitions, 12-athlete layout and interface switching in a browser; unit tests do not verify WebGL rendering. Local development uses the signaling server described in [games/AGENTS.md](../../AGENTS.md).

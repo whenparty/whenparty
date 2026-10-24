@@ -60,3 +60,5 @@ export const trimPlan = (plan: Plan): Plan => ({
   training: Object.fromEntries(characteristics.filter(each => plan.training[each]).map(each => [each, plan.training[each]])),
   rest: plan.rest
 })
+
+export const bodyVolume = (arms: number, legs: number) => ({arms: arms / maxLevel, legs: legs / maxLevel})
