@@ -2,5 +2,8 @@ packages:
   - platform/*
   - titles/*
 
+allowBuilds:
+  '@swc/core': false
+
 catalog:
   '@trystero-p2p/ws-relay': 0.26.0

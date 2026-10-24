@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
-import {challenges, resultsOf, winnersOf, type Levels} from '../engine/index.ts'
-import {perfectPlans, perform, playAll, rests, started, withAthlete} from './championship.ts'
+import {challenges, resultsOf, winnersOf, type Levels} from '../core/index.ts'
+import {perfectPlans, perform, playAll, rests, started, withAthlete} from './fixtures.ts'
 
 const levels = (some: Partial<Levels>): Levels => ({arms: 0, chest: 0, back: 0, legs: 0, abs: 0, balance: 0, stamina: 0, ...some})
 

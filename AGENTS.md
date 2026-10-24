@@ -11,6 +11,8 @@ The user has the final word, even when it contradicts these rules. When it does,
 
 ## Changes
 
+- Before editing any document, read every Markdown file that git tracks, including those that look unrelated, and resolve the duplicates and contradictions the edit would create.
+- When an agent breaks a rule that a document states, first check whether the rule is unclear, stated in several places or in a document that mixes purposes, as the [documentation conventions](docs/conventions/documentation.md) describe. Fix that before adding emphasis or another rule.
 - Every code change follows the [testing rules](docs/conventions/tests.md). First decide whether it changes observable behaviour. If it does, it starts with a specification edit, as described below. If it does not, as with refactoring or a fix that matches an existing requirement, the specification stays as it is.
 - If the task changes code that belongs to no [module](docs/glossary.md#module) with a [specification](docs/conventions/specs.md), stop. Say that these rules expect one, and ask whether to set it up first or to work without it.
 - A behaviour change starts with a specification edit that the user approves before implementation. Claude Code asks for confirmation before editing specification files, as set in [settings](.claude/settings.json).
@@ -24,4 +26,4 @@ The user has the final word, even when it contradicts these rules. When it does,
 
 - During implementation, run the affected fast tests and typechecks. Run the full fast suite when changing shared contracts.
 - Repeat successful checks only after relevant changes or new evidence of a problem. Report what was actually verified.
-- After adding a document or changing a rule, have a reviewer who has not seen the discussion, such as an agent with a fresh context, read every `AGENTS.md` and every file in a `docs/` folder and report unclear text, contradictions, duplicates, rules in the wrong file and rules that no longer match how the project works. Fix those places.
+- After adding a document or changing a rule, have a reviewer who has not seen the discussion, such as an agent with a fresh context, read every Markdown file that git tracks and report unclear text, contradictions, duplicates, rules in the wrong file and rules that no longer match how the project works. Fix those places.

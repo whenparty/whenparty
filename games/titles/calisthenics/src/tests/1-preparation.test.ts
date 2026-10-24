@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
 import {applyIntent, createRoomState, joinPlayer, type RoomState} from '@whenparty/p2p'
-import {athletesOf, calisthenics, emptyPlan, previewOf, type Championship, type Move, type Plan} from '../engine/index.ts'
-import {must, move, perform, plan, prepare, rests, started, withAthlete} from './championship.ts'
+import {athletesOf, calisthenics, emptyPlan, previewOf, type Championship, type Move, type Plan} from '../core/index.ts'
+import {must, move, perform, plan, prepare, rests, started, withAthlete} from './fixtures.ts'
 
 const athlete = (state: Championship, seat = '1') => state.athletes.find(each => each.seat === seat)!
 

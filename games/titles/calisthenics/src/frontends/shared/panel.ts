@@ -1,13 +1,13 @@
-// Shared page controls render the engine's screens in both interfaces.
+// The room and championship controls more than one frontend shows. It builds its own markup.
 import {ROOM_CODE_LENGTH, normalizeRoomCode, seatOf} from '@whenparty/p2p'
 import {
   actionsOf,
   actionsPerPlan,
+  announcementOf,
   athleteAt,
   athletesOf,
-  canPerform,
-  announcementOf,
   canAnnounceNext,
+  canPerform,
   canStart,
   canTrain,
   challenges,
@@ -24,64 +24,160 @@ import {
   normalizeProfile,
   previewOf,
   resultsOf,
+  restGain,
   seats,
   standingsOf,
   trainingCost,
-  trainingsOf,
   winnersOf,
   type Athlete,
-  type AthleteRow,
   type Championship,
   type Characteristic,
-  type Completion,
-  type Counts,
-  type Plan,
-  type PlanProblem
-} from './engine/index.ts'
-import {openRoom, visitNow, type Search, type Visit} from './room.ts'
+  type Move,
+  type Plan
+} from '../../core/index.ts'
+import type {Visit} from '../../connection.ts'
+import {athleteStatus, characteristicNames, completionNames, levelsText, namesOf, problemNote, statusOf, trainedText} from './texts.ts'
 
-export const mountControls = (onRender?: (visit: Visit | null) => void) => {
-  const characteristicNames: Record<Characteristic, string> = {
-    arms: 'Arms',
-    chest: 'Chest',
-    back: 'Back',
-    legs: 'Legs',
-    abs: 'Abs',
-    balance: 'Balance',
-    stamina: 'Stamina'
+export interface PanelActions {
+  create: () => void
+  join: (code: string) => void
+  send: (move: Move) => void
+}
+
+export interface PanelOptions {
+  // Room time for a visit, so the turn clock counts down between snapshots
+  clock: (visit: Visit | null) => number
+  // A frontend's own lobby controls, shown below the player list
+  lobbyExtra?: HTMLElement
+}
+
+type ActionKey = Characteristic | 'rest'
+
+interface Draft {
+  key: string
+  plan: Plan
+  note: string
+}
+
+const markup = `
+  <section id="entry">
+    <p>A street workout championship for 2 to 12 players. Train your athlete for ten challenges and guess what each one needs.</p>
+    <button id="create" type="button">Create a room</button>
+    <form id="join">
+      <label for="code">Or join one with its code</label>
+      <div class="row">
+        <input id="code" name="code" placeholder="K7MXQ" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" required />
+        <button type="submit">Join</button>
+      </div>
+      <p id="join-error" class="error" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="game" hidden>
+    <p id="room-info" class="room">
+      Room <strong id="room-code"></strong>
+      <span id="host-badge" hidden>you host</span>
+      <button id="copy-link" type="button" class="quiet">Copy invite link</button>
+    </p>
+    <p id="status" aria-live="polite"></p>
+
+    <div id="lobby" hidden>
+      <h2 id="players-title">Players</h2>
+      <ul id="players" class="list"></ul>
+      <form id="name-form" hidden>
+        <label for="name">Athlete name</label>
+        <div class="row">
+          <input id="name" name="name" maxlength="40" autocomplete="off" required />
+          <button type="submit">Save</button>
+        </div>
+        <p id="name-error" class="error" role="alert"></p>
+      </form>
+      <button id="start" type="button" hidden>Start the championship</button>
+    </div>
+
+    <div id="announcement" class="splash" hidden>
+      <p id="announce-number" class="muted"></p>
+      <h2 id="announce-name"></h2>
+      <p id="announce-note" class="muted"></p>
+      <button id="train" type="button" hidden>Start training</button>
+    </div>
+
+    <div id="preparation" hidden>
+      <h2 id="prep-title"></h2>
+      <div id="plan" class="card" hidden>
+        <div class="energy">
+          <div>
+            <span class="muted">Energy now</span>
+            <strong id="energy-now"></strong>
+          </div>
+          <div>
+            <span class="muted">After the plan</span>
+            <strong id="energy-after"></strong>
+          </div>
+        </div>
+        <p class="muted">A training raises a level by 1 and costs ${trainingCost} energy. A rest restores ${restGain} energy, up to ${maxEnergy}.</p>
+        <div id="sliders"></div>
+        <p id="plan-count"></p>
+        <p id="plan-error" class="error" role="alert"></p>
+        <button id="confirm" type="button">Ready for the challenge</button>
+      </div>
+      <p id="plan-done" hidden>Plan confirmed. Waiting for the others.</p>
+      <h2>Athletes</h2>
+      <ul id="athletes" class="list"></ul>
+      <button id="perform" type="button" hidden>Start the challenge</button>
+    </div>
+
+    <div id="results" hidden>
+      <h2 id="results-title"></h2>
+      <div id="performance-card" class="performance-card" hidden>
+        <p class="eyebrow">NOW PERFORMING</p>
+        <h3 id="performer"></h3>
+        <p id="performance-clock" role="timer"></p>
+        <button id="next-athlete" type="button" hidden>Next athlete</button>
+      </div>
+      <ul id="scores" class="list"></ul>
+      <h2 id="standings-title">Championship standings</h2>
+      <ol id="standings" class="list"></ol>
+      <p id="next"></p>
+      <button id="next-challenge" type="button" hidden>Next challenge</button>
+    </div>
+  </section>
+`
+
+const item = (title: string, detail = '') => {
+  const li = document.createElement('li')
+  li.textContent = title
+
+  if (detail) {
+    const span = document.createElement('span')
+    span.className = 'detail'
+    span.textContent = detail
+    li.append(span)
   }
 
-  const completionNames: Record<Completion, string> = {full: 'full completion', partial: 'partial completion', none: 'not performed'}
+  return li
+}
 
-  const problemNotes: Record<PlanProblem, (plan: Plan, athlete: Athlete) => string> = {
-    actions: () => `Plan all ${actionsPerPlan} actions.`,
-    energy: (plan, athlete) =>
-      `Not enough energy: the trainings cost ${trainingCost * trainingsOf(plan)}, and the athlete has ${athlete.energy}.`,
-    level: () => `Levels go up to ${maxLevel}.`
-  }
+const playerRow = (label: string, tags: string, value: string) => {
+  const li = item(label, tags)
+  const right = document.createElement('span')
+  right.className = 'value'
+  right.textContent = value
+  li.classList.add('split')
+  li.prepend(right)
+  return li
+}
 
-  const searchNotes: Record<Search, (code: string) => string> = {
-    looking: code => `Looking for room ${code}…`,
-    unreachable: code =>
-      `Found room ${code}, but could not connect to the players in it. A network on the way blocks the connection. Try again in a moment, or switch between Wi-Fi and mobile data.`,
-    offline: () => 'Cannot reach the game server. Check your internet connection.',
-    nobody: code => `Nobody is hosting ${code}. Check the code with the room creator.`
-  }
+const countOf = (plan: Plan, key: ActionKey) => (key === 'rest' ? plan.rest : (plan.training[key] ?? 0))
 
-  type ActionKey = Characteristic | 'rest'
+const withCount = (plan: Plan, key: ActionKey, count: number): Plan =>
+  key === 'rest' ? {...plan, rest: count} : {...plan, training: {...plan.training, [key]: count}}
 
-  interface Draft {
-    key: string
-    plan: Plan
-    note: string
-  }
-
-  let visit: Visit | null = null
-  // An unconfirmed plan lives only in this page
-  let draft: Draft = {key: '', plan: emptyPlan(), note: ''}
+export const mountPanel = (container: HTMLElement, actions: PanelActions, {clock, lobbyExtra}: PanelOptions) => {
+  container.innerHTML = markup
 
   const find = <T extends Element>(selector: string): T => {
-    const found = document.querySelector<T>(selector)
+    const found = container.querySelector<T>(selector)
 
     if (!found) {
       throw new Error(`missing ${selector}`)
@@ -90,29 +186,9 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     return found
   }
 
-  const item = (title: string, detail = '') => {
-    const li = document.createElement('li')
-    li.textContent = title
-
-    if (detail) {
-      const span = document.createElement('span')
-      span.className = 'detail'
-      span.textContent = detail
-      li.append(span)
-    }
-
-    return li
-  }
-
-  const playerRow = (label: string, tags: string, value: string) => {
-    const li = item(label, tags)
-    const right = document.createElement('span')
-    right.className = 'value'
-    right.textContent = value
-    li.classList.add('split')
-    li.prepend(right)
-    return li
-  }
+  let visit: Visit | null = null
+  // An unconfirmed plan lives only in this page
+  let draft: Draft = {key: '', plan: emptyPlan(), note: ''}
 
   const entry = find<HTMLElement>('#entry')
   const codeInput = find<HTMLInputElement>('#code')
@@ -147,6 +223,7 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
   const results = find<HTMLElement>('#results')
   const resultsTitle = find<HTMLElement>('#results-title')
   const scores = find<HTMLElement>('#scores')
+  const standingsTitle = find<HTMLElement>('#standings-title')
   const standings = find<HTMLElement>('#standings')
   const nextText = find<HTMLElement>('#next')
   const nextButton = find<HTMLButtonElement>('#next-challenge')
@@ -161,20 +238,9 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
   const announceNote = find<HTMLElement>('#announce-note')
   const trainButton = find<HTMLButtonElement>('#train')
 
-  const countOf = (plan: Plan, key: ActionKey) => (key === 'rest' ? plan.rest : (plan.training[key] ?? 0))
-
-  const withCount = (plan: Plan, key: ActionKey, count: number): Plan =>
-    key === 'rest' ? {...plan, rest: count} : {...plan, training: {...plan.training, [key]: count}}
-
-  const trainedText = (trained: Counts) => {
-    const parts = characteristics.filter(each => trained[each]).map(each => `${characteristicNames[each]} +${trained[each]}`)
-    return parts.length > 0 ? `Trained ${parts.join(', ')}` : 'Only rested'
+  if (lobbyExtra) {
+    lobby.insertBefore(lobbyExtra, nameForm)
   }
-
-  const levelsText = (row: Pick<AthleteRow, 'levels'>) =>
-    characteristics.map(each => `${characteristicNames[each]} ${row.levels[each]}`).join(' · ')
-
-  const namesOf = (athletes: Pick<Athlete, 'profile'>[]) => athletes.map(athlete => athlete.profile.name).join(', ')
 
   const myAthlete = () => {
     const room = visit?.view?.room
@@ -193,7 +259,7 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     }
 
     draft = {...draft, plan: withCount(draft.plan, key, count), note}
-    render()
+    render(visit)
   }
 
   const sliders = new Map(
@@ -222,82 +288,12 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     })
   )
 
-  const pauseText = (state: Championship) => {
-    const left = state.athletes.filter(athlete => athlete.left)
-    const away = state.athletes.filter(athlete => !athlete.left && state.away.includes(athlete.seat))
-
-    if (left.length > 0) {
-      return `Paused for good: the player of ${namesOf(left)} left the room.`
-    }
-
-    return away.length > 0 ? `Paused: the player of ${namesOf(away)} is away. The championship waits for them to come back.` : null
-  }
-
-  const describe = ({code, view, search}: Visit): string => {
-    if (view?.hostLeft) {
-      return 'The host left, so the championship is over.'
-    }
-
-    if (view?.waitingForHost) {
-      return view.room ? 'Waiting for the room creator. The room closes if they are away for two minutes.' : 'Restoring your room…'
-    }
-
-    if (!view?.room) {
-      return searchNotes[search](code)
-    }
-
-    if (!view.inControl) {
-      return 'This championship is open in another tab of yours, which plays now.'
-    }
-
-    const state = view.room.game
-    const seat = seatOf(view.room, view.playerId)
-    const me = athleteAt(state, seat)
-
-    if (state.stage === 'lobby') {
-      if (!seat) {
-        return 'The room is full. You are watching.'
-      }
-
-      return view.isHost
-        ? 'Send the code to the other players. Start when everyone has entered a name.'
-        : 'Enter a name. The host starts the championship.'
-    }
-
-    if (isFinished(state)) {
-      const winners = winnersOf(state)
-      return winners.length > 1 ? `${namesOf(winners)} share the win.` : `${namesOf(winners)} wins the championship.`
-    }
-
-    const pause = pauseText(state)
-
-    if (pause) {
-      return pause
-    }
-
-    if (!me || me.left) {
-      return 'You are watching the championship.'
-    }
-
-    if (state.stage === 'announcement') {
-      return view.isHost ? 'Talk the challenge over, then start training.' : 'The host starts training.'
-    }
-
-    if (state.stage === 'preparation') {
-      return me.plan ? 'Waiting for the others to confirm their plans.' : 'Plan three actions for your athlete, then confirm.'
-    }
-
-    if (state.performance) return 'Watch each athlete take their turn. Their result appears after the performance.'
-
-    return view.isHost ? 'Announce the next challenge when everyone has seen the results.' : 'The host announces the next challenge.'
-  }
-
   const renderLobby = (state: Championship, occupied: string[], seat: string | null, isHost: boolean) => {
     playersTitle.textContent = `Players: ${occupied.length} of ${seats.length}`
     players.replaceChildren(
       ...occupied.map(each => {
         const tags = [isHostSeat(each) ? 'host' : '', each === seat ? 'you' : ''].filter(Boolean)
-        return playerRow(`Player ${each}`, tags.join(', '), state.profiles[each]?.name ?? 'Entering a name…')
+        return playerRow(`Player ${each}`, tags.join(', '), state.profiles[each]?.name || 'Entering a name…')
       })
     )
     nameForm.hidden = !seat
@@ -313,15 +309,13 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     sliders.forEach(({input, info, count}, key) => {
       const value = countOf(draft.plan, key)
       input.value = `${value}`
-      info.textContent = key === 'rest' ? '+50 energy per action' : `Level ${me.levels[key]} / ${maxLevel}`
+      info.textContent = key === 'rest' ? `+${restGain} energy per action` : `Level ${me.levels[key]} / ${maxLevel}`
       count.textContent = value === 1 ? '1 action' : `${value} actions`
     })
     planCount.textContent = `Planned ${preview.actions} of ${actionsPerPlan} actions`
-    planError.textContent = draft.note || (preview.problem && preview.actions > 0 ? problemNotes[preview.problem](draft.plan, me) : '')
+    planError.textContent = draft.note || (preview.problem && preview.actions > 0 ? problemNote(preview.problem, draft.plan, me) : '')
     confirmButton.disabled = preview.problem !== null
   }
-
-  const athleteStatus = (row: AthleteRow) => (row.left ? 'left the room' : row.away ? 'away' : row.confirmed ? 'ready' : 'planning')
 
   const renderPreparation = (state: Championship, me: Athlete | null, code: string, isHost: boolean) => {
     const key = `${code}:${state.challenge}`
@@ -345,6 +339,14 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     performButton.disabled = !canPerform(state)
   }
 
+  const updatePerformanceClock = () => {
+    const turn = visit?.view?.room?.game.performance
+    if (!turn) return
+    const remaining = turn.endsAt === null ? turn.remainingMs : Math.max(0, turn.endsAt - clock(visit))
+    performanceClock.textContent =
+      turn.endsAt === null ? `Paused · ${Math.ceil(remaining / 1000)} s remaining` : `${Math.ceil(remaining / 1000)} s remaining`
+  }
+
   const renderResults = (state: Championship, isHost: boolean) => {
     const next = nextChallenge(state)
 
@@ -365,18 +367,10 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     standings.replaceChildren(
       ...standingsOf(state).map((row, index) => item(`${index + 1}. ${row.profile.name}: ${row.points} points`, levelsText(row)))
     )
-    find<HTMLElement>('#standings-title').hidden = Boolean(state.performance)
+    standingsTitle.hidden = Boolean(state.performance)
     nextText.textContent = isFinished(state) ? `Champions: ${namesOf(winnersOf(state))}. The championship is over.` : ''
     nextButton.hidden = !isHost || !next || Boolean(state.performance)
     nextButton.disabled = !canAnnounceNext(state)
-  }
-
-  const updatePerformanceClock = () => {
-    const turn = visit?.view?.room?.game.performance
-    if (!turn) return
-    const remaining = turn.endsAt === null ? turn.remainingMs : Math.max(0, turn.endsAt - visitNow(visit))
-    performanceClock.textContent =
-      turn.endsAt === null ? `Paused · ${Math.ceil(remaining / 1000)} s remaining` : `${Math.ceil(remaining / 1000)} s remaining`
   }
 
   const renderAnnouncement = (state: Championship, note: string, isHost: boolean) => {
@@ -389,7 +383,8 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     trainButton.disabled = !canTrain(state)
   }
 
-  const renderPage = () => {
+  const render = (next: Visit | null) => {
+    visit = next
     entry.hidden = visit !== null
     gameSection.hidden = visit === null
 
@@ -405,7 +400,7 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     const isHost = Boolean(view?.isHost)
 
     roomCode.textContent = visit.code
-    statusText.textContent = describe(visit)
+    statusText.textContent = statusOf(visit)
     hostBadge.hidden = !isHost
     lobby.hidden = !live || state?.stage !== 'lobby'
     roomInfo.hidden = Boolean(state && state.stage !== 'lobby')
@@ -433,25 +428,13 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     }
   }
 
-  const render = () => {
-    renderPage()
-    const link = document.querySelector<HTMLAnchorElement>('#interface-link')
-    if (link) link.href = `${link.dataset.target ?? './'}${visit ? `#${visit.code}` : ''}`
-    onRender?.(visit)
-  }
-
-  const room = openRoom(next => {
-    visit = next
-    render()
-  })
-
   const flash = (button: HTMLButtonElement, text: string) => {
     const original = button.textContent
     button.textContent = text
     setTimeout(() => (button.textContent = original), 2000)
   }
 
-  find('#create').addEventListener('click', () => room.create())
+  find('#create').addEventListener('click', () => actions.create())
 
   find('#join').addEventListener('submit', event => {
     event.preventDefault()
@@ -463,7 +446,7 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     }
 
     joinError.textContent = ''
-    room.join(code)
+    actions.join(code)
   })
 
   nameForm.addEventListener('submit', event => {
@@ -473,7 +456,7 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     nameError.textContent = profile ? '' : `Use 1 to ${maxNameLength} characters.`
 
     if (profile) {
-      room.send({type: 'profile', profile})
+      actions.send({type: 'profile', profile})
     }
   })
 
@@ -486,17 +469,17 @@ export const mountControls = (onRender?: (visit: Visit | null) => void) => {
     )
   })
 
-  startButton.addEventListener('click', () => room.send({type: 'start'}))
-  confirmButton.addEventListener('click', () => room.send({type: 'confirm', plan: draft.plan}))
-  performButton.addEventListener('click', () => room.send({type: 'perform'}))
-  trainButton.addEventListener('click', () => room.send({type: 'train'}))
-  nextButton.addEventListener('click', () => room.send({type: 'next'}))
+  startButton.addEventListener('click', () => actions.send({type: 'start'}))
+  confirmButton.addEventListener('click', () => actions.send({type: 'confirm', plan: draft.plan}))
+  performButton.addEventListener('click', () => actions.send({type: 'perform'}))
+  trainButton.addEventListener('click', () => actions.send({type: 'train'}))
+  nextButton.addEventListener('click', () => actions.send({type: 'next'}))
   nextAthleteButton.addEventListener('click', () => {
     const state = visit?.view?.room?.game
-    if (state?.performance) room.send({type: 'next-athlete', challenge: state.challenge, index: state.performance.index})
+    if (state?.performance) actions.send({type: 'next-athlete', challenge: state.challenge, index: state.performance.index})
   })
   const clockTimer = setInterval(updatePerformanceClock, 100)
   addEventListener('pagehide', () => clearInterval(clockTimer), {once: true})
 
-  return {send: (move: import('./engine/index.ts').Move) => room.send(move), refresh: render}
+  return {render}
 }

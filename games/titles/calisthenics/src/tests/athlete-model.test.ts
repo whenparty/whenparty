@@ -3,13 +3,13 @@ import {readFile} from 'node:fs/promises'
 import {test} from 'node:test'
 import {Vector3} from 'three'
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'
-import {startingCondition} from '../engine/index.ts'
-import {AthleteModel} from '../3d/athlete.ts'
-import {performanceMotion} from '../3d/presentation.ts'
+import {startingCondition} from '../core/index.ts'
+import {AthleteModel} from '../frontends/3d/athlete-model.ts'
+import {performanceMotion} from '../frontends/3d/presentation.ts'
 
 for (const bodyType of ['male', 'female'] as const)
   test(`a ${bodyType} athlete's failed push-up stays grounded without completing a repetition`, async () => {
-    const bytes = new Uint8Array(await readFile(new URL('../../public/assets/athlete.glb', import.meta.url)))
+    const bytes = new Uint8Array(await readFile(new URL('../frontends/3d/assets/athlete.glb', import.meta.url)))
     const source = await new GLTFLoader().parseAsync(bytes.buffer, '')
     const athlete = new AthleteModel(source.scene, source.animations)
     try {
@@ -42,7 +42,7 @@ for (const bodyType of ['male', 'female'] as const)
   })
 
 test('body types have distinct torso silhouettes without folded surfaces', async () => {
-  const bytes = new Uint8Array(await readFile(new URL('../../public/assets/athlete.glb', import.meta.url)))
+  const bytes = new Uint8Array(await readFile(new URL('../frontends/3d/assets/athlete.glb', import.meta.url)))
   const source = await new GLTFLoader().parseAsync(bytes.buffer, '')
   const athlete = new AthleteModel(source.scene, source.animations)
   const widths: number[][] = []
