@@ -12,4 +12,4 @@ These rules say what to check while working on a change that [workflow-changes.m
 ## Code
 
 - During implementation, run the affected fast tests and typechecks. Run the full fast suite when changing shared contracts.
-- Before reporting a change as done, check each affected requirement against the code and its tests. Affected requirements are those the branch changes in `docs/specs/` since it left `main` and those that the changed module's `AGENTS.md` lists as relying on it.
+- Before reporting a change as done, check each affected requirement against the code and its tests. Affected requirements are those the branch changes in `docs/specs/` since it left `main` and those that the `AGENTS.md` of the changed project or module lists as relying on it.
