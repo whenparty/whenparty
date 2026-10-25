@@ -18,7 +18,7 @@ Decide when writing the specifications of the platform modules which module stat
 
 ## Fast tests and shared contracts
 
-The checks in the root [AGENTS.md](../AGENTS.md) say "affected fast tests", "full fast suite" and "shared contracts". None of these terms is defined, and the repository has no slow tests to tell fast ones apart from. Decide whether to define them in the [glossary](glossary.md) or rephrase the checks.
+The [workflow checks](/docs/conventions/workflow-checks.md) say "affected fast tests", "full fast suite" and "shared contracts". None of these terms is defined, and the repository has no slow tests to tell fast ones apart from. Decide whether to define them in the [glossary](glossary.md) or rephrase the checks.
 
 ## Rules that code cannot express
 
@@ -26,19 +26,15 @@ The checks in the root [AGENTS.md](../AGENTS.md) say "affected fast tests", "ful
 
 ## Rules for non-module AGENTS.md files
 
-[index.md](conventions/index.md) says which conventions file covers each kind of file, but not which one covers the root `AGENTS.md`, `games/AGENTS.md` and `games/titles/AGENTS.md`. Module `AGENTS.md` files also hold testing, formatting and deployment instructions, not only what the specification rules describe.
+The map in the root [AGENTS.md](/AGENTS.md) gives the root `AGENTS.md`, `games/AGENTS.md` and `games/titles/AGENTS.md` to the [documentation conventions](/docs/conventions/documentation.md), but those conventions do not say what such a file holds. Module `AGENTS.md` files also hold testing, formatting and deployment instructions, not only what the specification rules describe.
 
 ## Link to open questions in the documentation conventions
 
 [documentation.md](conventions/documentation.md) ends with a line that links to this file but states no rule. Decide whether to keep it.
 
-## Specifications on `main` and on a branch
-
-The [specification rules](conventions/specs.md) say to describe the behaviour implemented on `main`. The root [AGENTS.md](../AGENTS.md) says a behaviour change starts with a specification edit on a branch, before the code exists. Decide how to state that both hold: the specification on `main` matches `main`, and a branch's specification describes what the branch implements.
-
 ## Rules outside games
 
-`www/`, `nii-au/`, `infra/` and `temp-sites/` are not [modules](glossary.md#module), so the root `AGENTS.md` stops before any code change there and asks whether to set up a specification. Decide whether and how the specification and testing rules extend to the rest of the repository.
+`www/`, `nii-au/`, `infra/` and `temp-sites/` are not [modules](glossary.md#module), so the [workflow rules](/docs/conventions/workflow-changes.md) stop before any code change there and ask whether to set up a specification. Decide whether and how the specification and testing rules extend to the rest of the repository.
 
 ## Testing the TURN module
 
