@@ -29,8 +29,6 @@ Each part deploys only when its own files change. Markdown-only changes don't de
 
 Every third-party action is pinned to a full commit SHA, with its version in a comment (`uses: owner/action@<sha> # v1.2.3`). A tag can be moved to different code, but a SHA can't. This matters because the deploy jobs hold the VPS SSH key. To update an action, look up the commit of the new release tag and replace both the SHA and the comment.
 
-`temp-sites/` and the nii.au site (then in `www/`) were separate repos (`whenparty/temp-sites`, `whenparty/www`, now archived) and were imported with full history. This repo itself was named `whenparty/infra` until October 2026, and GitHub redirects the old name.
-
 ## Nginx Configuration
 
 All nginx configs live in `infra/nginx/conf.d/` and ship together with the nginx deploy:

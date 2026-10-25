@@ -1,29 +1,35 @@
-# Working in WhenParty
+# WhenParty
 
-Before starting work, read the [documentation conventions](docs/conventions/documentation.md) and the [convention files](docs/conventions/index.md) that cover what the task changes, and follow them.
-Read the applicable `AGENTS.md` files for the area being changed. Keep changes within the requested scope.
-Files that git ignores, such as `node_modules` and build output, are not part of the project. Do not edit them or take them as project rules.
-Before starting, check [open questions](docs/open-questions.md) about the modules or topics the task touches and raise them with the user. Add a question only with the user's agreement. When a question is decided, move the decision into the conventions or a specification and delete the question.
+This repository holds everything that runs on the WhenParty VPS. [README.md](/README.md) describes how it is deployed and served. Its top-level folders, apart from `docs/`, `.github/` (CI workflows) and `.claude/` (Claude Code settings and hooks), are:
 
-When a task needs a decision the conventions do not cover, such as a new module, a new top-level folder or a new kind of document, or when rules contradict each other or make the task impossible, stop. Describe what is missing and propose options. The user decides.
-When you see a better way to reach the result than a rule allows, follow the rule anyway. In your report, name the rule, describe the better way and why it is better. The user decides whether to change the rule.
-The user has the final word, even when it contradicts these rules. When it does, remind the user of the rule, then follow their decision.
+- `infra/`: the nginx proxy that terminates TLS for every site.
+- `www/`: the When Party site at `www.when.party`.
+- `nii-au/`: the site at `www.nii.au`.
+- `temp-sites/`: temporary sites on `*.when.party` and the Traefik router that serves them.
+- `games/`: peer-to-peer browser games and the platform they share. Only this folder has [modules](/docs/glossary.md#module).
 
-## Changes
+## Documents
 
-- Before editing any document, read every Markdown file that git tracks, including those that look unrelated, and resolve the duplicates and contradictions the edit would create.
-- When an agent breaks a rule that a document states, first check whether the rule is unclear, stated in several places or in a document that mixes purposes, as the [documentation conventions](docs/conventions/documentation.md) describe. Fix that before adding emphasis or another rule.
-- Every code change follows the [testing rules](docs/conventions/tests.md). First decide whether it changes observable behaviour. If it does, it starts with a specification edit, as described below. If it does not, as with refactoring or a fix that matches an existing requirement, the specification stays as it is.
-- If the task changes code that belongs to no [module](docs/glossary.md#module) with a [specification](docs/conventions/specs.md), stop. Say that these rules expect one, and ask whether to set it up first or to work without it.
-- A behaviour change starts with a specification edit that the user approves before implementation. Claude Code asks for confirmation before editing specification files, as set in [settings](.claude/settings.json).
-- The specification edit and the code land in the same pull request, so the requirements a branch has not yet implemented are its `docs/specs/` diff against `main`. Work split over several pull requests adds to the specification only the part each one implements.
-- A pull request that adds, changes or removes a reliance on another module's requirement updates the specification and that module's list of relying requirements together.
-- When a test would have to check requirements of several specification files, a requirement about how they fit together is missing. Propose it to the user.
-- During implementation, change the specification only as approved. When a requirement turns out wrong or incomplete, stop and ask.
-- Before reporting a change as done, check each affected requirement against the code and its tests. Affected requirements are those the specification diff changes and those that the changed module's `AGENTS.md` lists as relying on it.
+- This file maps the repository and its documents. It follows the [documentation conventions](/docs/conventions/documentation.md).
+- A `README.md` tells people what a folder holds and how it is deployed, run and tested. The root and folders such as `www/` and `temp-sites/` have one. It follows the documentation conventions.
+- `games/AGENTS.md` lists the platform modules and holds commands and rules shared by all games. `games/titles/AGENTS.md` lists the titles. They follow the documentation conventions. Which rules apply to such files is an [open question](/docs/open-questions.md#rules-for-non-module-agentsmd-files).
+- A module's `AGENTS.md` states how to work on the module. Every module has one. It follows the [specification rules](/docs/conventions/specs.md).
+- A module's specification in its `docs/specs/` describes the module's observable behaviour, one numbered file per topic. Every module has one. It follows the specification rules.
+- A module's `docs/PLANNED.md` lists accepted changes that are not in its specification yet. A module has one while there are such changes. It follows the specification rules.
+- Other documents of a module live in its `docs/` folder and hold what its specification and `AGENTS.md` do not. They follow the documentation conventions.
+- The conventions files in `docs/conventions/`, listed below, hold the rules for each kind of file and for how to work. Adding one is a decision for the user, like any new kind of document (see the [workflow rules](/docs/conventions/workflow-changes.md)). Conventions files follow the documentation conventions.
+- The [glossary](/docs/glossary.md) defines the terms that documents use and that can be read in more than one way. It follows the documentation conventions.
+- [Open questions](/docs/open-questions.md) lists undecided questions about the rules. The workflow rules say when a question is added and deleted. It follows the documentation conventions.
 
-## Checks
+## Conventions files
 
-- During implementation, run the affected fast tests and typechecks. Run the full fast suite when changing shared contracts.
-- Repeat successful checks only after relevant changes or new evidence of a problem. Report what was actually verified.
-- After adding a document or changing a rule, have a reviewer who has not seen the discussion, such as an agent with a fresh context, read every Markdown file that git tracks and report unclear text, contradictions, duplicates, rules in the wrong file and rules that no longer match how the project works. Fix those places.
+- [documentation.md](/docs/conventions/documentation.md): responses and every document that the list above does not give to another file.
+- [specs.md](/docs/conventions/specs.md): the module documents the list above gives to it.
+- [tests.md](/docs/conventions/tests.md): test files.
+- [code.md](/docs/conventions/code.md): source code and the files it loads, such as styles and assets.
+- [workflow-changes.md](/docs/conventions/workflow-changes.md): how to start a task, when to stop and ask, and how specifications and code change.
+- [workflow-checks.md](/docs/conventions/workflow-checks.md): what to check in documents and code while working on a change.
+
+A rule lives in the file that covers what the rule constrains. Rules about how to work, such as the order of steps or when to stop and ask, live in the workflow files.
+
+Before any change, read both workflow files and follow them.
