@@ -18,12 +18,12 @@ Every `AGENTS.md`, from the root to a [module](/docs/glossary.md#module), has at
 
 - a paragraph that says what its folder is;
 - a map of the other documents in the folder and of its parts that have their own documentation, such as [subprojects](/docs/glossary.md#subproject) and modules, with what each holds; a folder with neither has no map;
-- how to work there: in the root, which workflow files to read; elsewhere, the folder's key files, architecture constraints, commands and checks.
+- how to work there: in the root, which workflow files to read and what you need to know to change the files in the root itself; elsewhere, the folder's key files, architecture constraints, the commands and checks for changing its code, and what the code cannot express but you need to know to change it.
 
 Other conventions files can add parts, such as the list of relying requirements in the specification rules.
 
 ## Links
 
 - Inside one of the [projects](/docs/glossary.md#project) that the [map](/AGENTS.md) lists, such as `games/`, including all its subprojects and modules, link with relative paths, such as `../p2p/AGENTS.md`. Link to anything outside that project with a path from the repository root that starts with `/`, such as `/infra/nginx/conf.d/`.
-- The root `AGENTS.md` and `README.md` and everything in the root `docs/` link to other files only with paths from the repository root.
+- Documents outside those projects, such as the root `AGENTS.md` and `README.md` and everything in the root `docs/`, link to other files only with paths from the repository root.
 - A link to a heading in the same file uses only the anchor, such as `#subproject`.
