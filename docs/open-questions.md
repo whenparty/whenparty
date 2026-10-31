@@ -10,7 +10,7 @@ Decide when the first requirement that needs a browser test appears: the tool, w
 
 The platform in `games/platform/` needs a [specification](/docs/conventions/specs.md) of what games and players get from it, such as a connection through the TURN relay, and each of its [modules](/docs/glossary.md#module) needs one of its own boundary, as [games/AGENTS.md](/games/AGENTS.md) and the specification rules state. Decide when writing the platform specification:
 
-- where the platform's specification, `AGENTS.md` and `docs/PLANNED.md` live;
+- where the platform's specification, `AGENTS.md`, `docs/PLANNED.md` and [decision records](/docs/conventions/decisions.md) live, including those about its modules;
 - how the platform and the TURN module are tested, together with [Browser tests](/docs/open-questions.md#browser-tests) and [Testing the TURN module](/docs/open-questions.md#testing-the-turn-module);
 - where the session rules in [STATES.md](/games/platform/p2p/STATES.md) of p2p move.
 
@@ -21,14 +21,6 @@ The platform in `games/platform/` needs a [specification](/docs/conventions/spec
 ## Fast tests and shared contracts
 
 The [workflow checks](/docs/conventions/workflow-checks.md) say "affected fast tests", "full fast suite" and "shared contracts". None of these terms is defined, and the repository has no slow tests to tell fast ones apart from. Decide whether to define them in the [glossary](glossary.md) or rephrase the checks.
-
-## Rules that code cannot express
-
-[code.md](conventions/code.md) says to put rules that code cannot express in "the module's documentation". It does not say whether that is the specification or the `AGENTS.md`, while the [specification rules](conventions/specs.md) leave implementation choices out of the specification.
-
-## Link to open questions in the documentation conventions
-
-[documentation.md](conventions/documentation.md) ends with a line that links to this file but states no rule. Decide whether to keep it.
 
 ## Testing the TURN module
 
