@@ -7,12 +7,13 @@ keys/
 
 docker-compose.override.yml
 
-# Generated on the VPS by infra/scripts/update-cloudflare-real-ip.sh
 infra/nginx/conf.d/cloudflare_real_ip.conf
 
 .vscode/
 
-# Claude desktop session files. Project settings and hooks are shared.
 .claude/*
+!.claude/AGENTS.md
 !.claude/settings.json
 !.claude/hooks/
+!.claude/agents/
+!.claude/skills/
