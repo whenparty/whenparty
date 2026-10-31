@@ -7,13 +7,16 @@ These rules say how to work on any change. [workflow-checks.md](/docs/convention
 Before starting work, read the [documentation conventions](/docs/conventions/documentation.md) and the conventions files that cover what the task changes, as the [map](/AGENTS.md) lists them, and follow them.
 Read the applicable `AGENTS.md` files for the area being changed. Keep changes within the requested scope.
 Files that git ignores, such as `node_modules` and build output, are not part of the repository. Do not edit them or take them as rules.
-Before starting, check [open questions](/docs/open-questions.md) about the projects, modules or topics the task touches and raise them with the user. Add a question only with the user's agreement. When a question is decided, move the decision into the conventions or a specification and delete the question.
+Before starting, check [open questions](/docs/open-questions.md) about the projects, modules or topics the task touches and raise them with the user. Add a question only with the user's agreement. When a question is decided, move the decision into the document it concerns, such as a conventions file, an `AGENTS.md` or a specification, and delete the question. The Decisions section below says when the decision also needs a decision record.
 
 ## Decisions
 
-When a task needs a decision the conventions do not cover, such as a new top-level project, a new module or a new kind of document, or when rules contradict each other or make the task impossible, stop. Describe what is missing and propose options. The user decides.
+When a task needs a decision the conventions do not cover, such as a new [project](/docs/glossary.md#project) on the [map](/AGENTS.md), a new [module](/docs/glossary.md#module), a new kind of document or a new conventions file, or when rules contradict each other or make the task impossible, stop. Describe what is missing and propose options. The user decides.
+Before splitting a document that is longer than the [documentation conventions](/docs/conventions/documentation.md) allow, propose the split to the user.
 When you see a better way to reach the result than a rule allows, follow the rule anyway. In your report, name the rule, describe the better way and why it is better. The user decides whether to change the rule.
+Do not propose again an option that a [decision record](/docs/conventions/decisions.md) has already weighed unless you have facts that the record does not contain. Link the record and name those facts.
 The user has the final word, even when it contradicts these rules. When it does, remind the user of the rule, then follow their decision.
+After any decision the user makes under this section or on an open question, write a decision record when the decision record rules call for one, and have the user approve its text. The record reaches `main` with the first change that follows from it, or on its own when the decision changes nothing. A change that goes against a decision record is a new decision for the user. When the user accepts it, the same change rewrites or deletes the record as the decision record rules describe. A change that moves or renames something linked under the record's Consequences updates the link.
 
 ## Specifications and code
 
