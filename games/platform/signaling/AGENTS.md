@@ -2,7 +2,7 @@
 
 The service at `signaling.when.party` handles peer discovery and WebRTC negotiation. Games connect through [P2P](../p2p/AGENTS.md).
 
-[src/server.mjs](src/server.mjs) owns HTTP, WebSockets, heartbeat and resource limits. [src/origin.mjs](src/origin.mjs) defines allowed origins. Keep heartbeat below proxy idle timeouts and retain the separate signaling limits in [nginx](../../../infra/nginx/conf.d/temp-sites.conf). Origin filtering restricts browser use; it does not authenticate clients.
+[src/server.mjs](src/server.mjs) owns HTTP, WebSockets, heartbeat and resource limits. [src/origin.mjs](src/origin.mjs) defines allowed origins. Keep heartbeat below proxy idle timeouts and retain the separate signaling limits in [nginx](/infra/nginx/conf.d/temp-sites.conf). Origin filtering restricts browser use; it does not authenticate clients.
 
 `GET /health` is the container health check. `GET /turn-credentials` returns uncached credentials for allowed origins, or 404 when TURN is disabled. [src/turn.mjs](src/turn.mjs) defines their format and lifetime; follow the [TURN instructions](../turn/AGENTS.md) for shared configuration. Keep secrets on the server.
 
