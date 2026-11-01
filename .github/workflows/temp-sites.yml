@@ -27,7 +27,6 @@ jobs:
 
           BASE_SHA="${{ github.event.before }}"
           if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
-            # The monorepo has several root commits, so diff against the empty tree instead
             BASE_SHA=$(git hash-object -t tree /dev/null)
           fi
 

@@ -11,6 +11,6 @@ if [ -z "$limit" ]; then
   echo "word-limit.sh found no 'at most N words' in docs/conventions/documentation.md" >&2
   exit 2
 fi
-words=$(wc -w < "$path" | tr -d ' ')
+words=$(LC_ALL=C awk '{ n += NF } END { print n + 0 }' "$path")
 [ "$words" -le "$limit" ] && exit 0
 jq -n --arg reason "$root/$path has $words words. A Markdown document has at most $limit words, as docs/conventions/documentation.md says. Before you continue, propose to the user how to split it, as docs/conventions/workflow-changes.md says under Decisions. If the user has already decided how to split this document, or not to split it in this task, follow that decision and continue." '{decision: "block", reason: $reason}'
