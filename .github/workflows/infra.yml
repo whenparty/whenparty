@@ -10,24 +10,7 @@ on:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Test nginx config
-        run: |
-          set -euo pipefail
-          image=$(docker compose -f infra/docker-compose.yml config --images)
-          certs=$(mktemp -d)
-          for domain in nii.au when.party; do
-            openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=$domain" \
-              -keyout "$certs/$domain.key" -out "$certs/$domain.crt" 2>/dev/null
-          done
-          docker run --rm \
-            -v "$PWD/infra/nginx/conf.d:/etc/nginx/conf.d:ro" \
-            -v "$certs:/etc/nginx/certs:ro" \
-            "$image" nginx -t
+    uses: ./.github/workflows/check-nginx.yml
 
   deploy:
     needs: validate

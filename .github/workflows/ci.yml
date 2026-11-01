@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      games: ${{ steps.changes.outputs.games }}
+      turn: ${{ steps.changes.outputs.turn }}
+      nginx: ${{ steps.changes.outputs.nginx }}
+      project-names: ${{ steps.changes.outputs.project-names }}
+      markdown: ${{ steps.changes.outputs.markdown }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detect changes
+        id: changes
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          base=HEAD^1
+          if [ "$EVENT" = push ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            base=$BEFORE
+          fi
+
+          code=$(git diff --name-only "$base" HEAD -- ':!*.md')
+
+          touched() {
+            grep -qE "$1" <<< "$code"
+          }
+
+          workflow_touched() {
+            touched "^\.github/workflows/(ci|$1)\.yml$"
+          }
+
+          if workflow_touched 'check-games|games'; then
+            games=all
+          else
+            games=$(
+              { grep '^games/' <<< "$code" || true; } | { grep -v '^games/platform/turn/' || true; } |
+                while read -r file; do
+                  package=$(echo "$file" | cut -d/ -f2-3)
+                  case "$file" in
+                    games/*/*/*)
+                      if git cat-file -e "HEAD:games/$package/package.json" 2>/dev/null; then
+                        echo "$package"
+                      else
+                        echo all
+                      fi
+                      ;;
+                    *) echo all ;;
+                  esac
+                done | sort -u
+            )
+            if grep -qx all <<< "$games"; then
+              games=all
+            fi
+            games=$(paste -sd ' ' - <<< "$games")
+          fi
+
+          turn=false
+          if touched '^games/platform/turn/' || workflow_touched 'check-turn|games'; then
+            turn=true
+          fi
+
+          nginx=false
+          if touched '^infra/' || workflow_touched 'check-nginx|infra'; then
+            nginx=true
+          fi
+
+          project_names=false
+          if touched '^(games|temp-sites/projects)/' || workflow_touched 'check-project-names|games'; then
+            project_names=true
+          fi
+
+          markdown=$(git diff -z --name-only --diff-filter=d "$base" HEAD -- '*.md' |
+            jq -Rsc 'split("\u0000") | map(select(length > 0))')
+
+          {
+            echo "games=$games"
+            echo "turn=$turn"
+            echo "nginx=$nginx"
+            echo "project-names=$project_names"
+            echo "markdown=$markdown"
+          } | tee -a "$GITHUB_OUTPUT"
+
+  games:
+    needs: changes
+    if: needs.changes.outputs.games != ''
+    uses: ./.github/workflows/check-games.yml
+    with:
+      packages: ${{ needs.changes.outputs.games }}
+
+  turn:
+    needs: changes
+    if: needs.changes.outputs.turn == 'true'
+    uses: ./.github/workflows/check-turn.yml
+
+  nginx:
+    needs: changes
+    if: needs.changes.outputs.nginx == 'true'
+    uses: ./.github/workflows/check-nginx.yml
+
+  project-names:
+    needs: changes
+    if: needs.changes.outputs.project-names == 'true'
+    uses: ./.github/workflows/check-project-names.yml
+
+  words:
+    needs: changes
+    if: needs.changes.outputs.markdown != '[]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check the word limit
+        env:
+          FILES: ${{ needs.changes.outputs.markdown }}
+        run: |
+          set -euo pipefail
+          limit=$(sed -n 's/.*at most \([0-9][0-9]*\) words.*/\1/p' docs/conventions/documentation.md | head -n 1)
+          if [ -z "$limit" ]; then
+            echo "::error file=docs/conventions/documentation.md::No 'at most N words' in docs/conventions/documentation.md"
+            exit 1
+          fi
+          status=0
+          while IFS= read -r file; do
+            words=$(LC_ALL=C awk '{ n += NF } END { print n + 0 }' "$file")
+            if [ "$words" -gt "$limit" ]; then
+              echo "::error file=$file::$file has $words words. A Markdown document has at most $limit words, as docs/conventions/documentation.md says."
+              status=1
+            fi
+          done < <(jq -r '.[]' <<< "$FILES")
+          exit "$status"
+
+  result:
+    needs: [changes, games, turn, nginx, project-names, words]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a check failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
