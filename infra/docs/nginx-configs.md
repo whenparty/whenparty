@@ -2,7 +2,7 @@
 
 `docker-compose.yml` mounts `nginx/conf.d/` over the image's `/etc/nginx/conf.d/`, and the image's main config loads every `*.conf` file there into its `http` block. So the directives outside a `server` block apply to every site.
 
-Each config's first comment says what it serves. `cloudflare_real_ip.conf` is generated on the VPS and ignored by git, as [cloudflare-ip-list.md](cloudflare-ip-list.md) says.
+`default.conf` holds the shared settings and the port 80 server; `www.conf`, `nii-au.conf` and `temp-sites.conf` hold one site each, as [sites.md](sites.md) describes. `cloudflare_real_ip.conf` is generated on the VPS and ignored by git, as [cloudflare-ip-list.md](cloudflare-ip-list.md) says.
 
 ## Shared settings and a site's own
 
