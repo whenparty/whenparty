@@ -2,7 +2,7 @@
 
 ## Context
 
-The [workflow](/docs/conventions/workflow-changes.md) and the [checks](/docs/conventions/workflow-checks.md) require reading documents before a change, and nothing confirms that an agent has read them. Claude Code hooks can add text to the agent's context when a session starts and next to the result of a tool call, and a hook that runs before a tool call can deny it. Claude Code cuts each text a hook adds at 10,000 characters: it saves the text to a file and gives the agent the path and the first 2,000 characters, without asking it to read the file. The root `AGENTS.md`, `README.md` and the Markdown files in `docs/` are together longer than 10,000 characters, and so are the documents of `games/`. Each document alone is shorter. `games/` holds a platform and several games. Each game has its own `AGENTS.md` and specification and lists the platform packages it uses as `@whenparty/*` dependencies in its `package.json`. The root map lists only top-level projects, and a project's `AGENTS.md` lists its subprojects.
+The [workflow](/docs/conventions/workflow.md) and the [checks](/docs/conventions/workflow-checks.md) require reading documents before a change, and nothing confirms that an agent has read them. Claude Code hooks can add text to the agent's context when a session starts and next to the result of a tool call, and a hook that runs before a tool call can deny it. Claude Code cuts each text a hook adds at 10,000 characters: it saves the text to a file and gives the agent the path and the first 2,000 characters, without asking it to read the file. The root `AGENTS.md`, `README.md` and the Markdown files in `docs/` are together longer than 10,000 characters, and so are the documents of `games/`. Each document alone is shorter. `games/` holds a platform and several games. Each game has its own `AGENTS.md` and specification and lists the platform packages it uses as `@whenparty/*` dependencies in its `package.json`. The root map lists only top-level projects, and a project's `AGENTS.md` lists its subprojects.
 
 ## Options
 
@@ -32,4 +32,4 @@ A file needs the documents on its path, its deepest folder with an `AGENTS.md` a
 ## Consequences
 
 - [doc-context.sh](/.claude/hooks/doc-context.sh) and its entries in [settings.json](/.claude/settings.json).
-- [.claude/hooks/AGENTS.md](/.claude/hooks/AGENTS.md), which describes how the hook works.
+- [.claude/hooks/doc-context.md](/.claude/hooks/doc-context.md), which describes how the hook works.
