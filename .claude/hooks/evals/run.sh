@@ -22,7 +22,7 @@ ids=${*:-$(jq -r '.[].id' "$tasks")}
 out=$(mktemp -d "${TMPDIR:-/tmp}/doc-eval.XXXXXX")
 
 copy_source() {
-  git clone -q --shared "$source" "$1"
+  GIT_LFS_SKIP_SMUDGE=1 git clone -q --shared "$source" "$1"
   [ "$(git -C "$1" symbolic-ref --short HEAD)" = main ] || git -C "$1" branch -q -f main origin/main 2>/dev/null || true
   git -C "$1" remote remove origin
   git -C "$source" diff HEAD --binary > "$1.diff"
