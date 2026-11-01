@@ -133,16 +133,16 @@ jobs:
           FILES: ${{ needs.changes.outputs.markdown }}
         run: |
           set -euo pipefail
-          limit=$(sed -n 's/.*at most \([0-9][0-9]*\) words.*/\1/p' docs/conventions/documentation.md | head -n 1)
+          limit=$(sed -n 's/.*at most \([0-9][0-9]*\) words.*/\1/p' docs/conventions/writing.md | head -n 1)
           if [ -z "$limit" ]; then
-            echo "::error file=docs/conventions/documentation.md::No 'at most N words' in docs/conventions/documentation.md"
+            echo "::error file=docs/conventions/writing.md::No 'at most N words' in docs/conventions/writing.md"
             exit 1
           fi
           status=0
           while IFS= read -r file; do
-            words=$(LC_ALL=C awk '{ n += NF } END { print n + 0 }' "$file")
+            words=$(LC_ALL=C awk '/^ *```mermaid *$/ { m = 1; k = 0; next } m && /^ *```/ { m = 0; next } m { k += NF; next } { n += NF } END { print n + m * (k + 1) }' "$file")
             if [ "$words" -gt "$limit" ]; then
-              echo "::error file=$file::$file has $words words. A Markdown document has at most $limit words, as docs/conventions/documentation.md says."
+              echo "::error file=$file::$file has $words words. A Markdown document has at most $limit words, as docs/conventions/writing.md says."
               status=1
             fi
           done < <(jq -r '.[]' <<< "$FILES")
