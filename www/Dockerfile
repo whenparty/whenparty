@@ -1,5 +1,7 @@
 FROM nginx:1.31.7-alpine
 
+RUN apk upgrade --no-cache brotli-libs
+
 COPY html/ /usr/share/nginx/html/
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
