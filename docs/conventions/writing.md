@@ -1,6 +1,6 @@
 # Writing
 
-These rules apply to every document, and to responses where they say so. The other conventions files that the [map](/AGENTS.md) lists add rules for the kinds of files they cover, such as the [rules for AGENTS.md and README](/docs/conventions/folder-docs.md).
+These rules apply to every document, and to responses where they say so. The other conventions files that the [map](/AGENTS.md) lists add rules for the kinds of files they cover, such as the [folder document rules](/docs/conventions/folder-docs.md).
 
 - Use the minimum text needed in documents and responses.
 - Describe only current behaviour. Replace or delete superseded text without adding change histories or before-and-after narratives. Keep history in Git. Reasons for a change belong in commit messages and in the pull request description when there is one. The [specification rules](/docs/conventions/specs.md) say how a specification and `docs/PLANNED.md` describe changes that are not on `main` yet.
