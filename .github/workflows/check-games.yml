@@ -1,0 +1,42 @@
+name: Check Games
+
+on:
+  workflow_call:
+    inputs:
+      packages:
+        description: all, or package folders under games/ to test and typecheck together with the packages that depend on them
+        required: false
+        type: string
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Test and typecheck
+        env:
+          PACKAGES: ${{ inputs.packages }}
+        run: |
+          docker run --rm -e PACKAGES -v "$PWD/games:/games" -w /games node:24.22.0-alpine3.24 sh -c '
+            set -euf
+            corepack enable
+            pnpm install --frozen-lockfile
+            if [ "$PACKAGES" = all ]; then
+              pnpm test
+              pnpm typecheck
+            else
+              set --
+              for package in $PACKAGES; do
+                set -- "$@" --filter "...{./$package}"
+              done
+              pnpm "$@" test
+              pnpm "$@" --if-present typecheck
+            fi
+          '

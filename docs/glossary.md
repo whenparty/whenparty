@@ -14,4 +14,4 @@ A part of a project that the documentation of the project names as a module. Its
 
 ## Deployment
 
-A folder that CI deploys on its own with its Compose file, `compose.yml` or `docker-compose.yml`, such as `www/` or `games/platform/signaling/`. A project can hold several deployments: in `games/`, each title and the signaling and turn modules are deployments, while p2p ships inside the games. File and variable names in code, such as `deploy-project.yml`, call a deployment a project. In `temp-sites/`, each subproject is one deployment, and `traefik/` is one more.
+A folder that a deploy workflow deploys on its own with its Compose file, `compose.yml` or `docker-compose.yml`, such as `www/` or `games/platform/signaling/`. A project can hold several deployments: in `games/`, each title and the signaling and turn modules are deployments, while p2p ships inside the games. File and variable names in code, such as `deploy-project.yml`, call a deployment a project. In `temp-sites/`, each subproject is one deployment, and `traefik/` is one more.

@@ -31,7 +31,7 @@ The hook enforces only the documents a file needs, as listed below. The workflow
 
 ### word-limit.sh
 
-The hook runs after Edit or Write of a Markdown file. It reads the word limit from the phrase "at most N words" in the [documentation conventions](/docs/conventions/documentation.md). When the phrase is missing, it exits with code 2, so the agent sees the error. When the file is longer than the limit, it returns `decision: "block"`. Its reason asks the agent to propose a split, or to follow what the user has already decided about splitting this document. The edit itself stays.
+The hook runs after Edit or Write of a Markdown file. It reads the word limit from the phrase "at most N words" in the [documentation conventions](/docs/conventions/documentation.md) and counts words with the same command they give. When the phrase is missing, it exits with code 2, so the agent sees the error. When the file is longer than the limit, it returns `decision: "block"`. Its reason asks the agent to propose a split, or to follow what the user has already decided about splitting this document. The edit itself stays. The `words` job of [ci.yml](/.github/workflows/ci.yml) reads the limit and counts the same way for Markdown files of each pull request and push to `main`. Change the hook and the job together.
 
 ## Testing
 
