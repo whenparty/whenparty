@@ -14,6 +14,7 @@ infra/nginx/conf.d/cloudflare_real_ip.conf
 .claude/*
 !.claude/AGENTS.md
 !.claude/settings.json
+!.claude/docs/
 !.claude/hooks/
 !.claude/agents/
 !.claude/skills/

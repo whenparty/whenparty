@@ -1,0 +1,19 @@
+# Troubleshooting the proxy
+
+Run these on the VPS in `/opt/services/whenparty/infra`:
+
+```bash
+docker exec nginx nginx -t
+docker compose logs nginx
+docker inspect -f '{{.State.Health.Status}}' nginx
+```
+
+The health check calls `/health` on port 80 inside the container.
+
+| Symptom | Cause |
+| --- | --- |
+| A site answers 502 | Its container is down or not on the network it shares with nginx, as [sites.md](sites.md) says. `docker network inspect wp_www` and `docker network inspect wp_tempsites` list the containers on each network. |
+| Every site of one zone answers 400 | Authenticated Origin Pulls is off in that zone, as [setup.md](setup.md) says. A request straight to the server's address always gets 400 on port 443, while port 80 answers 301. |
+| nginx logs Cloudflare's addresses instead of visitors' | `cloudflare_real_ip.conf` is missing or empty. [cloudflare-ip-list.md](cloudflare-ip-list.md) says where the job logs. |
+| A removed site or config still has an effect | Its file is still on the VPS, as [deploys.md](/.github/docs/deploys.md#infrayml) says. |
+| The container does not start after a restart | A config on disk fails `nginx -t`, as [deploys.md](/.github/docs/deploys.md#infrayml) says. |
