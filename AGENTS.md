@@ -1,6 +1,6 @@
 # WhenParty
 
-This repository holds everything that runs on the WhenParty VPS. [README.md](/README.md) describes how it is deployed and served. Its top-level folders, apart from `docs/`, `.github/` (CI workflows) and [`.claude/`](/.claude/AGENTS.md) (Claude Code settings, hooks, skills and subagents), are [projects](/docs/glossary.md#project):
+This repository holds everything that runs on the WhenParty VPS. [README.md](/README.md) describes how it is deployed and served. Its top-level folders, apart from `docs/`, [`.github/`](/.github/AGENTS.md) (CI workflows) and [`.claude/`](/.claude/AGENTS.md) (Claude Code settings, hooks, skills and subagents), are [projects](/docs/glossary.md#project):
 
 - `infra/`: the nginx proxy that terminates TLS for every site.
 - [`www/`](/www/README.md): the When Party site at `www.when.party`.

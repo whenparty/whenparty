@@ -1,14 +1,5 @@
 name: Deploy Compose Project
 
-# Reusable: deploys one project folder that has a compose.yml (temp sites, games).
-# - Builds <path>/Dockerfile, if there is one, from <context> and pushes
-#   ghcr.io/<owner>/<image> (latest + sha-<commit>).
-# - Copies <path> to /opt/services/whenparty/<path> on the VPS and runs its compose.yml
-#   with the sha-<commit> image.
-# - If <path> is gone from the repo, takes the project down on the VPS and removes its folder.
-# - If its compose.yml uses TURN_SECRET (games/platform/turn and signaling), writes the repository
-#   secret to the project's .env on the VPS, readable by the deploy user only.
-# Callers grant contents: read and packages: write.
 on:
   workflow_call:
     inputs:
@@ -106,11 +97,10 @@ jobs:
           context: ${{ inputs.context || inputs.path }}
           file: ${{ inputs.path }}/Dockerfile
           push: true
-          load: true  # Load locally for scanning
+          load: true
           tags: |
             ${{ steps.image.outputs.latest }}
             ${{ steps.image.outputs.sha }}
-          # One cache per image, so projects built in parallel don't evict each other
           cache-from: type=gha,scope=${{ inputs.image }}
           cache-to: type=gha,mode=max,scope=${{ inputs.image }}
 
@@ -121,7 +111,7 @@ jobs:
           image-ref: ${{ steps.image.outputs.latest }}
           format: 'table'
           severity: 'CRITICAL,HIGH'
-          exit-code: '0'  # Don't fail the deploy, the weekly image scan reports these
+          exit-code: '0'
 
       - name: Make image public
         if: steps.dockerfile.outputs.exists == 'true'
@@ -157,7 +147,6 @@ jobs:
             echo "value=" >> "$GITHUB_OUTPUT"
           fi
 
-      # Keeps the repo path: <path> lands in /opt/services/whenparty/<path>
       - name: Copy project files to VPS
         if: steps.project_dir.outputs.exists == 'true'
         uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
@@ -171,7 +160,6 @@ jobs:
       - name: Deploy project
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
-          # Empty unless the project's compose.yml uses it
           TURN_SECRET: ${{ steps.project_secrets.outputs.turn == 'true' && secrets.TURN_SECRET || '' }}
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -185,7 +173,6 @@ jobs:
             PROJECT_EXISTS="${{ steps.project_dir.outputs.exists }}"
             IMAGE_OVERRIDE="${{ steps.deploy_image.outputs.value }}"
 
-            # Every project is routed by the temp-sites Traefik on this network
             docker network inspect wp_tempsites >/dev/null 2>&1 || docker network create wp_tempsites
 
             if [ "$PROJECT_EXISTS" = "true" ]; then
@@ -196,7 +183,6 @@ jobs:
 
               cd "$PROJECT_DIR"
 
-              # docker compose reads .env for ${TURN_SECRET} in compose.yml
               if [ -n "${TURN_SECRET:-}" ]; then
                 (umask 077 && printf 'TURN_SECRET=%s\n' "$TURN_SECRET" > .env)
               fi

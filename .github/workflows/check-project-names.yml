@@ -1,0 +1,34 @@
+name: Check Project Names
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check project names
+        run: |
+          set -euo pipefail
+          names=$(git ls-tree -r --name-only HEAD -- games |
+            { grep -E '^games/[^/]+/[^/]+/compose\.yml$' || true; } |
+            sed 's#/compose\.yml$##; s#.*/##' | sort)
+          taken=$(
+            echo "$names" | uniq -d
+            for name in $names; do
+              if git cat-file -e "HEAD:temp-sites/projects/$name" 2>/dev/null; then
+                echo "$name"
+              fi
+            done
+          )
+          if [ -n "$taken" ]; then
+            echo "::error::Project names used twice in games/ or also in temp-sites/projects/: $taken"
+            exit 1
+          fi
