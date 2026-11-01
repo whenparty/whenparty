@@ -1,0 +1,31 @@
+[
+  {
+    "id": "ci-paths",
+    "prompt": "Make .github/workflows/ci.yml start only when a pull request or a push to main changes files other than Markdown, with paths-ignore on its triggers.",
+    "read": ["docs/decisions/ci-checks.md"],
+    "changed": []
+  },
+  {
+    "id": "node-image",
+    "prompt": "Update the Node image that .github/workflows/check-games.yml uses from node:24.22.0-alpine3.24 to node:24.23.0-alpine3.24.",
+    "read": [".github/AGENTS.md"],
+    "changed": [
+      ".github/workflows/check-games.yml",
+      "games/platform/signaling/Dockerfile",
+      "games/titles/calisthenics/Dockerfile",
+      "games/titles/tictactoe/Dockerfile"
+    ]
+  },
+  {
+    "id": "scoring-test",
+    "prompt": "Add a calisthenics test that a characteristic above its required level adds nothing to a challenge score.",
+    "read": ["docs/conventions/tests.md", "games/titles/calisthenics/docs/specs/2-scoring.md"],
+    "changed": ["games/titles/calisthenics/src/tests/2-scoring.test.ts"]
+  },
+  {
+    "id": "seats",
+    "prompt": "Let a calisthenics room seat 16 players instead of 12.",
+    "read": ["docs/conventions/specs.md", "games/titles/calisthenics/docs/specs/3-match.md"],
+    "changed": []
+  }
+]
