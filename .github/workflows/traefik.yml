@@ -27,7 +27,6 @@ jobs:
         run: |
           set -euo pipefail
           hash="$DASHBOARD_USER:$(openssl passwd -apr1 "$DASHBOARD_PASSWORD")"
-          # docker compose treats $ in .env values as interpolation, so escape it as $$
           escaped=${hash//\$/\$\$}
           echo "::add-mask::$escaped"
           echo "hash=$escaped" >> "$GITHUB_OUTPUT"
@@ -70,10 +69,8 @@ jobs:
 
             docker network inspect wp_tempsites >/dev/null 2>&1 || docker network create wp_tempsites
             docker compose pull
-            # traefik.yml is bind-mounted, so recreate to pick up static config changes
             docker compose up -d --force-recreate --remove-orphans
 
-            # The dashboard must answer on the loopback port and ask for credentials
             code=000
             for _ in $(seq 1 15); do
               code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18080/dashboard/ || true)
