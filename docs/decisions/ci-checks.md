@@ -37,4 +37,4 @@ The checks of the projects are reusable workflows, the word limit is a job of `c
 ## Consequences
 
 - [ci.yml](/.github/workflows/ci.yml), the `check-*.yml` workflows it calls, and the deploy workflows that call them, [games.yml](/.github/workflows/games.yml) and [infra.yml](/.github/workflows/infra.yml).
-- [.github/AGENTS.md](/.github/AGENTS.md).
+- [.github/docs/checks.md](/.github/docs/checks.md).

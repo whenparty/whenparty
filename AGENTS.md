@@ -1,11 +1,11 @@
 # WhenParty
 
-This repository holds everything that runs on the WhenParty VPS. [README.md](/README.md) describes how it is deployed and served. Its top-level folders, apart from `docs/`, [`.github/`](/.github/AGENTS.md) (CI workflows) and [`.claude/`](/.claude/AGENTS.md) (Claude Code settings, hooks, skills and subagents), are [projects](/docs/glossary.md#project):
+This repository holds everything that runs on the WhenParty VPS. Its top-level folders, apart from `docs/`, [`.github/`](/.github/AGENTS.md) (CI workflows) and [`.claude/`](/.claude/AGENTS.md) (Claude Code settings, hooks, skills and subagents), are [projects](/docs/glossary.md#project):
 
-- `infra/`: the nginx proxy that terminates TLS for every site.
-- [`www/`](/www/README.md): the When Party site at `www.when.party`.
-- [`nii-au/`](/nii-au/README.md): the site at `www.nii.au`.
-- [`temp-sites/`](/temp-sites/README.md): temporary sites on `*.when.party` and the Traefik router that serves them.
+- [`infra/`](/infra/AGENTS.md): the nginx proxy that terminates TLS for every site.
+- [`www/`](/www/AGENTS.md): the When Party site at `www.when.party`.
+- [`nii-au/`](/nii-au/AGENTS.md): the site at `www.nii.au`.
+- [`temp-sites/`](/temp-sites/AGENTS.md): temporary sites on `*.when.party` and the Traefik router that serves them.
 - [`games/`](/games/AGENTS.md): peer-to-peer browser games and the platform they share.
 
 ## Documents
