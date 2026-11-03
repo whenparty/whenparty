@@ -27,6 +27,8 @@ importers:
         specifier: 8.3.4
         version: 8.3.4(@types/node@24.19.1)
 
+  index: {}
+
   platform/p2p:
     dependencies:
       '@trystero-p2p/ws-relay':

@@ -72,10 +72,10 @@ jobs:
           if [ "$packages" = all ]; then
             folders=$(
               git ls-tree -r --name-only HEAD -- games |
-                { grep -E '^games/[^/]+/[^/]+/compose\.yml$' || true; } |
+                { grep -E '^games/([^/]+/)?[^/]+/compose\.yml$' || true; } |
                 sed 's#/compose\.yml$##'
               { git diff --name-only --diff-filter=D "$base" HEAD -- games || true; } |
-                { grep -E '^games/[^/]+/[^/]+/compose\.yml$' || true; } |
+                { grep -E '^games/([^/]+/)?[^/]+/compose\.yml$' || true; } |
                 sed 's#/compose\.yml$##' |
                 while read -r folder; do
                   if [ ! -d "$folder" ]; then
