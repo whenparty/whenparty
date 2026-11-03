@@ -27,4 +27,4 @@ A workflow of its own that only `ci.yml` calls. A host missing from `games.conf`
 
 - [check-game-hosts.yml](/.github/workflows/check-game-hosts.yml) and [ci.yml](/.github/workflows/ci.yml).
 - [checks.md](/.github/docs/checks.md#the-checks).
-- [Games and signaling in nginx-configs.md](/infra/docs/nginx-configs.md#games-and-signaling).
+- [games-conf.md](/infra/docs/games-conf.md).
