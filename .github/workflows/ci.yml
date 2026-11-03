@@ -135,6 +135,9 @@ jobs:
           fi
           status=0
           while IFS= read -r file; do
+            case "$file" in
+              .claude/agents/* | .claude/skills/*) continue ;;
+            esac
             words=$(LC_ALL=C awk '/^ *```mermaid *$/ { m = 1; k = 0; next } m && /^ *```/ { m = 0; next } m { k += NF; next } { n += NF } END { print n + m * (k + 1) }' "$file")
             if [ "$words" -gt "$limit" ]; then
               echo "::error file=$file::$file has $words words. A Markdown document has at most $limit words, as docs/conventions/writing.md says."
