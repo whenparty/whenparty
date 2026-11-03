@@ -18,7 +18,7 @@ jobs:
         run: |
           set -euo pipefail
           names=$(git ls-tree -r --name-only HEAD -- games |
-            { grep -E '^games/[^/]+/[^/]+/compose\.yml$' || true; } |
+            { grep -E '^games/([^/]+/)?[^/]+/compose\.yml$' || true; } |
             sed 's#/compose\.yml$##; s#.*/##' | sort)
           taken=$(
             echo "$names" | uniq -d

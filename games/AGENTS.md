@@ -1,14 +1,14 @@
 # Games
 
-`games/` is a [project](/docs/glossary.md#project) of [subprojects](/docs/glossary.md#subproject): the platform in `platform/` and each game in `titles/`. The platform consists of three [modules](/docs/glossary.md#module):
+`games/` is a [project](/docs/glossary.md#project) of [subprojects](/docs/glossary.md#subproject): the platform in `platform/`, each game in `titles/` and the page that lists the games in `index/`. The platform consists of three [modules](/docs/glossary.md#module):
 
 - [platform/p2p](platform/p2p/AGENTS.md) owns browser connections and room state.
 - [platform/signaling](platform/signaling/AGENTS.md) discovers peers and issues TURN credentials.
 - [platform/turn](platform/turn/AGENTS.md) relays WebRTC traffic when direct connections fail.
 
-[titles/](titles/AGENTS.md) holds the games and lists them.
+[titles/](titles/AGENTS.md) holds the games and lists them. [index/](index/AGENTS.md) holds the page at the root of `games.when.party` that lists them for players. [index-page-location.md](docs/decisions/index-page-location.md) explains why it lives in `index/`.
 
-The platform, each of its modules and each title need a [specification](/docs/conventions/specs.md).
+The platform, each of its modules, each title and the index page need a [specification](/docs/conventions/specs.md).
 
 Games own match rules and results. Shared platform code owns transport and participant lifecycle.
 

@@ -10,8 +10,8 @@
   "scripts": {
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "format": "prettier --write \"platform/*/src/**/*.{ts,mjs}\" \"titles/*/src/**/*.ts\"",
-    "format:check": "prettier --check \"platform/*/src/**/*.{ts,mjs}\" \"titles/*/src/**/*.ts\""
+    "format": "prettier --write \"platform/*/src/**/*.{ts,mjs}\" \"titles/*/src/**/*.ts\" \"index/src/**/*.ts\"",
+    "format:check": "prettier --check \"platform/*/src/**/*.{ts,mjs}\" \"titles/*/src/**/*.ts\" \"index/src/**/*.ts\""
   },
   "devDependencies": {
     "@types/node": "24.19.1",

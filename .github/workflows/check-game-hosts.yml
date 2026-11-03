@@ -21,7 +21,7 @@ jobs:
           config=infra/nginx/conf.d/games.conf
           status=0
           labels=''
-          for file in $(git ls-files | { grep -E '^games/[^/]+/[^/]+/compose\.yml$' || true; }); do
+          for file in $(git ls-files | { grep -E '^games/([^/]+/)?[^/]+/compose\.yml$' || true; }); do
             while IFS= read -r rule; do
               hosts=$(grep -oE 'Host\(`[^`]+`\)' <<< "$rule" | sed -E 's/^Host\(`(.*)`\)$/\1/' || true)
               rest=$(sed -E 's/(Host|PathPrefix)\(`[^`]+`\)|&&|\|\||[[:space:]]//g' <<< "$rule")
