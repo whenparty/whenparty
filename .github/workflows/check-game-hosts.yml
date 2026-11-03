@@ -1,0 +1,48 @@
+name: Check Game Hosts
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compare the hosts of games/ with games.conf
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+          config=infra/nginx/conf.d/games.conf
+          status=0
+          labels=''
+          for file in $(git ls-files | { grep -E '^games/[^/]+/[^/]+/compose\.yml$' || true; }); do
+            while IFS= read -r rule; do
+              hosts=$(grep -oE 'Host\(`[^`]+`\)' <<< "$rule" | sed -E 's/^Host\(`(.*)`\)$/\1/' || true)
+              rest=$(sed -E 's/(Host|PathPrefix)\(`[^`]+`\)|&&|\|\||[[:space:]]//g' <<< "$rule")
+              if [ -z "$hosts" ] || [ -n "$rest" ]; then
+                echo "::error file=$file::Cannot read the hosts of the Traefik rule $rule"
+                status=1
+              fi
+              labels+="$hosts"$'\n'
+            done < <({ grep -E 'traefik\.http\.routers\.[^.]+\.rule' "$file" || true; } |
+              sed -E "s/^[[:space:]]*(-[[:space:]]*)?['\"]?traefik\.http\.routers\.[^.]+\.rule['\"]?[[:space:]]*[=:][[:space:]]*['\"]?//; s/['\"][[:space:]]*$//")
+          done
+          labels=$(sed '/^$/d' <<< "$labels" | sort -u)
+          servers=$(sed -nE 's/^[[:space:]]*server_name[[:space:]]+([^;]*);.*/\1/p' "$config" | tr -s ' \t' '\n' | sed '/^$/d' | sort -u)
+          missing=$(comm -23 <(echo "$labels") <(echo "$servers"))
+          extra=$(comm -13 <(echo "$labels") <(echo "$servers"))
+          if [ -n "$missing" ]; then
+            echo "::error file=$config::No server_name in $config for the hosts of games/: $(echo $missing)"
+            status=1
+          fi
+          if [ -n "$extra" ]; then
+            echo "::error file=$config::No deployment in games/ has the hosts in $config: $(echo $extra)"
+            status=1
+          fi
+          exit "$status"

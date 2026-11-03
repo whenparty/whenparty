@@ -16,6 +16,7 @@ jobs:
       turn: ${{ steps.changes.outputs.turn }}
       nginx: ${{ steps.changes.outputs.nginx }}
       project-names: ${{ steps.changes.outputs.project-names }}
+      game-hosts: ${{ steps.changes.outputs.game-hosts }}
       markdown: ${{ steps.changes.outputs.markdown }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -86,6 +87,11 @@ jobs:
             project_names=true
           fi
 
+          game_hosts=false
+          if touched '^(games|infra)/' || workflow_touched 'check-game-hosts'; then
+            game_hosts=true
+          fi
+
           markdown=$(git diff -z --name-only --diff-filter=d "$base" HEAD -- '*.md' |
             jq -Rsc 'split("\u0000") | map(select(length > 0))')
 
@@ -94,6 +100,7 @@ jobs:
             echo "turn=$turn"
             echo "nginx=$nginx"
             echo "project-names=$project_names"
+            echo "game-hosts=$game_hosts"
             echo "markdown=$markdown"
           } | tee -a "$GITHUB_OUTPUT"
 
@@ -118,6 +125,11 @@ jobs:
     needs: changes
     if: needs.changes.outputs.project-names == 'true'
     uses: ./.github/workflows/check-project-names.yml
+
+  game-hosts:
+    needs: changes
+    if: needs.changes.outputs.game-hosts == 'true'
+    uses: ./.github/workflows/check-game-hosts.yml
 
   words:
     needs: changes
@@ -149,7 +161,7 @@ jobs:
           exit "$status"
 
   result:
-    needs: [changes, games, turn, nginx, project-names, words]
+    needs: [changes, games, turn, nginx, project-names, game-hosts, words]
     if: always()
     runs-on: ubuntu-latest
     steps:

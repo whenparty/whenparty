@@ -34,5 +34,5 @@ Each zone served here, `nii.au` and `when.party`, has these settings:
 
 - SSL/TLS mode is Full (strict).
 - Always Use HTTPS is on.
-- Authenticated Origin Pulls is on, under SSL/TLS → Origin Server. Without it, nginx rejects Cloudflare's requests and every site in the zone answers 400.
+- Authenticated Origin Pulls is on, under SSL/TLS → Origin Server. Without it, nginx rejects Cloudflare's requests and every site in the zone answers 400. nginx checks Cloudflare's client certificate against `nginx/conf.d/cloudflare-origin-pull-ca.pem`, which is valid until 2029-11-01.
 - The DNS records of the sites point to the VPS and are proxied. `turn.when.party` is not proxied, as the [TURN relay's documentation](/games/platform/turn/AGENTS.md) says.
