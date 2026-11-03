@@ -30,7 +30,7 @@ Then open http://localhost:8080/dashboard/ and log in. To change the credentials
 
 ## Troubleshooting
 
-Traefik answers 404 when no router matches the host and path: the container is not running or not healthy, does not set `traefik.enable=true`, or has a `Host` or `PathPrefix` rule that does not match. On `games.when.party`, a path that no title matches goes to the [index page](/games/index/AGENTS.md), which answers 404 for it. A labelled container that is not on `wp_tempsites` gets a router, but Traefik cannot reach it and answers with a gateway error, such as 502 or 504. On the VPS:
+Traefik answers 404 when no router matches the host and path: the container is not running or not healthy, does not set `traefik.enable=true`, or has a `Host` or `PathPrefix` rule that does not match. On `games.when.party`, a path that no title matches goes to the [index page](/games/index/AGENTS.md), which answers 404 for it. Through nginx, every 404 on `games.when.party` shows the proxy's 404 page, as [games-conf.md](/infra/docs/games-conf.md) says. Asking Traefik directly, as below, shows the status but not which router answered. A labelled container that is not on `wp_tempsites` gets a router, but Traefik cannot reach it and answers with a gateway error, such as 502 or 504. On the VPS:
 
 ```bash
 # Is Traefik up and healthy?
