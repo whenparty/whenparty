@@ -30,11 +30,11 @@ Every later change to a site deploys when it reaches `main`, and removing its fo
 
 ## What a page can load
 
-Inline scripts and styles work. Everything else loads only from the site's own host, apart from images from `data:` URLs, the Cloudflare analytics script and connections to the games' signaling server. No page can frame the site. The camera, the microphone and geolocation are blocked. A cross-origin popup, such as a payment window, is cut off from the page. Other origins, other temp sites included, cannot embed the site's files.
+Inline scripts and styles work. Everything else loads only from the site's own host, apart from images from `data:` URLs and the Cloudflare analytics script. No page can frame the site. The camera, the microphone and geolocation are blocked. A cross-origin popup, such as a payment window, is cut off from the page. Other origins, other temp sites included, cannot embed the site's files.
 
 nginx answers 503 when one IP address sends more than 10 requests a second beyond a burst of 30 or holds more than 15 connections. It answers 413 to a request body over 1 MB, and closes a response that sends nothing for 90 seconds.
 
-[temp-sites.conf](/infra/nginx/conf.d/temp-sites.conf) sets what loads from where, and a change there applies to every temp site and game. [default.conf](/infra/nginx/conf.d/default.conf) sets the rest, and a change there applies to every site on the proxy.
+[temp-sites.conf](/infra/nginx/conf.d/temp-sites.conf) sets what loads from where, and a change there applies to every temp site. [default.conf](/infra/nginx/conf.d/default.conf) sets the rest, and a change there applies to every site on the proxy.
 
 ## Secrets and data
 

@@ -6,4 +6,4 @@ Keep rules and transitions pure. [src/session-machine.ts](src/session-machine.ts
 
 Use [machine tests](src/tests/session-machine.test.ts) for rules and deadlines, [handover tests](src/tests/handover.test.ts) for snapshot acceptance, and [room tests](src/tests/room-state.test.ts) for membership and moves. Run `pnpm format` before committing. [Session tests](src/tests/session.test.ts) verify transport interactions. Keep the [seeded fuzz test](src/tests/session-fuzz.test.ts) for event combinations. Use the [controlled clock](src/tests/clock.ts).
 
-Keep `src/dev-headers.ts` aligned with `infra/nginx/conf.d/`. Follow [signaling instructions](../signaling/AGENTS.md) for Trystero updates and [TURN instructions](../turn/AGENTS.md) for relay configuration.
+Keep `src/dev-headers.ts` aligned with the headers that [nginx-configs.md](/infra/docs/nginx-configs.md#games-and-signaling) says it copies. Follow [signaling instructions](../signaling/AGENTS.md) for Trystero updates and [TURN instructions](../turn/AGENTS.md) for relay configuration.

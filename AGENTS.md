@@ -19,7 +19,7 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 - A skill in `.claude/skills/` holds the steps of a task that the rules call for. A subagent in `.claude/agents/` holds the instructions and tools of an agent that the rules call for. [`.claude/AGENTS.md`](/.claude/AGENTS.md) maps them and the hooks.
 - The conventions files in `docs/conventions/`, listed below, hold the rules for each kind of file and for how to work.
 - The [glossary](/docs/glossary.md) defines the terms that documents use and that can be read in more than one way.
-- [Open questions](/docs/open-questions.md) lists undecided questions about the rules. The [workflow rules](/docs/conventions/workflow.md) say when a question is added and deleted.
+- [Open questions](/docs/open-questions.md) lists undecided questions. The [workflow rules](/docs/conventions/workflow.md) say when a question is added and deleted.
 
 ## Conventions files
 

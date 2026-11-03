@@ -1,8 +1,8 @@
 # How the proxy reaches the sites
 
-Each site config in `nginx/conf.d/` passes requests to an `upstream`. Each upstream names a container from `www/`, `nii-au/` or `temp-sites/traefik/docker-compose.yml`, on a network they share with nginx. The upstream uses the container name in the site's compose file, which joins the network as an external one. Renaming a container or network, or changing the port a backend listens on, changes both sides in the same change. [setup.md](setup.md#vps) says which deploy creates the networks.
+Each site config in `nginx/conf.d/` passes requests to an `upstream`. Each upstream names a container from `www/`, `nii-au/` or `temp-sites/traefik/docker-compose.yml`, on a network they share with nginx. The upstream uses the container name in the site's compose file, which joins the network as an external one. Renaming a container or network, or changing the port a backend listens on, changes both sides in the same change. `temp-sites.conf` and `games.conf` each have an upstream that names the Traefik router, so each file is complete without the other. Every upstream marks its server `resolve`, so nginx looks the container up in Docker's DNS while it runs, and a stopped container does not keep nginx from starting or reloading. [setup.md](setup.md#vps) says which deploy creates the networks.
 
-Traefik routes each `*.when.party` host to a temporary site or game container by the labels in its compose file. A new temporary site or game needs no change here.
+Traefik routes each `*.when.party` host to a temporary site or game container by the labels in its compose file. A new temporary site needs no change here. A new or removed game adds or removes its host in `games.conf`, as [nginx-configs.md](nginx-configs.md#games-and-signaling) says.
 
 When nginx cannot reach a backend, the site answers 502: its container is down or is not on the network. [troubleshooting.md](troubleshooting.md) says how to check.
 

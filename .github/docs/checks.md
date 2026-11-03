@@ -10,12 +10,14 @@
 | `turn` | `check-turn.yml` | `games/platform/turn/` | `games.yml` |
 | `nginx` | `check-nginx.yml` | `infra/` | `infra.yml` |
 | `project-names` | `check-project-names.yml` | `games/` or `temp-sites/projects/` | `games.yml` |
+| `game-hosts` | `check-game-hosts.yml` | `games/` or `infra/` | none |
 | `words` | none, a job of `ci.yml` | a Markdown file | none |
 
 Every check other than `words` also runs when `ci.yml`, its own workflow or the deploy workflow that calls it changes. Only `games.yml` and `infra.yml` call their checks before every deploy, and a failing check stops the deploy. `temp-sites.yml` runs no check before it deploys. Markdown files never start the other checks.
 
 - `check-games.yml` gets the changed package folders from the `changes` job and tests them with the packages that depend on them, as [games-check-scope.md](/docs/decisions/games-check-scope.md) decides. It runs pnpm in the Node image of the Dockerfiles in `games/`. A change to that image changes `check-games.yml` and every Dockerfile in `games/` together.
 - `check-nginx.yml` runs `nginx -t` on the nginx configs with throwaway self-signed certificates that it creates only for `nii.au` and `when.party`. A config that names another certificate file also needs that name in the loop of `check-nginx.yml`. [nginx-configs.md](/infra/docs/nginx-configs.md#checking-a-change) says how to run the same check locally.
+- `check-game-hosts.yml` compares the hosts in the Traefik `rule` labels of `games/*/*/compose.yml` with the `server_name` entries of [games.conf](/infra/nginx/conf.d/games.conf), and fails when a host is in one but not the other. It reads the labels both as list items and as a mapping. It pools the names of both servers in `games.conf` and does not check which server names a host. It reads rules made of at least one `Host` and any `PathPrefix`, joined by `&&` or `||` without brackets, and fails on any other rule. [game-hosts-check.md](/docs/decisions/game-hosts-check.md) explains why no deploy calls it.
 - The `words` job fails when a Markdown file that the change adds or edits is over the word limit of the [writing rules](/docs/conventions/writing.md), even when the user decided to leave that document over the limit. [word-limit.md](/.claude/hooks/docs/word-limit.md) says how it counts.
 
 ## Skipping and the result job
