@@ -23,5 +23,5 @@ Every game on `games.when.party` under a path of its own. A new game needs no ch
 ## Consequences
 
 - [games.conf](/infra/nginx/conf.d/games.conf) and [temp-sites.conf](/infra/nginx/conf.d/temp-sites.conf).
-- [Games and signaling in nginx-configs.md](/infra/docs/nginx-configs.md#games-and-signaling).
+- [games-conf.md](/infra/docs/games-conf.md).
 - [hosting.md](/games/titles/docs/hosting.md).
