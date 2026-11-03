@@ -24,7 +24,7 @@ Every check other than `words` also runs when `ci.yml`, its own workflow or the 
 
 `ci.yml` has no `paths`. Its first job, `changes`, finds what changed, and every check has an `if:` on that job's output. A workflow that `paths` keeps from running leaves a required status check pending, while a job skipped by `if:` counts as passed.
 
-The `result` job fails when any job it needs failed or was cancelled. So a branch rule on `main`, if one is added, needs to require only `result`.
+The `result` job fails when any job it needs failed or was cancelled. So a ruleset on `main` that requires checks, if one is added, needs to require only `result`.
 
 ## Adding a check
 
