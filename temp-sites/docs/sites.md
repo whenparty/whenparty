@@ -15,7 +15,7 @@ projects/
 2. Copy [dtm-cleaning](../projects/dtm-cleaning/), a placeholder site with both files, to `projects/<name>/`.
 3. Replace `dtm-cleaning` everywhere in its `compose.yml`, the container name included, and check that file against the next section. Replace the page in `site/`.
 4. Ask the user for the DNS record, as [names.md](names.md#hosts) says.
-5. Merge to `main`. When the site has a `Dockerfile`, have the user make its new package public, as [deploy.md](deploy.md#the-first-deploy) says.
+5. Merge to `main`. When the site has a `Dockerfile` and its first deploy fails at the pull, have the user make its new package public, as [deploy.md](deploy.md#the-first-deploy) says.
 
 Every later change to a site deploys when it reaches `main`, and removing its folder takes the site down, as [deploy.md](deploy.md) describes.
 
