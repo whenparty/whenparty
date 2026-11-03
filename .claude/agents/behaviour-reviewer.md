@@ -15,6 +15,10 @@ Ask these questions of each requirement and of the specification as a whole:
 - When two events happen at the same time, is the result the same in either order, or does the specification say which order wins?
 - What happens on a partial failure: a send that reaches some receivers and fails for others, a crash between two steps, or a party that answers at the network level but whose code no longer runs, such as a background tab whose scripts the browser has suspended?
 - Does each participant's stay in a room, each connection and each operation end exactly once, release what it holds and stop delivering, whichever causes end it and in whatever combination?
+- When does each guarantee hold, and what may be lost when it does not, such as messages in flight when a connection closes?
+- Does every request get exactly one answer, with its possible values named, and is each notice given once for each cause?
+- Does any status, such as being able to act, stay true after the thing it depends on has ended?
+- Does a temporary failure, such as a full send queue or a short network drop, lead to a lasting outcome, such as losing a seat, and is that intended?
 - What happens when code that the system calls but does not control, such as a game's rules, throws, returns an invalid value or changes its input?
 - Do the limits in different files fit together, with every overhead counted, and do they hold at the largest use the specification allows?
 - What can a client outside a browser do, which limits hold across its connections, and which weaker protection does the specification accept on purpose?
