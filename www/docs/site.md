@@ -1,6 +1,7 @@
 # Working on the site
 
 - The nginx proxy sets the page's Content-Security-Policy in [www.conf](/infra/nginx/conf.d/www.conf), which ships with the nginx deploy, not with this folder. The policy blocks inline styles and scripts, so styles stay in `html/styles.css`. A new outside resource, such as another font host, needs a change to `www.conf`.
+- Through the proxy, every 404 of the site shows the shared 404 page, and `/_errors/` belongs to the proxy, as [nginx-configs.md](/infra/docs/nginx-configs.md) says. A 404 page of the site's own needs a change to `www.conf`.
 - The container sends none of the proxy's headers, such as the Content-Security-Policy, so a local run does not show what they block. To run the site locally:
 
   ```bash
