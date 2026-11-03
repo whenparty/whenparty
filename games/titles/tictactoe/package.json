@@ -1,7 +1,7 @@
 {
   "name": "@whenparty/tictactoe",
   "private": true,
-  "description": "Peer-to-peer tic-tac-toe at tictactoe.when.party",
+  "description": "Peer-to-peer tic-tac-toe at games.when.party/tictactoe/",
   "type": "module",
   "scripts": {
     "dev": "vite",

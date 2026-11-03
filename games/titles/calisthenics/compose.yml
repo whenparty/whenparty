@@ -7,8 +7,16 @@ services:
     restart: unless-stopped
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.calisthenics.rule=Host(`calisthenics.when.party`)'
+      - 'traefik.http.routers.calisthenics.rule=Host(`games.when.party`) && PathPrefix(`/calisthenics/`)'
       - 'traefik.http.routers.calisthenics.entrypoints=web'
+      - 'traefik.http.routers.calisthenics.middlewares=calisthenics-path'
+      - 'traefik.http.middlewares.calisthenics-path.stripprefix.prefixes=/calisthenics'
+      - 'traefik.http.routers.calisthenics-old-host.rule=Host(`calisthenics.when.party`)'
+      - 'traefik.http.routers.calisthenics-old-host.entrypoints=web'
+      - 'traefik.http.routers.calisthenics-old-host.middlewares=calisthenics-old-host'
+      - 'traefik.http.middlewares.calisthenics-old-host.redirectregex.regex=^https?://[^/]+/(.*)'
+      - 'traefik.http.middlewares.calisthenics-old-host.redirectregex.replacement=https://games.when.party/calisthenics/$${1}'
+      - 'traefik.http.middlewares.calisthenics-old-host.redirectregex.permanent=true'
       - 'traefik.http.services.calisthenics.loadbalancer.server.port=80'
     networks:
       - wp_tempsites

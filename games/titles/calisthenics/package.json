@@ -1,7 +1,7 @@
 {
   "name": "@whenparty/calisthenics",
   "private": true,
-  "description": "Peer-to-peer calisthenics championship at calisthenics.when.party",
+  "description": "Peer-to-peer calisthenics championship at games.when.party/calisthenics/",
   "type": "module",
   "scripts": {
     "dev": "vite",

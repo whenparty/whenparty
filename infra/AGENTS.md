@@ -9,4 +9,4 @@
 - [setup.md](docs/setup.md): what the proxy needs on the VPS and in Cloudflare: folders, certificates and zone settings. Read it before setting up a VPS or a new domain, or replacing a certificate.
 - [troubleshooting.md](docs/troubleshooting.md): what to check on the VPS when a site fails.
 - [decisions/default-server.md](docs/decisions/default-server.md): why the default server of port 443 refuses the handshake, and why it lives in `default.conf`.
-- [game-hosts.md](/docs/decisions/game-hosts.md): why the games keep their own hosts and have `games.conf` apart from the temporary sites.
+- [game-hosts.md](/docs/decisions/game-hosts.md): why the games share the host `games.when.party` and have `games.conf` apart from the temporary sites.
