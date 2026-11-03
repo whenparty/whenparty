@@ -30,7 +30,7 @@ Then open http://localhost:8080/dashboard/ and log in. To change the credentials
 
 ## Troubleshooting
 
-Traefik answers 404 when no router matches the host: the container is not running or not healthy, does not set `traefik.enable=true`, or has a `Host` rule that does not match. A labelled container that is not on `wp_tempsites` gets a router, but Traefik cannot reach it and answers with a gateway error, such as 502 or 504. On the VPS:
+Traefik answers 404 when no router matches the host and path: the container is not running or not healthy, does not set `traefik.enable=true`, or has a `Host` or `PathPrefix` rule that does not match. A labelled container that is not on `wp_tempsites` gets a router, but Traefik cannot reach it and answers with a gateway error, such as 502 or 504. On the VPS:
 
 ```bash
 # Is Traefik up and healthy?
@@ -43,9 +43,13 @@ docker logs traefik-tempsites | grep <name>
 # Which routers did Traefik find? Asks for the dashboard password.
 curl -u <user> http://127.0.0.1:18080/api/http/routers
 
-# Ask Traefik directly, past nginx. 404 means no router matches the host.
+# Ask Traefik directly, past nginx. 404 means no router matches the host and path.
 docker run --rm --network wp_tempsites curlimages/curl -s -o /dev/null -w '%{http_code}\n' \
   -H 'Host: <name>.when.party' http://traefik-tempsites:8000/
+
+# The same for a game's title
+docker run --rm --network wp_tempsites curlimages/curl -s -o /dev/null -w '%{http_code}\n' \
+  -H 'Host: games.when.party' http://traefik-tempsites:8000/<name>/
 ```
 
 Traefik keeps no access log. Requests are only in the nginx log, which [troubleshooting.md](/infra/docs/troubleshooting.md) shows how to read.

@@ -7,8 +7,16 @@ services:
     restart: unless-stopped
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.tictactoe.rule=Host(`tictactoe.when.party`)'
+      - 'traefik.http.routers.tictactoe.rule=Host(`games.when.party`) && PathPrefix(`/tictactoe/`)'
       - 'traefik.http.routers.tictactoe.entrypoints=web'
+      - 'traefik.http.routers.tictactoe.middlewares=tictactoe-path'
+      - 'traefik.http.middlewares.tictactoe-path.stripprefix.prefixes=/tictactoe'
+      - 'traefik.http.routers.tictactoe-old-host.rule=Host(`tictactoe.when.party`)'
+      - 'traefik.http.routers.tictactoe-old-host.entrypoints=web'
+      - 'traefik.http.routers.tictactoe-old-host.middlewares=tictactoe-old-host'
+      - 'traefik.http.middlewares.tictactoe-old-host.redirectregex.regex=^https?://[^/]+/(.*)'
+      - 'traefik.http.middlewares.tictactoe-old-host.redirectregex.replacement=https://games.when.party/tictactoe/$${1}'
+      - 'traefik.http.middlewares.tictactoe-old-host.redirectregex.permanent=true'
       - 'traefik.http.services.tictactoe.loadbalancer.server.port=80'
     networks:
       - wp_tempsites
