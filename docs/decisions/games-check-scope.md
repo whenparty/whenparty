@@ -2,7 +2,7 @@
 
 ## Context
 
-As [ci-checks.md](/docs/decisions/ci-checks.md) decides, `ci.yml` checks every pull request and every push to `main`, and `games.yml` checks `games/` before it deploys. `games.yml` deploys only the [deployments](/docs/glossary.md#deployment) a change reaches: the titles and signaling, which are packages with a `compose.yml`, and `games/platform/turn/`. `games/` is one pnpm workspace of five packages: the root, the platform packages p2p and signaling, and two titles that import p2p. Its tests and typechecks take about 20 seconds. They run in the Node image of the games' Dockerfiles, which has no git. `games/platform/turn/` has no package; it has its own smoke test. A file directly in `games/`, such as `pnpm-lock.yaml`, can change every package. The repository has no slow tests yet, and the [open questions](/docs/open-questions.md#browser-tests) expect browser tests for requirements such as a connection through the TURN relay.
+As [ci-checks.md](/docs/decisions/ci-checks.md) decides, `ci.yml` checks every pull request and every push to `main`, and `games.yml` checks `games/` before it deploys. `games.yml` deploys only the [deployments](/docs/glossary.md#deployment) a change reaches: the titles, the index page and signaling, which are packages with a `compose.yml`, and `games/platform/turn/`. `games/` is one pnpm workspace of six packages: the root, the platform packages p2p and signaling, two titles that import p2p, and the index page. Its tests and typechecks take about 20 seconds. They run in the Node image of the games' Dockerfiles, which has no git. `games/platform/turn/` has no package; it has its own smoke test. A file directly in `games/`, such as `pnpm-lock.yaml`, can change every package. The repository has no slow tests yet, and the [open questions](/docs/open-questions.md#browser-tests) expect browser tests for requirements such as a connection through the TURN relay.
 
 The GitHub runner has git. `pnpm/action-setup` installs on it the pnpm version that `packageManager` in `games/package.json` names, as a standalone binary that needs no Node. `pnpm --filter "...[<commit>]"` selects the packages with files changed since that commit and the packages that depend on them, without an install. It counts a file outside every package as a change to the root package, and fails when the commit is not in the history.
 
@@ -34,7 +34,7 @@ What `games.yml` runs before a deploy:
 
 ## Decision
 
-`ci.yml` runs the changed packages and those that depend on them, so the browser tests the open questions expect will not run for changes to other titles. Finding the affected packages costs less than that once those tests exist. A build tool would cost more upkeep than it saves for five packages.
+`ci.yml` runs the changed packages and those that depend on them, so the browser tests the open questions expect will not run for changes to other titles. Finding the affected packages costs less than that once those tests exist. A build tool would cost more upkeep than it saves for six packages.
 
 A shared workflow finds the changed packages with pnpm's git filter on the runner. pnpm already knows the workspace, so the workflow adds only what pnpm cannot: it ignores Markdown, handles `platform/turn/` on its own, and makes every package affected when pnpm selects the root package or fails. One more action costs less than a mapping that has to follow every change to the package layout.
 

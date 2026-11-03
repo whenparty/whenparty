@@ -1,6 +1,6 @@
 # Hosting a title
 
-Every title is served at `https://games.when.party/<name>/`, where `<name>` is its deployment name, such as `tictactoe`, made of lowercase letters, digits and hyphens. [game-hosts.md](/docs/decisions/game-hosts.md) explains why the titles share one host. No deployment serves the root of `games.when.party`, and Traefik answers 404 there.
+Every title is served at `https://games.when.party/<name>/`, where `<name>` is its deployment name, such as `tictactoe`, made of lowercase letters, digits and hyphens. [game-hosts.md](/docs/decisions/game-hosts.md) explains why the titles share one host. The root of `games.when.party` is the [index page](../../index/AGENTS.md), and its own files are under `/_assets/`, which no `<name>` can be.
 
 - `base` in the title's `vite.config.ts` is `/<name>/`, so the built pages load their files from that path. The dev and preview servers serve the title at the same path.
 - Its `compose.yml` has a Traefik router `<name>` with the rule ``Host(`games.when.party`) && PathPrefix(`/<name>/`)`` and a `stripprefix` middleware `<name>-path` that removes `/<name>`, so the container serves the built files from its root. The server for the games in [games.conf](/infra/nginx/conf.d/games.conf) redirects `/<name>` to `/<name>/`, as [nginx-configs.md](/infra/docs/nginx-configs.md#games-and-signaling) says.

@@ -4,7 +4,7 @@ Everything that runs on the WhenParty VPS: the When Party site at `www.when.part
 
 ## How a request reaches a site
 
-Every site sits behind Cloudflare. Cloudflare passes each request to the nginx proxy in [infra/](/infra/README.md), which terminates TLS, adds the security headers and hands the request to the right container. `when.party` and `nii.au` redirect to their `www` hosts. Every other `*.when.party` host goes to the Traefik router of [temp-sites/](/temp-sites/README.md), which finds the container by its host name, and a game title's container by its path on `games.when.party`.
+Every site sits behind Cloudflare. Cloudflare passes each request to the nginx proxy in [infra/](/infra/README.md), which terminates TLS, adds the security headers and hands the request to the right container. `when.party` and `nii.au` redirect to their `www` hosts. Every other `*.when.party` host goes to the Traefik router of [temp-sites/](/temp-sites/README.md), which finds the container by its host name, and a game title's container by its path on `games.when.party`, with the page that lists the games at its root.
 
 ```mermaid
 flowchart LR
