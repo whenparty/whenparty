@@ -34,7 +34,7 @@ Inline scripts and styles work. Everything else loads only from the site's own h
 
 nginx answers 503 when one IP address sends more than 10 requests a second beyond a burst of 30 or holds more than 15 connections. It answers 413 to a request body over 1 MB, and closes a response that sends nothing for 90 seconds.
 
-[temp-sites.conf](/infra/nginx/conf.d/temp-sites.conf) sets what loads from where, and a change there applies to every temp site. [default.conf](/infra/nginx/conf.d/default.conf) sets the rest, and a change there applies to every site on the proxy.
+[temp-sites.conf](/infra/nginx/conf.d/temp-sites.conf) sets what loads from where, and a change there applies to every temp site. [default.conf](/infra/nginx/conf.d/default.conf) sets the rest, apart from the [404 pages](#404-pages), and a change there applies to every site on the proxy.
 
 ## Secrets and data
 
@@ -49,6 +49,10 @@ docker run --rm -p 8080:80 <name>:local
 ```
 
 Then open http://localhost:8080, with the container's port in place of `80` if it differs. The container sends none of the proxy's headers, so a local run does not show what they block. `docker compose up` needs the `wp_tempsites` network, which `docker network create wp_tempsites` makes, and publishes no port, so the site is not reachable from the browser that way.
+
+## 404 pages
+
+Through the proxy, every 404 of a site shows the shared 404 page, and a host without a site shows a page that links to `www.when.party`, as [nginx-configs.md](/infra/docs/nginx-configs.md) says. A site serves nothing under `/_errors/`. A site that needs its own 404 body, such as an API's JSON, needs a server with its exact name in `infra/`, as nginx-configs.md says.
 
 ## Troubleshooting
 
