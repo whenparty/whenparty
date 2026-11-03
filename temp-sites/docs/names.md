@@ -18,6 +18,6 @@ Renaming a site's folder removes the old site and adds a new one, as [deploy.md]
 
 ## Hosts
 
-- A host is one level below `when.party`, because the origin certificate covers `*.when.party`.
+- A host is one level below `when.party`, because Cloudflare's free edge certificate and the origin certificate cover only `when.party` and the hosts one level below it, as [setup.md](/infra/docs/setup.md#certificates) and [game-hosts.md](/docs/decisions/game-hosts.md) say.
 - `when.party` and `www.when.party` go to the When Party site, not to Traefik. The hosts of the games' deployments, such as `signaling.when.party`, `turn.when.party` and each title's host, belong to the games.
 - The host needs a proxied DNS record in Cloudflare that points to the VPS. Nothing in the repository creates it. Ask the user whether a wildcard record covers the host, and if not, to add the record.

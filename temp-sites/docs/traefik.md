@@ -4,7 +4,7 @@
 
 ## What other code relies on
 
-- The nginx proxy reaches the router as `traefik-tempsites:8000` on the `wp_tempsites` network, as [temp-sites.conf](/infra/nginx/conf.d/temp-sites.conf) sets. A change to the container name or the `web` entrypoint's port needs the same change there, as [sites.md](/infra/docs/sites.md) says. The network name also appears in [infra/docker-compose.yml](/infra/docker-compose.yml), in the deploy workflows that create the network, and in the `compose.yml` of every site and game.
+- The nginx proxy reaches the router as `traefik-tempsites:8000` on the `wp_tempsites` network, as [temp-sites.conf](/infra/nginx/conf.d/temp-sites.conf) and [games.conf](/infra/nginx/conf.d/games.conf) set. A change to the container name or the `web` entrypoint's port needs the same change in both, as [sites.md](/infra/docs/sites.md) says. The network name also appears in [infra/docker-compose.yml](/infra/docker-compose.yml), in the deploy workflows that create the network, and in the `compose.yml` of every site and game.
 - The `web` entrypoint on port 8000 is not published on the host, so every request reaches Traefik through nginx, with its certificate check, headers and limits. Publishing it would let requests skip them.
 - Traefik routes only containers that set `traefik.enable=true`, and reaches them only over `wp_tempsites`. Every site and game relies on the `web` entrypoint by that name.
 - Traefik trusts `X-Forwarded-*` headers from addresses in `172.16.0.0/12`, so the containers see the client address that nginx passes on.

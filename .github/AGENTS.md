@@ -10,3 +10,4 @@
 - [word-limit.md](/.claude/hooks/docs/word-limit.md): how the `words` job reads the limit and counts like `word-limit.sh`. Read it before changing the `words` job.
 - [ci-checks.md](/docs/decisions/ci-checks.md): why the checks are reusable workflows without secrets, why `ci.yml` skips checks with `if:`, and why it runs on pushes to `main` too.
 - [games-check-scope.md](/docs/decisions/games-check-scope.md): which packages of `games/` `ci.yml` tests, how the `changes` job finds them, and why `games.yml` tests the whole workspace.
+- [game-hosts-check.md](/docs/decisions/game-hosts-check.md): why a check of its own compares the game hosts with `games.conf`, and why no deploy calls it.
