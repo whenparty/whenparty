@@ -7,6 +7,7 @@
 - The nginx proxy reaches the router as `traefik-tempsites:8000` on the `wp_tempsites` network, as [temp-sites.conf](/infra/nginx/conf.d/temp-sites.conf) and [games.conf](/infra/nginx/conf.d/games.conf) set. A change to the container name or the `web` entrypoint's port needs the same change in both, as [sites.md](/infra/docs/sites.md) says. The network name also appears in [infra/docker-compose.yml](/infra/docker-compose.yml), in the deploy workflows that create the network, and in the `compose.yml` of every site and game.
 - The `web` entrypoint on port 8000 is not published on the host, so every request reaches Traefik through nginx, with its certificate check, headers and limits. Publishing it would let requests skip them.
 - Traefik routes only containers that set `traefik.enable=true`, and reaches them only over `wp_tempsites`. Every site and game relies on the `web` entrypoint by that name.
+- The router `unknown-host` matches every host at priority 1 and sends what no other router matches to `noop@internal`, which answers 418. The nginx configs turn that 418 into their 404 pages, as [nginx-configs.md](/infra/docs/nginx-configs.md) says, so a change to the router or the status needs the same change there.
 - Traefik trusts `X-Forwarded-*` headers from addresses in `172.16.0.0/12`, so the containers see the client address that nginx passes on.
 - The `traefik` entrypoint on port 8080 serves the dashboard, the API and the ping that the healthcheck uses. It is published only on the VPS loopback as `127.0.0.1:18080`. The deploy checks the dashboard on that address.
 
@@ -30,7 +31,7 @@ Then open http://localhost:8080/dashboard/ and log in. To change the credentials
 
 ## Troubleshooting
 
-Traefik answers 418 through its router `unknown-host` when no other router matches the host: the container is not running or not healthy, does not set `traefik.enable=true`, or has a `Host` rule that does not match. It answers 404 when a router matches the host but not the path, such as a `PathPrefix` that does not match. On `games.when.party`, a path that no title matches goes to the [index page](/games/index/AGENTS.md), which answers 404 for it. Through nginx, every 404 shows a 404 page of the proxy: the games' page on `games.when.party`, as [games-conf.md](/infra/docs/games-conf.md) says, and the shared one elsewhere, as [nginx-configs.md](/infra/docs/nginx-configs.md) says, and a 418 shows as a 404 with the page for a host without a site. Asking Traefik directly, as below, shows the status. A labelled container that is not on `wp_tempsites` gets a router, but Traefik cannot reach it and answers with a gateway error, such as 502 or 504. On the VPS:
+Traefik answers 418 through its router `unknown-host` when no other router matches the request: the container is not running or not healthy, does not set `traefik.enable=true`, or has a rule that does not match the host and path. Any 404 comes from a container. On `games.when.party`, a path that no title matches goes to the [index page](/games/index/AGENTS.md), which answers 404 for it. Through nginx, the proxy replaces them with its pages, as [nginx-configs.md](/infra/docs/nginx-configs.md) and [games-conf.md](/infra/docs/games-conf.md) say. A labelled container that is not on `wp_tempsites` gets a router, but Traefik cannot reach it and answers with a gateway error, such as 502 or 504. On the VPS:
 
 ```bash
 # Is Traefik up and healthy?
@@ -43,7 +44,7 @@ docker logs traefik-tempsites | grep <name>
 # Which routers did Traefik find? Asks for the dashboard password.
 curl -u <user> http://127.0.0.1:18080/api/http/routers
 
-# Ask Traefik directly, past nginx. 418 means no router matches the host, 404 that none matches the path.
+# Ask Traefik directly, past nginx. 418 means no router matches; any other status comes from the container.
 docker run --rm --network wp_tempsites curlimages/curl -s -o /dev/null -w '%{http_code}\n' \
   -H 'Host: <name>.when.party' http://traefik-tempsites:8000/
 
