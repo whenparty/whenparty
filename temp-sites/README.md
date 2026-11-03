@@ -2,7 +2,7 @@
 
 Small sites that live for a while on their own host under `when.party`, such as `dtm-cleaning.when.party`. Each site is a folder in `projects/` with its own container. `dtm-cleaning` is a placeholder page.
 
-nginx hands every `*.when.party` host other than `www.when.party` to one Traefik router, which `traefik/` holds. Traefik reads the labels of the running containers and sends the request to the container whose label names that host. The peer-to-peer games run behind the same router.
+nginx hands every `*.when.party` host other than `www.when.party` to one Traefik router, which `traefik/` holds. Traefik reads the labels of the running containers and sends the request to the container whose label names that host, and for a game's title also the path. The peer-to-peer games run behind the same router.
 
 ```mermaid
 flowchart LR

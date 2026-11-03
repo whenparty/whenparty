@@ -461,7 +461,7 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {clock
   })
 
   copyLink.addEventListener('click', () => {
-    const link = `${location.origin}/#${visit?.code ?? ''}`
+    const link = new URL(`./#${visit?.code ?? ''}`, location.href).href
 
     navigator.clipboard.writeText(link).then(
       () => flash(copyLink, 'Copied'),
