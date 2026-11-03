@@ -20,68 +20,16 @@ jobs:
   project-names:
     uses: ./.github/workflows/check-project-names.yml
 
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      projects: ${{ steps.changes.outputs.projects }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Detect project changes
-        id: changes
-        env:
-          HEAD_SHA: ${{ github.sha }}
-          BEFORE_SHA: ${{ github.event.before }}
-        run: |
-          set -euo pipefail
-
-          BASE_SHA="$BEFORE_SHA"
-          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
-            BASE_SHA=$(git hash-object -t tree /dev/null)
-          fi
-
-          is_project() {
-            git cat-file -e "$HEAD_SHA:$1/compose.yml" 2>/dev/null ||
-              git cat-file -e "$BASE_SHA:$1/compose.yml" 2>/dev/null
-          }
-
-          projects_after_push() {
-            git ls-tree -r --name-only "$HEAD_SHA" -- games |
-              { grep -E '^games/[^/]+/[^/]+/compose\.yml$' || true; } |
-              sed 's#/compose\.yml$##'
-          }
-
-          changed_files=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- games/ ':!*.md')
-
-          changed_projects=$(
-            while read -r file; do
-              [ -n "$file" ] || continue
-              project=$(echo "$file" | cut -d/ -f1-3)
-
-              if [ "$(echo "$file" | awk -F/ '{print NF}')" -le 3 ]; then
-                projects_after_push
-              elif is_project "$project"; then
-                echo "$project"
-              elif [ "$(echo "$file" | cut -d/ -f2)" = platform ]; then
-                projects_after_push | { grep '^games/titles/' || true; }
-              fi
-            done <<< "$changed_files"
-          )
-
-          projects=$(echo "$changed_projects" | sort -u |
-            jq -R 'select(length > 0) | {path: ., image: (split("/") | last)}' | jq -sc .)
-          echo "projects=$projects" >> "$GITHUB_OUTPUT"
-          echo "Changed projects: $projects"
+  changes:
+    uses: ./.github/workflows/games-changes.yml
 
   deploy:
-    needs: [check, turn, project-names, detect-changes]
-    if: needs.detect-changes.outputs.projects != '[]'
+    needs: [check, turn, project-names, changes]
+    if: needs.changes.outputs.deployments != '[]'
     strategy:
       fail-fast: false
       matrix:
-        project: ${{ fromJson(needs.detect-changes.outputs.projects) }}
+        project: ${{ fromJson(needs.changes.outputs.deployments) }}
     permissions:
       contents: read
       packages: write

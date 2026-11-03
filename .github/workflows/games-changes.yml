@@ -1,0 +1,104 @@
+name: Games Changes
+
+on:
+  workflow_call:
+    outputs:
+      packages:
+        description: all, nothing, or the folders under games/ of the changed packages and the packages that depend on them
+        value: ${{ jobs.changes.outputs.packages }}
+      deployments:
+        description: JSON list of the deployments of games/ that the change reaches, each as {path, image}
+        value: ${{ jobs.changes.outputs.deployments }}
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.changes.outputs.packages }}
+      deployments: ${{ steps.changes.outputs.deployments }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: games/package.json
+          standalone: true
+
+      - name: Find affected packages and deployments
+        id: changes
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT" = pull_request ]; then
+            base=$(git rev-parse HEAD^1)
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = 0000000000000000000000000000000000000000 ]; then
+            base=$(git hash-object -t tree /dev/null)
+          else
+            base=$BEFORE
+          fi
+          echo "Base: $base"
+
+          if selected=$(
+            cd games &&
+              pnpm --filter "...[$base]" \
+                --changed-files-ignore-pattern '**/*.md' \
+                --changed-files-ignore-pattern 'games/platform/turn/**' \
+                ls --depth -1 --json |
+              jq -r --arg root "$PWD" '.[].path | if . == $root then "all" else ltrimstr($root + "/") end'
+          ); then
+            packages=$(sort -u <<< "$selected" | paste -sd ' ' -)
+            if grep -qx all <<< "$selected"; then
+              packages=all
+            fi
+          else
+            echo "::warning::pnpm could not find the changed packages, so every package is affected"
+            packages=all
+          fi
+
+          turn=false
+          if ! git diff --quiet "$base" HEAD -- games/platform/turn/ ':!*.md'; then
+            turn=true
+          fi
+
+          if [ "$packages" = all ]; then
+            folders=$(
+              git ls-tree -r --name-only HEAD -- games |
+                { grep -E '^games/[^/]+/[^/]+/compose\.yml$' || true; } |
+                sed 's#/compose\.yml$##'
+              { git diff --name-only --diff-filter=D "$base" HEAD -- games || true; } |
+                { grep -E '^games/[^/]+/[^/]+/compose\.yml$' || true; } |
+                sed 's#/compose\.yml$##' |
+                while read -r folder; do
+                  if [ ! -d "$folder" ]; then
+                    echo "$folder"
+                  fi
+                done
+            )
+          else
+            folders=$(
+              for package in $packages; do
+                if [ -f "games/$package/compose.yml" ]; then
+                  echo "games/$package"
+                fi
+              done
+              if [ "$turn" = true ]; then
+                echo games/platform/turn
+              fi
+            )
+          fi
+          deployments=$(sort -u <<< "$folders" |
+            jq -R 'select(length > 0) | {path: ., image: (split("/") | last)}' | jq -sc .)
+
+          {
+            echo "packages=$packages"
+            echo "deployments=$deployments"
+          } | tee -a "$GITHUB_OUTPUT"
