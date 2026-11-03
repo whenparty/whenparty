@@ -26,6 +26,10 @@ services:
       - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
       # user:hash from the deploy workflow (written to .env on the VPS)
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH:-}"
+      - "traefik.http.routers.unknown-host.rule=HostRegexp(`.+`)"
+      - "traefik.http.routers.unknown-host.priority=1"
+      - "traefik.http.routers.unknown-host.entrypoints=web"
+      - "traefik.http.routers.unknown-host.service=noop@internal"
 
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]

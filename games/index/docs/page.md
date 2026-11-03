@@ -4,7 +4,7 @@
 
 - [index.html](../index.html) holds the page and one entry for each game, as [1-catalog.md](specs/1-catalog.md) says. A new entry copies an existing `<li class="game">`, because the tests find an entry's name in its `<h2>` and its description in its first `<p>`, and its `<img>` gives the picture's width and height.
 - [src/images/](../src/images/) holds the pictures, one per game, named after its folder in `titles/`, as JPEG at 16:10, such as a screenshot of the game in play. It also holds the favicon.
-- [src/styles.css](../src/styles.css) holds the look: its colours as custom properties, with a light and a dark theme that follows the browser's setting, its fonts and its hand-drawn corners. A change to its colours or fonts also changes the proxy's 404 page, as [games-conf.md](/infra/docs/games-conf.md) says.
+- [src/styles.css](../src/styles.css) holds the look: its colours as custom properties, with a light and a dark theme that follows the browser's setting, its fonts and its hand-drawn corners. A change to its colours or fonts also changes the games' 404 page, `errors/games-404.html`,, as [games-conf.md](/infra/docs/games-conf.md) says.
 - Vite builds the page and puts the files it loads under `/_assets/`, which no game's path can be, as [hosting.md](../../titles/docs/hosting.md) says.
 
 ## Routing
