@@ -2,7 +2,7 @@
 
 `docker-compose.yml` mounts `nginx/conf.d/` over the image's `/etc/nginx/conf.d/`, and the image's main config loads every `*.conf` file there into its `http` block. So the directives outside a `server` block apply to every site.
 
-`default.conf` holds the shared settings, the port 80 server and the default server of port 443. `www.conf` and `nii-au.conf` hold one site each, `temp-sites.conf` the temporary sites, and `games.conf` the games and their signaling server, as [sites.md](sites.md) describes. `cloudflare_real_ip.conf` is generated on the VPS and ignored by git, as [cloudflare-ip-list.md](cloudflare-ip-list.md) says.
+`default.conf` holds the shared settings, the port 80 server and the default server of port 443. `www.conf` and `nii-au.conf` hold one site each, `temp-sites.conf` the temporary sites, and `games.conf` the games and their signaling server, as [sites.md](sites.md) describes and [games-conf.md](games-conf.md) details. `cloudflare_real_ip.conf` is generated on the VPS and ignored by git, as [cloudflare-ip-list.md](cloudflare-ip-list.md) says.
 
 ## Shared settings and a site's own
 
@@ -11,16 +11,6 @@
 - `limit_conn` and `limit_req` in a server replace the shared limits instead of adding to them, as the `signaling.when.party` server does.
 - An empty `Connection` header, which `$connection_upgrade` sends for every request that is not a WebSocket upgrade, keeps the keepalive connections to the upstreams usable.
 - nginx picks a server with an exact `server_name` before one with a wildcard. So `www.when.party` and `when.party` have servers with their exact names in `www.conf`, `games.when.party`, the former hosts of the games and `signaling.when.party` in `games.conf`, and every other `*.when.party` host falls to the wildcard server of `temp-sites.conf`. A `when.party` host that needs other settings than the temporary sites needs a server with its exact name.
-
-## Games and signaling
-
-- The server for the games in `games.conf` names `games.when.party`, where every title has a path of its own, and the former hosts of titles, which redirect to those paths, as [hosting.md](/games/titles/docs/hosting.md) says. The server for `signaling.when.party` names the signaling server. [check-game-hosts.yml](/.github/workflows/check-game-hosts.yml) checks that the `server_name` entries of `games.conf`, across both servers, are exactly the `Host` labels of the deployments in `games/`, as [checks.md](/.github/docs/checks.md#the-checks) says. A host of a deployment in `games/` that is missing there falls to the wildcard server, whose Content-Security-Policy blocks the signaling server.
-- The server for the games redirects a path of one segment of lowercase letters, digits and hyphens without a trailing slash, such as `/tictactoe`, to the same path with the slash, because the Traefik router of each title matches only the path with it.
-- The Content-Security-Policy of the server for the games lets the games reach the signaling server, over WebSocket and for their TURN credentials. A change to the policy of the temporary sites does not need the same change here. Both policies allow the Cloudflare Web Analytics script that Cloudflare adds to every page. The script reports to `/cdn-cgi/rum` on the page's own host, which `'self'` covers.
-- The signaling server has its own limits per client address, in zones of its own. Every player holds one WebSocket there, and the players of one party often share an address, such as one Wi-Fi or a mobile carrier's NAT, so the 15 connections that the other sites allow would shut the 16th player out. Its own zones also keep those sockets from using up the 15 connections that the game pages get. The signaling server limits what each socket does, keeps its heartbeat below `proxy_read_timeout`, and relies on these limits, as the [signaling documentation](/games/platform/signaling/AGENTS.md) says.
-- The Content-Security-Policy of the server for the games and the Permissions-Policy of `default.conf` are copied to `games/platform/p2p/src/dev-headers.ts` for local game development, with the local signaling server added, as the [p2p documentation](/games/platform/p2p/AGENTS.md) says.
-
-How each config reaches its backend is in [sites.md](sites.md). [game-hosts.md](/docs/decisions/game-hosts.md) explains why the games share one host and have a config of their own.
 
 ## The default server
 

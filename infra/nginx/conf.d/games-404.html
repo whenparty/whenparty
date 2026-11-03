@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#f7f7f4" />
+    <title>Not found · When Party games</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --paper: #f7f7f4;
+        --ink: #23262a;
+        --ink-muted: #565a60;
+        --graphite: #5e6268;
+        --denim: #8faacb;
+        --denim-deep: #2d5a85;
+        --denim-deeper: #234a6f;
+        --on-denim: #ffffff;
+        --serif: 'Iowan Old Style', 'Baskerville', 'Palatino Linotype', Georgia, serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #1b1d20;
+          --ink: #ecede9;
+          --ink-muted: #a8acb1;
+          --graphite: #a9adb2;
+          --denim: #5f80a8;
+          --denim-deep: #9dbfe3;
+          --denim-deeper: #c9d8ea;
+          --on-denim: #1b1d20;
+        }
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: 'Avenir Next', Avenir, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        width: min(560px, calc(100% - 48px));
+        padding: 48px 0;
+      }
+      .wordmark {
+        display: block;
+        margin-bottom: 56px;
+        font-family: var(--serif);
+        font-size: 24px;
+        letter-spacing: -0.047em;
+        text-decoration: none;
+        color: inherit;
+      }
+      .wordmark span {
+        color: var(--denim);
+      }
+      .code {
+        margin: 0 0 18px;
+        color: var(--graphite);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.165em;
+      }
+      h1 {
+        margin: 0 0 24px;
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: clamp(48px, 9vw, 84px);
+        line-height: 0.97;
+        letter-spacing: -0.064em;
+      }
+      h1 em {
+        color: var(--denim-deep);
+      }
+      .text {
+        margin: 0 0 32px;
+        color: var(--ink-muted);
+        font-size: 16px;
+        line-height: 1.78;
+      }
+      .back {
+        display: inline-block;
+        padding: 13px 22px 12px;
+        color: var(--on-denim);
+        background: var(--denim-deep);
+        border: 1.5px solid var(--denim-deeper);
+        border-radius: 15px 17px 14px 16px / 15px 14px 17px 13px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.025em;
+        text-decoration: none;
+      }
+      .back:hover {
+        background: var(--denim-deeper);
+      }
+      a:focus-visible {
+        outline: 3px solid var(--denim-deep);
+        outline-offset: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="wordmark" href="https://games.when.party/">when party <i>games</i><span>.</span></a>
+      <p class="code">404 · PAGE NOT FOUND</p>
+      <h1>Nothing to<br /><em>play here.</em></h1>
+      <p class="text">This page does not exist. The link may be old, or a letter may have slipped.</p>
+      <a class="back" href="https://games.when.party/">See all games</a>
+    </main>
+  </body>
+</html>
