@@ -5,9 +5,9 @@ These rules say what to check while working on a change that the workflow files,
 ## Documents
 
 - Before editing a document, besides what the [workflow](/docs/conventions/workflow.md#starting) says to read, search with `git grep -i --untracked` for the names, terms and paths that the old and the new text use, including what the edit removes, and read every document that has a match. Resolve the duplicates and contradictions the edit would create.
-- Before proposing the text of a document, give it to a reviewer who has not seen the discussion, such as the [`reviewer` subagent](/.claude/agents/reviewer.md), together with the files it goes into and links to. The reviewer only suggests changes. Weigh each suggestion and report your conclusions, including the suggestions you rejected.
+- Before proposing the text of a document, give it to the [`docs-reviewer` subagent](/.claude/agents/docs-reviewer.md) with the files it goes into and links to, and a specification edit that changes behaviour also to the [`behaviour-reviewer` subagent](/.claude/agents/behaviour-reviewer.md) with the source documents of the change, such as the user's requirements. Name the files and say in a sentence what changed; do not ask a reviewer to skip any of its checks. The reviewers only suggest changes. Weigh each suggestion and report your conclusions, including the suggestions you rejected.
 - When an agent breaks a rule that a document states, first check whether the rule is unclear, stated in several places or in a document that mixes purposes, as the [writing rules](/docs/conventions/writing.md) describe. Fix that before adding emphasis or another rule.
-- After adding a document or changing a rule, have a reviewer who has not seen the discussion, such as the `reviewer` subagent, read every Markdown file that git tracks or the change adds and report unclear text, contradictions, duplicates, rules in the wrong file and rules that no longer match how the repository works. Fix those places.
+- After adding a document or changing a rule, have the `docs-reviewer` subagent read every Markdown file that git tracks or the change adds. Fix the places it reports.
 
 ## Code
 
