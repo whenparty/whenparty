@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       packages:
-        description: all, or package folders under games/ to test and typecheck together with the packages that depend on them
+        description: all, or the package folders under games/ to test and typecheck
         required: false
         type: string
         default: all
@@ -34,7 +34,7 @@ jobs:
             else
               set --
               for package in $PACKAGES; do
-                set -- "$@" --filter "...{./$package}"
+                set -- "$@" --filter "{./$package}"
               done
               pnpm "$@" test
               pnpm "$@" --if-present typecheck

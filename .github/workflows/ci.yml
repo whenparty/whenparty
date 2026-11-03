@@ -12,7 +12,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      games: ${{ steps.changes.outputs.games }}
+      games-workflows: ${{ steps.changes.outputs.games-workflows }}
       turn: ${{ steps.changes.outputs.turn }}
       nginx: ${{ steps.changes.outputs.nginx }}
       project-names: ${{ steps.changes.outputs.project-names }}
@@ -47,29 +47,9 @@ jobs:
             touched "^\.github/workflows/(ci|$1)\.yml$"
           }
 
-          if workflow_touched 'check-games|games'; then
-            games=all
-          else
-            games=$(
-              { grep '^games/' <<< "$code" || true; } | { grep -v '^games/platform/turn/' || true; } |
-                while read -r file; do
-                  package=$(echo "$file" | cut -d/ -f2-3)
-                  case "$file" in
-                    games/*/*/*)
-                      if git cat-file -e "HEAD:games/$package/package.json" 2>/dev/null; then
-                        echo "$package"
-                      else
-                        echo all
-                      fi
-                      ;;
-                    *) echo all ;;
-                  esac
-                done | sort -u
-            )
-            if grep -qx all <<< "$games"; then
-              games=all
-            fi
-            games=$(paste -sd ' ' - <<< "$games")
+          games_workflows=false
+          if workflow_touched 'check-games|games|games-changes'; then
+            games_workflows=true
           fi
 
           turn=false
@@ -96,7 +76,7 @@ jobs:
             jq -Rsc 'split("\u0000") | map(select(length > 0))')
 
           {
-            echo "games=$games"
+            echo "games-workflows=$games_workflows"
             echo "turn=$turn"
             echo "nginx=$nginx"
             echo "project-names=$project_names"
@@ -104,12 +84,15 @@ jobs:
             echo "markdown=$markdown"
           } | tee -a "$GITHUB_OUTPUT"
 
+  games-changes:
+    uses: ./.github/workflows/games-changes.yml
+
   games:
-    needs: changes
-    if: needs.changes.outputs.games != ''
+    needs: [changes, games-changes]
+    if: needs.changes.outputs.games-workflows == 'true' || needs.games-changes.outputs.packages != ''
     uses: ./.github/workflows/check-games.yml
     with:
-      packages: ${{ needs.changes.outputs.games }}
+      packages: ${{ needs.changes.outputs.games-workflows == 'true' && 'all' || needs.games-changes.outputs.packages }}
 
   turn:
     needs: changes
@@ -161,7 +144,7 @@ jobs:
           exit "$status"
 
   result:
-    needs: [changes, games, turn, nginx, project-names, game-hosts, words]
+    needs: [changes, games-changes, games, turn, nginx, project-names, game-hosts, words]
     if: always()
     runs-on: ubuntu-latest
     steps:

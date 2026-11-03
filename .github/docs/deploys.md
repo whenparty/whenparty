@@ -11,7 +11,7 @@ Each deploy workflow runs on a push to `main` that changes a file in its folder 
 | `traefik.yml` | `temp-sites/traefik/` | itself | the Traefik router | yes |
 | `games.yml` | `games/` | itself, `deploy-project.yml` | each [deployment](/docs/glossary.md#deployment) a change reaches, through `deploy-project.yml` | yes |
 
-So merging a change to `site.yml` redeploys both sites, and a change to `infra.yml` or `traefik.yml` redeploys what it deploys. `games.yml` and `temp-sites.yml` deploy only the deployments whose files changed, so a change to their workflows or to `deploy-project.yml` alone deploys nothing. No deploy workflow lists a `check-*.yml` file, so a change to a check deploys nothing. [image-scan.md](/.github/docs/image-scan.md) says which deploys scan their images and when a scan stops a deploy.
+So merging a change to `site.yml` redeploys both sites, and a change to `infra.yml` or `traefik.yml` redeploys what it deploys. `games.yml` and `temp-sites.yml` deploy only the deployments that a change reaches, so a change to their workflows or to `deploy-project.yml` alone deploys nothing. No deploy workflow lists a `check-*.yml` file, so a change to a check deploys nothing. [image-scan.md](/.github/docs/image-scan.md) says which deploys scan their images and when a scan stops a deploy.
 
 ## infra.yml
 
@@ -43,7 +43,7 @@ Deployment names of `games/` and `temp-sites/projects/` share one namespace, and
 
 ## Which deployments a push reaches
 
-`games.yml` and `temp-sites.yml` compare the pushed commit with the commit before the push. When the event has none, as in a manual run, they compare with the empty tree, because the repository has several root commits and no single first one. So a manual run of `games.yml` deploys every deployment of `games/`. Run it after a push whose deploy failed or was skipped, because the next push deploys only what it changes. The [games documentation](/games/AGENTS.md) says which changes in `games/` reach which deployments.
+`games.yml` and `temp-sites.yml` compare the pushed commit with the commit before the push. When the event has none, as in a manual run, they compare with the empty tree, because the repository has several root commits and no single first one. So a manual run of `games.yml` deploys every deployment of `games/`. Run it after a push whose deploy failed or was skipped, because the next push deploys only what it changes. [games-changes.md](/.github/docs/games-changes.md) says which changes in `games/` reach which deployments.
 
 ## traefik.yml
 

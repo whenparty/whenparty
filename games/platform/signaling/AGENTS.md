@@ -12,4 +12,4 @@ Signaling and P2P take `@trystero-p2p/ws-relay` from the catalog in [pnpm-worksp
 
 Run `pnpm --filter @whenparty/signaling test` from `games/`. [Tests](src/tests/) cover allowed origins, HTTP responses, WebSocket limits, heartbeat and credentials. Dependency updates also require the full workspace tests and typecheck.
 
-Start locally with `pnpm --filter @whenparty/signaling start`; P2P uses `ws://localhost:8080`. The [Dockerfile](Dockerfile) uses `games/` as its build context. [compose.yml](compose.yml) defines production settings; shared deployment rules are in [games/AGENTS.md](../../AGENTS.md).
+Start locally with `pnpm --filter @whenparty/signaling start`; P2P uses `ws://localhost:8080`. The [Dockerfile](Dockerfile) uses `games/` as its build context. [compose.yml](compose.yml) defines production settings; [deploys.md](/.github/docs/deploys.md#deploy-projectyml) says how it deploys, and [games-changes.md](/.github/docs/games-changes.md) which changes redeploy it.
