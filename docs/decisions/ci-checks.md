@@ -2,7 +2,7 @@
 
 ## Context
 
-The deploy workflows run on a push to `main` and hold the VPS SSH key and other secrets. `games.yml` runs the tests and typechecks of `games/`, the TURN smoke test and the project name check in the same run that deploys, and `infra.yml` runs `nginx -t` the same way. `temp-sites.yml`, `traefik.yml`, `www.yml` and `nii-au.yml` run none of these checks. `main` is not protected, and changes reach it through pull requests or direct pushes, such as a quick temporary site. A workflow that runs on `pull_request` gets the repository secrets when the pull request comes from a branch of this repository.
+The deploy workflows run on a push to `main` and hold the VPS SSH key and other secrets. `games.yml` runs the tests and typechecks of `games/`, the TURN smoke test and the project name check in the same run that deploys, and `infra.yml` runs `nginx -t` the same way. `temp-sites.yml`, `traefik.yml`, `www.yml` and `nii-au.yml` run none of these checks. No ruleset on `main` requires a pull request or a check, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides, and changes reach it through pull requests or direct pushes, such as a quick temporary site. A workflow that runs on `pull_request` gets the repository secrets when the pull request comes from a branch of this repository.
 
 GitHub keeps a required status check pending when `paths` keeps its workflow from running. A job skipped by `if:` counts as successful, and so does a job skipped because a job it needs failed. Workflows that the same push starts run side by side, and a deploy workflow does not wait for one it does not call.
 
