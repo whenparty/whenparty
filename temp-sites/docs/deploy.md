@@ -11,7 +11,7 @@
 
 ## The first deploy
 
-When the new package of a site with a `Dockerfile` is private, its first deploy fails at the pull until the user makes the package public and re-runs the failed jobs, as [github-setup.md](/.github/docs/github-setup.md#container-packages) says.
+When the new package of a site with a `Dockerfile` is private, its first deploy fails at the pull, as [github-setup.md](/.github/docs/github-setup.md#container-packages) says. Retry it as [Retrying a failed deploy](#retrying-a-failed-deploy) says.
 
 ## Retrying a failed deploy
 
