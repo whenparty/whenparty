@@ -19,7 +19,7 @@ Where the checks of a pull request run:
 How a check that a change does not need is skipped:
 
 - A workflow per project with `paths`. Each file is simple to read. A skipped workflow leaves a required status check pending.
-- One `ci.yml` whose first job finds the changed projects, with an `if:` on every check and one job that fails when any check failed or was cancelled. A skipped check counts as passed, so any check can become required. The file is longer and needs that last job.
+- One `ci.yml` whose first jobs find what changed, with an `if:` on every check and one job that fails when any check failed or was cancelled. A skipped check counts as passed, so any check can become required. The file is longer and needs that last job.
 
 When `ci.yml` runs:
 
