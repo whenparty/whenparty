@@ -15,4 +15,4 @@ flowchart LR
 
 For every site the proxy sets the same security headers, rate limits each client address and passes WebSocket connections through. Each site adds its own Content-Security-Policy. Cloudflare sends the visitor's address in a header, and the proxy trusts that header only from Cloudflare's addresses. A job on the VPS refreshes the list of those addresses every hour.
 
-A change to the configs goes live when it reaches `main`, after the configs pass `nginx -t`.
+A change to the configs goes live when it reaches `main`, after the configs pass `nginx -t` and tests that run the proxy in Docker against stand-ins for the sites.

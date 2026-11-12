@@ -12,7 +12,7 @@ When nginx cannot reach a backend, the site answers 502: its container is down o
 
 A site on its own host name gets a config file in `nginx/conf.d/` with its `server` blocks, certificates, Content-Security-Policy and upstream, as [nginx-configs.md](nginx-configs.md) describes. When its container is on a new network, `docker-compose.yml` attaches nginx to it as an external network. Then add the new network to the networks that [infra.yml creates](/.github/docs/deploys.md#infrayml).
 
-A new domain also needs its certificates on the VPS and its Cloudflare settings, as [setup.md](setup.md) says, and its certificate name in `check-nginx.yml`, as [checks.md](/.github/docs/checks.md#the-checks) says.
+A new domain also needs its certificates on the VPS and its Cloudflare settings, as [setup.md](setup.md) says, and its certificate name in `check-nginx.yml` and in the tests, as [checks.md](/.github/docs/checks.md#the-checks) says.
 
 ## Removing a site
 
