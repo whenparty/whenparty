@@ -38,4 +38,5 @@ jobs:
       path: ${{ matrix.project.path }}
       image: ${{ matrix.project.image }}
       context: games
+      network: wp_games
     secrets: inherit
