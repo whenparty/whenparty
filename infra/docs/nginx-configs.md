@@ -18,6 +18,10 @@
 
 The server in `default.conf` with `default_server` gets every TLS connection on port 443 whose SNI names no server, or that has no SNI, and refuses the handshake, so the client gets no certificate. Cloudflare answers a proxied host that no config names with error 525. A second `default_server` on port 443 fails `nginx -t`. [default-server.md](decisions/default-server.md) explains the choice and which hosts reach this server.
 
+## The health check
+
+The `healthcheck` in `docker-compose.yml` calls `/health` of the port 80 server at `127.0.0.1`, not `localhost`: BusyBox `wget` in the image resolves `localhost` to `::1`, and the port 80 server listens only on IPv4.
+
 ## Checking a change
 
 [check-nginx.yml](/.github/workflows/check-nginx.yml) runs `nginx -t` on `nginx/conf.d/` with the image from `docker-compose.yml`. `ci.yml` runs it for every change to `infra/`, and `infra.yml` runs it before every deploy. [checks.md](/.github/docs/checks.md#the-checks) says what it needs when a config names another certificate.

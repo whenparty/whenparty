@@ -1,6 +1,4 @@
-FROM nginx:1.31.7-alpine
-
-RUN apk upgrade --no-cache brotli-libs
+FROM nginx:1.31.8-alpine
 
 COPY html/ /usr/share/nginx/html/
 

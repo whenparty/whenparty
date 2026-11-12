@@ -8,7 +8,7 @@ docker compose logs nginx
 docker inspect -f '{{.State.Health.Status}}' nginx
 ```
 
-The health check calls `/health` on port 80 inside the container.
+The health check calls `/health` on port 80 inside the container, as [nginx-configs.md](nginx-configs.md#the-health-check) says.
 
 | Symptom | Cause |
 | --- | --- |
