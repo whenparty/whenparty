@@ -1,0 +1,9 @@
+# Signaling
+
+- `1-1` The transport has a part on each page and a part in the transport server, which runs in the signaling server in [`games/platform/signaling/`](../../../signaling/AGENTS.md). When a page opens a signaling connection, the transport server gives the connection a peer ID that no other signaling connection got since the server started. Opening completes when the page has its peer ID.
+- `1-2` When the page has no peer ID 10 seconds after it began to open the signaling connection, or the connection closes before that, opening fails and the connection is closed.
+- `1-3` Each module that uses the transport, such as the rooms module, has a channel of its own on every signaling connection, between its part on the page and its part in the transport server, called its server part. A message is a JSON value of at most 16,384 bytes of UTF-8 as JSON. When a page or a server part sends a value that is not JSON, a larger message, or a message on a connection that is not open, sending fails and nothing is sent.
+- `1-4` While a signaling connection is open, each message on a channel arrives once and in the order sent, in either direction. Messages that have not arrived when the connection closes are lost.
+- `1-5` A server part gets each message with the peer ID of the signaling connection that sent it. It can send a message to any open signaling connection by its peer ID. The transport server drops a message to a peer ID that no open signaling connection has.
+- `1-6` When a signaling connection closes, whichever side or network closes it, the transport tells its page once, and tells each server part once, after the server part got every message from that connection that reached the server. A closed signaling connection does not open again: the page opens a new one, which gets a new peer ID.
+- `1-7` The transport drops a message on a channel that no module uses on the side it reaches, and a message from the server that the page cannot read.

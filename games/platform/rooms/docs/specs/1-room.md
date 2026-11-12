@@ -1,0 +1,11 @@
+# Room
+
+- `1-1` An app ID has 1 to 64 characters, each a lowercase Latin letter, a digit, a dot, a hyphen or a slash. When a page creates, joins or returns to a room with another app ID, it fails with "bad app" before the page opens a signaling connection.
+- `1-2` A room code has 5 characters from `23456789BCDFGHJKMNPQRSTVWXYZ`. The rooms module turns text that a person typed into a room code, ignoring case, spaces and hyphens, and says when the result is not a room code.
+- `1-3` When a page creates a room, it gives an app ID and a waiting time: a whole number of seconds from 1 to 86,400, or none for 600. With another waiting time, creating fails with "bad wait" before the page opens a signaling connection.
+- `1-4` A page creates, joins or returns to a room over a signaling connection of its own ([1-1](../../../transport/docs/specs/1-signaling.md)). When that connection cannot open, or closes before the rooms server answers, or the server has not answered 15 seconds after the page asked, creating, joining or returning fails with "offline".
+- `1-5` When a page creates a room while fewer than 10 rooms are open, across all app IDs, the rooms server opens a room with a code that no open room of the app ID has. The rooms server is the rooms module's server part ([1-3](../../../transport/docs/specs/1-signaling.md)). The page's participant becomes the room's owner, with public number 1 and term 1, and the page is told the code. When 10 rooms are open, creating fails with "busy".
+- `1-6` A room belongs to one app ID: joining or returning by a code finds only a room of the same app ID.
+- `1-7` Each participant of a room has a token, which the rooms server gives it when it enters the room, and a public number. The rooms module sends a token only between the page that holds it and the rooms server, and tells apps only public numbers.
+- `1-8` The rooms server keeps rooms only in memory. When it restarts, every room is gone.
+- `1-9` A room closes when its owner leaves it ([4-6](4-presence.md)), when the room ends for the owner ([4-7](4-presence.md)), or when no page of the owner had an open signaling connection for 24 hours. Then the rooms server deletes it and cancels its tokens, and its code may go to a new room.
