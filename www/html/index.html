@@ -4,23 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>When Party</title>
-  <meta name="description" content="When Party. Contact: whenparty@nii.au">
+  <meta name="description" content="When Party: things to do with friends, starting with games you play together in the browser. Contact: whenparty@nii.au">
   <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="styles.css">
+  <script src="takeoff.js" defer></script>
 </head>
 <body>
-  <!-- Pencil & Gouache: pencil everywhere, color only where you look (the contact). -->
   <svg class="defs" aria-hidden="true" focusable="false">
     <defs>
-      <!-- Slightly uneven pencil line -->
       <filter id="pencil" x="-5%" y="-30%" width="110%" height="160%">
         <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="grain"/>
         <feDisplacementMap in="SourceGraphic" in2="grain" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
       </filter>
-      <!-- Gouache wash: bleeding edges and uneven pigment -->
       <filter id="wash" x="-10%" y="-40%" width="120%" height="180%" color-interpolation-filters="sRGB">
         <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="4" result="flow"/>
         <feDisplacementMap in="SourceGraphic" in2="flow" scale="7" xChannelSelector="R" yChannelSelector="G" result="bleed"/>
@@ -31,32 +29,93 @@
     </defs>
   </svg>
 
-  <main>
-    <svg class="garland" viewBox="0 0 360 64" aria-hidden="true" focusable="false">
-      <g filter="url(#pencil)">
-        <path class="pencil" d="M6 10 C 90 34, 270 34, 354 10"/>
-        <path class="pencil" d="M36 16.9 L48 46.8 L60 20.7 M100 24.9 L112 53.7 L124 26.5 M164 27.9 L176 55.9 L188 28.0 M228 26.9 L240 54.2 L252 25.5 M292 21.7 L304 48.0 L316 18.3"/>
-        <path class="pencil pencil-second" d="M7 11 C 91 35, 271 35, 353 11"/>
-        <path class="hatch" d="M45 38.8 L51 32.8 M109 45.7 L115 39.7 M173 47.9 L179 41.9 M237 46.2 L243 40.2 M301 40.0 L307 34.0"/>
-      </g>
-    </svg>
-
-    <h1>When Party</h1>
-
-    <svg class="rule" viewBox="0 0 560 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-      <g filter="url(#pencil)">
-        <path class="pencil" d="M2 7 C 140 4, 300 9, 558 5"/>
-        <path class="pencil pencil-second" d="M3 8 C 141 5, 301 10, 557 6"/>
-      </g>
-    </svg>
-
-    <p class="label">Contact</p>
-    <a class="email pg-sketch" href="mailto:whenparty@nii.au">
-      <svg class="band" viewBox="0 0 200 16" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        <rect class="band-fill" x="3" y="1" width="194" height="14" rx="6" filter="url(#wash)"/>
+  <main class="layout">
+    <div class="intro">
+      <svg class="garland" viewBox="0 0 360 64" aria-hidden="true" focusable="false">
+        <g filter="url(#pencil)">
+          <path class="pencil draw" pathLength="1" d="M6 10 C 90 34, 270 34, 354 10"/>
+          <g class="flags">
+            <path class="pencil" d="M36 16.9 L48 46.8 L60 20.7 M100 24.9 L112 53.7 L124 26.5 M164 27.9 L176 55.9 L188 28.0 M228 26.9 L240 54.2 L252 25.5 M292 21.7 L304 48.0 L316 18.3"/>
+            <path class="hatch" d="M45 38.8 L51 32.8 M109 45.7 L115 39.7 M173 47.9 L179 41.9 M237 46.2 L243 40.2 M301 40.0 L307 34.0"/>
+          </g>
+          <path class="pencil pencil-second draw" pathLength="1" d="M7 11 C 91 35, 271 35, 353 11"/>
+        </g>
       </svg>
-      <span>whenparty@nii.au</span>
-    </a>
+
+      <h1 class="rise">When Party</h1>
+      <p class="lead rise">A small place for things to do with friends.</p>
+      <p class="about rise">For now, it’s games you play together in the browser: open one, send the link and play. More is on the way, and each new thing gets a balloon of its own.</p>
+    </div>
+
+    <nav class="places" aria-label="When Party sites">
+      <ul>
+        <li class="balloon balloon-games">
+          <a class="balloon-float" href="https://games.when.party/">
+            <svg class="balloon-art" viewBox="0 0 200 210" aria-hidden="true" focusable="false">
+              <path class="string string-side" d="M84 140 C 82 160, 104 170, 126 176 C 150 182, 170 186, 184 196"/>
+              <path class="string string-down" d="M84 140 C 78 156, 92 172, 86 186 C 83 193, 84 197, 84 200"/>
+              <path class="balloon-fill" filter="url(#wash)" d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"/>
+              <path class="shine" d="M48 54 C 50 40, 58 29, 70 23"/>
+              <g filter="url(#pencil)">
+                <path class="pencil balloon-outline" d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"/>
+                <path class="pencil pencil-second" d="M118 22 C 132 36, 138 56, 135 74 C 132 98, 112 122, 88 130"/>
+                <path class="pencil knot" d="M77 141 C 80 137, 82 134, 84 132 C 86 134, 88 137, 91 141 C 86 139, 82 139, 77 141 Z"/>
+                <path class="hatch" d="M112 104 L120 96 M104 114 L116 102 M96 121 L106 111"/>
+              </g>
+            </svg>
+            <span class="balloon-name">Games</span>
+          </a>
+        </li>
+        <li class="balloon balloon-soon" aria-hidden="true">
+          <div class="balloon-float">
+            <svg class="balloon-art" viewBox="0 0 200 210" focusable="false">
+              <path class="string string-side" d="M84 140 C 82 160, 104 170, 126 176 C 150 182, 170 186, 184 196"/>
+              <path class="string string-down" d="M84 140 C 78 156, 92 172, 86 186 C 83 193, 84 197, 84 200"/>
+              <g filter="url(#pencil)">
+                <path class="pencil balloon-outline" d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"/>
+                <path class="pencil knot" d="M77 141 C 80 137, 82 134, 84 132 C 86 134, 88 137, 91 141 C 86 139, 82 139, 77 141 Z"/>
+              </g>
+            </svg>
+            <span class="balloon-name">soon</span>
+          </div>
+        </li>
+      </ul>
+      <svg class="rope rope-vertical" viewBox="0 0 16 400" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <g filter="url(#pencil)">
+          <path class="pencil rope-line draw" pathLength="1" d="M8 0 C 6 100, 10 220, 8 400"/>
+        </g>
+      </svg>
+      <svg class="rope rope-horizontal" viewBox="0 0 400 16" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <g filter="url(#pencil)">
+          <path class="pencil rope-line draw" pathLength="1" d="M0 8 C 100 6, 260 11, 400 8"/>
+        </g>
+      </svg>
+      <svg class="weight" viewBox="0 0 28 30" aria-hidden="true" focusable="false">
+        <g filter="url(#pencil)">
+          <path class="pencil" d="M14 9 C 9 2, 4 6, 14 9 C 24 6, 19 2, 14 9"/>
+          <path class="pencil" d="M4 10 L24 10 L24 27 L4 27 Z"/>
+          <path class="pencil pencil-second" d="M14 10 L14 27"/>
+          <path class="hatch" d="M18 24 L22 20 M18 19 L22 15"/>
+        </g>
+      </svg>
+    </nav>
+
+    <div class="contact rise">
+      <svg class="rule" viewBox="0 0 560 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <g filter="url(#pencil)">
+          <path class="pencil" d="M2 7 C 140 4, 300 9, 558 5"/>
+          <path class="pencil pencil-second" d="M3 8 C 141 5, 301 10, 557 6"/>
+        </g>
+      </svg>
+
+      <p class="label">Contact</p>
+      <a class="email pg-sketch" href="mailto:whenparty@nii.au">
+        <svg class="band" viewBox="0 0 200 16" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <rect class="band-fill" x="3" y="1" width="194" height="14" rx="6" filter="url(#wash)"/>
+        </svg>
+        <span>whenparty@nii.au</span>
+      </a>
+    </div>
   </main>
 </body>
 </html>
