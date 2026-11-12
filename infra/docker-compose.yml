@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: nginx:1.31.7-alpine
+    image: nginx:1.31.8-alpine
     container_name: nginx
     restart: unless-stopped
     volumes:
@@ -13,7 +13,6 @@ services:
       - wp_www
       - wp_tempsites
     healthcheck:
-      # 127.0.0.1, not localhost: busybox wget resolves localhost to ::1 and nginx listens on IPv4 only
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/health"]
       interval: 30s
       timeout: 3s

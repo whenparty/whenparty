@@ -1,9 +1,7 @@
-FROM nginx:1.31.7-alpine
+FROM nginx:1.31.8-alpine
 
-# Copy static site content
 COPY site/ /usr/share/nginx/html/
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 

@@ -1,4 +1,3 @@
-# Build context: games/, so the build sees the workspace lockfile and the platform packages
 FROM node:24.22.0-alpine3.24 AS build
 
 WORKDIR /games
@@ -10,7 +9,7 @@ RUN corepack enable \
   && pnpm install --frozen-lockfile --include-workspace-root --filter @whenparty/calisthenics... \
   && pnpm --filter @whenparty/calisthenics build
 
-FROM nginx:1.31.7-alpine
+FROM nginx:1.31.8-alpine
 
 COPY --from=build /games/titles/calisthenics/dist/ /usr/share/nginx/html/
 
