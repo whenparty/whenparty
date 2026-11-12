@@ -11,5 +11,6 @@
 - [word-limit.md](/.claude/hooks/docs/word-limit.md): how the `words` job reads the limit and counts like `word-limit.sh`. Read it before changing the `words` job.
 - [ci-checks.md](/docs/decisions/ci-checks.md): why the checks are reusable workflows without secrets, why `ci.yml` skips checks with `if:`, and why it runs on pushes to `main` too.
 - [games-check-scope.md](/docs/decisions/games-check-scope.md): which packages of `games/` `ci.yml` tests, why pnpm finds them on the runner, which deployments `games.yml` deploys, and why it tests the whole workspace.
-- [game-hosts-check.md](/docs/decisions/game-hosts-check.md): why a check of its own compares the game hosts with `games.conf`, and why no deploy calls it.
+- [games-routing.md](/docs/decisions/games-routing.md): why nginx reaches the containers of the games itself, which is why the games deploy onto their own network `wp_games`.
+- [game-names-check.md](/docs/decisions/game-names-check.md): why a check of its own keeps other containers off the names that nginx reaches for the games, and why no deploy calls it.
 - [main-branch-protection.md](/docs/decisions/main-branch-protection.md): why the ruleset on `main` blocks only force pushes and deletion, and when a ruleset that requires a pull request and the `result` check of `ci.yml` becomes worth it.

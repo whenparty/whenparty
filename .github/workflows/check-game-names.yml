@@ -1,0 +1,79 @@
+name: Check Game Names
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compare the container names of every compose file with games.conf
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+          config=infra/nginx/conf.d/games.conf
+          status=0
+
+          fixed=$(sed -nE 's/^[[:space:]]*server[[:space:]]+([^:[:space:]]+):[0-9]+[[:space:]]+resolve;.*$/\1/p' "$config" |
+            jq -Rsc 'split("\n") | map(select(length > 0)) | unique')
+          if [ "$fixed" = '[]' ]; then
+            echo "::error file=$config::No upstream server with resolve in $config"
+            status=1
+          fi
+
+          program='
+            . as $c
+            | (.services // {}) | to_entries[]
+            | (.value.container_name // "\($c.name)-\(.key)-1") as $container
+            | [(.value.networks // {}) | keys[] | ($c.networks[.].name // .)] as $networks
+            | ($networks | any(. == "wp_games")) as $on_games
+            | ([.key, $container] + [(.value.networks // {})[] | (. // {}).aliases // [] | .[]] | unique) as $names
+            | (if $title == "" then empty
+               elif $container != "games-\($title)" then "error\tThe container of the title \($title) is \($container), not games-\($title)"
+               elif ($on_games | not) then "error\tThe container \($container) is not on wp_games"
+               else empty end),
+              ($names[] as $n
+               | if ($n | startswith("games-")) then
+                   (if $title != "" and $n == "games-\($title)" then empty
+                    else "error\tOnly the container of games/titles/\($n | ltrimstr("games-"))/ may have the name \($n)" end)
+                 elif ($fixed | any(. == $n)) then
+                   (if $in_games and $n == $container and $on_games then "found\t\($n)"
+                    else "error\tThe name \($n) belongs to the container in games/ on wp_games that games.conf names" end)
+                 else empty end)
+          '
+
+          found=''
+          while IFS= read -r file; do
+            title=''
+            if [[ "$file" =~ ^games/titles/([^/]+)/compose\.yml$ ]]; then
+              title=${BASH_REMATCH[1]}
+            fi
+            in_games=false
+            if [[ "$file" == games/* ]]; then
+              in_games=true
+            fi
+            json=$(docker compose -f "$file" config --format json)
+            while IFS=$'\t' read -r kind text; do
+              if [ "$kind" = found ]; then
+                found+="$text"$'\n'
+              else
+                echo "::error file=$file::$text"
+                status=1
+              fi
+            done < <(jq -r --arg title "$title" --argjson fixed "$fixed" --argjson in_games "$in_games" "$program" <<< "$json")
+          done < <(git ls-files | { grep -E '(^|/)(docker-)?compose\.ya?ml$' || true; })
+
+          while IFS= read -r name; do
+            if ! grep -qxF "$name" <<< "$found"; then
+              echo "::error file=$config::No container in games/ on wp_games has the name $name that $config names"
+              status=1
+            fi
+          done < <(jq -r '.[]' <<< "$fixed")
+          exit "$status"

@@ -6,7 +6,7 @@
 - [platform/signaling](platform/signaling/AGENTS.md) discovers peers and issues TURN credentials.
 - [platform/turn](platform/turn/AGENTS.md) relays WebRTC traffic when direct connections fail.
 
-[titles/](titles/AGENTS.md) holds the games and lists them. [index/](index/AGENTS.md) holds the page at the root of `games.when.party` that lists them for players. [index-page-location.md](docs/decisions/index-page-location.md) explains why it lives in `index/`.
+[titles/](titles/AGENTS.md) holds the games and lists them. [index/](index/AGENTS.md) holds the page at the root of `games.when.party` that lists them for players. [index-page-location.md](docs/decisions/index-page-location.md) explains why it lives in `index/`. [games-routing.md](/docs/decisions/games-routing.md) explains how nginx reaches the containers of `games/`, and [game-names-check.md](/docs/decisions/game-names-check.md) which names they keep. Read both before changing the name or network of a container here.
 
 The platform, each of its modules, each title and the index page need a [specification](/docs/conventions/specs.md).
 

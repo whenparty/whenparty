@@ -9,7 +9,8 @@ flowchart LR
   cloudflare["Cloudflare, with its client certificate"] -->|443| nginx[nginx proxy]
   direct[Direct request to the server] -->|443| reject["400 error or refused handshake"]
   nginx -->|wp_www network| sites["www and nii-au containers"]
-  nginx -->|wp_tempsites network| traefik["Traefik: temp sites and games"]
+  nginx -->|wp_games network| games["game and signaling containers"]
+  nginx -->|wp_tempsites network| traefik["Traefik: temp sites"]
 ```
 
 For every site the proxy sets the same security headers, rate limits each client address and passes WebSocket connections through. Each site adds its own Content-Security-Policy. Cloudflare sends the visitor's address in a header, and the proxy trusts that header only from Cloudflare's addresses. A job on the VPS refreshes the list of those addresses every hour.

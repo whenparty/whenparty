@@ -62,4 +62,5 @@ jobs:
     with:
       path: temp-sites/projects/${{ matrix.project }}
       image: ${{ matrix.project }}
+      network: wp_tempsites
     secrets: inherit

@@ -9,7 +9,7 @@
 
 ## Routing
 
-The Traefik router `index` in [compose.yml](../compose.yml) matches every path of `games.when.party`. Traefik prefers the longer rule of a title's router, so the page gets only the paths that no title matches, and its nginx answers 404 for those it has no file for. The proxy then replaces the body of that 404 with its own page, as [games-conf.md](/infra/docs/games-conf.md) says.
+The proxy passes every path of `games.when.party` that does not start with a segment of lowercase letters, digits and hyphens followed by `/` to the container `index` on the network `wp_games`. [compose.yml](../compose.yml) gives the container that name, and `games.conf` uses it in its upstream `games_index`, as [games-conf.md](/infra/docs/games-conf.md) says. The page's nginx answers 404 for the paths it has no file for, and the proxy replaces the body of that 404 with its own page. A path `/<name>/` that names no title gets that page from the proxy without reaching the page.
 
 ## Adding a game
 
