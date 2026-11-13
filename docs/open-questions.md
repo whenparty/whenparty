@@ -2,9 +2,15 @@
 
 ## Browser tests
 
-Some requirements cannot be verified by unit or in-memory integration tests, for example that two browsers whose networks block direct connections still connect through the TURN relay. The repository has no automated browser tests. The [testing rules](/docs/conventions/tests.md) name a requirement test file after its specification file, such as `1-connection.test.ts`, and `node --test` runs every `*.test.ts` file, so a browser test named this way would run in the default test command.
+Some requirements of `games/` cannot be verified by unit or in-memory integration tests, for example that two browsers whose networks block direct connections still connect through the TURN relay. The [testing rules](/docs/conventions/tests.md) say browser tests use Playwright, but `games/` has none yet. The testing rules name a requirement test file after its specification file, such as `1-connection.test.ts`, and `node --test` runs every `*.test.ts` file, so a browser test named this way would run in the default test command.
 
-Decide when the first requirement that needs a browser test appears: the tool, where browser test files live and how they are named so that the default test command does not run them, and which signaling and TURN servers they use.
+Decide when the first requirement of `games/` that needs a browser test appears: where its browser test files live and how they are named so that the default test command does not run them, and which signaling and TURN servers they use.
+
+## Component screenshots in games
+
+The interfaces of the games may grow into components with many states. Storybook shows each component in its states on its own, and Chromatic, a service of its makers, compares their screenshots in its cloud, with a review page and a check on pull requests. They cost a large dependency, an account, a secret in CI and a monthly limit of screenshots, and a click or a timer still needs a browser test. `www/` compares storyboards in Playwright instead, as [screenshot-tests.md](/www/docs/decisions/screenshot-tests.md) decides for its one static page.
+
+Decide, when a game's interface has components whose states need screenshot tests, whether to use Storybook with Chromatic or Playwright tests like those of `www/`.
 
 ## Platform specification
 
@@ -20,7 +26,7 @@ The platform in `games/platform/` needs a [specification](/docs/conventions/spec
 
 ## Fast tests and shared contracts
 
-The [workflow checks](/docs/conventions/workflow-checks.md) say "affected fast tests", "full fast suite" and "shared contracts". None of these terms is defined, and the repository has no slow tests to tell fast ones apart from. Decide whether to define them in the [glossary](/docs/glossary.md) or rephrase the checks.
+The [workflow checks](/docs/conventions/workflow-checks.md) say "affected fast tests", "full fast suite" and "shared contracts". None of these terms is defined, and apart from the browser tests of `www/`, which [tests.md](/www/docs/tests.md) says when to run, the repository has no slow tests to tell fast ones apart from. Decide whether to define them in the [glossary](/docs/glossary.md) or rephrase the checks.
 
 ## Testing the TURN module
 
