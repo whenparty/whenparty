@@ -33,3 +33,4 @@
 
 - `2-5` On every host, a request stays open while its site sends something at least every 90 seconds, and an open WebSocket while its site or its client does. After 90 seconds of such silence, the proxy closes it, and answers 504 if the site has sent no response yet, which on `games.when.party` shows the games' 404 page of [4-games.md](4-games.md).
 - `2-6` A request whose body is larger than 1 MiB (1,048,576 bytes) answers 413 and does not reach its site.
+- `2-7` On every host, when the container that a request goes to, which for a temporary site is the router of the temporary sites, does not accept the proxy's connection within 2 seconds, the request answers 504, which on `games.when.party` shows the games' 404 page of [4-games.md](4-games.md).

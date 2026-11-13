@@ -88,4 +88,12 @@ check_between '2-4 the other hosts answer 31 requests at once, together' "$((fir
 burst 140 signaling.when.party /
 check_between '2-4 signaling.when.party answers 101 requests at once, on its own' "$(answered 200)" 101 115
 
+check '2-7 the configs give a site 2 seconds to accept the connection, on every host' \
+  "$(grep -rh 'proxy_connect_timeout' "$repo/infra/nginx/conf.d" | tr -s ' ')" 'proxy_connect_timeout 2s;'
+gone=$(address nii-au)
+docker stop nii-au >/dev/null
+proxy_edit default.conf 's/^proxy_connect_timeout .*;$/proxy_connect_timeout 1s;/'
+proxy_edit nii-au.conf "s/server nii-au:80 resolve;/server $gone:80;/"
+check '2-7 a site that does not accept the connection answers 504' "$(request www.nii.au / --max-time 4)" 504
+
 finish

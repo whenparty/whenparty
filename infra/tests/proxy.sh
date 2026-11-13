@@ -131,10 +131,18 @@ stop() {
   proxy_wait
 }
 
-proxy_set_read_timeout() {
-  sed "s/^proxy_read_timeout .*;\$/proxy_read_timeout $1;/" "$work/conf.d/default.conf" > "$work/default.conf"
-  mv "$work/default.conf" "$work/conf.d/default.conf"
+proxy_edit() {
+  sed "$2" "$work/conf.d/$1" > "$work/edited.conf"
+  mv "$work/edited.conf" "$work/conf.d/$1"
   proxy_reload
+}
+
+proxy_set_read_timeout() {
+  proxy_edit default.conf "s/^proxy_read_timeout .*;\$/proxy_read_timeout $1;/"
+}
+
+address() {
+  docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$1"
 }
 
 proxy_set_real_ip() {
