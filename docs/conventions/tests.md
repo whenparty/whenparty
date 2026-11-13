@@ -4,6 +4,6 @@ Test the requirements in the [specification](/docs/conventions/specs.md) of a pr
 
 Requirement tests verify behaviour through the public interface of the project or module, whichever files implement it. A test of internal code needs a specific risk that requirement tests do not cover. Tests of one specification do not re-verify rules that another specification states. From `games/`, `pnpm --filter @whenparty/calisthenics test --test-name-pattern '\b1-3 '` runs the tests of requirement `1-3`.
 
-Use unit tests by default. Add in-memory integration tests only when unit tests cannot verify a required interaction.
+Use unit tests by default. Add in-memory integration tests only when unit tests cannot verify a required interaction. Add browser tests, written with Playwright, only for what needs a real browser, such as how a page looks and moves.
 
 Use controlled time for deadlines. Do not wait through application timeouts. Bound real network waits.

@@ -186,6 +186,10 @@ a.balloon-float:focus-visible .balloon-outline { stroke: var(--focus); stroke-wi
   .is-leaving { pointer-events: none; }
   .is-leaving :is(.intro, .contact, .balloon-soon, .rope, .weight) { opacity: 0; translate: 0 12px; }
   .is-flying .balloon-float { animation: takeoff .9s cubic-bezier(.45, 0, .85, .4) forwards; }
+  .string { transition: opacity .12s ease-out; }
+  .is-flying .string-side { opacity: 0; }
+  .is-flying .string-down { display: inline; }
+  @starting-style { .is-flying .string-down { opacity: 0; } }
 }
 
 @keyframes draw {
