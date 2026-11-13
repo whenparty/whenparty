@@ -25,3 +25,12 @@ The [workflow checks](/docs/conventions/workflow-checks.md) say "affected fast t
 ## Testing the TURN module
 
 `games/platform/turn` is a module without a package. Its only test is [smoke.sh](/games/platform/turn/tests/smoke.sh), so the test file and test name rules in [tests.md](/docs/conventions/tests.md) and `pnpm --filter <package> test` do not fit it. Decide when writing the specification of the TURN module.
+
+## Leftovers of the games' move to nginx
+
+The titles moved from hosts of their own, such as `tictactoe.when.party`, to `games.when.party/<name>/`, as [game-hosts.md](/docs/decisions/game-hosts.md) and [games-routing.md](/docs/decisions/games-routing.md) decide. These were left behind:
+
+- A comment in `games/platform/p2p/src/room-code.ts` gives an invite link on `tictactoe.when.party` as its example, and the tests `p2p/src/tests/signaling-url.test.ts` and `signaling/src/tests/turn.test.mjs` in `games/platform/` use that host as a page's host. The tests still pass, because every host below `when.party` may reach the signaling server. The [code rules](/docs/conventions/code.md) allow no explanatory comments, and `room-code.ts` has others too. The platform has no specification, so changing its code waits for the user's answer, as [workflow-specs.md](/docs/conventions/workflow-specs.md) says, or for [Platform specification](#platform-specification).
+- `games/` has no `README.md`, although the [map](/AGENTS.md) says every project on it has one.
+
+Decide when to take them up: with the next change to p2p, or on their own.
