@@ -4,7 +4,7 @@
 
 `www/` is one static page without components or a specification, and most of what it does is animation: balloons inflate, bob and take off, their strings meet ropes, and the page fades. A mistake, such as a string that points at the rope while its balloon flies away, shows at once to a person who watches.
 
-A browser test can measure each part at a set time of an animation, or take a screenshot. Playwright compares a screenshot with an approved one within a tolerance and, when they differ, leaves both and their difference. Browsers draw a few pixels differently on another operating system or processor: Docker on an Apple Silicon Mac runs arm64, and GitHub's runners x86. A pull request shows the old and new image side by side. Git LFS keeps files outside the repository, and every checkout of them counts towards a transfer quota. A workflow run by hand must be on `main`, while one that a label on a pull request starts runs from its branch. A commit that a workflow makes with its own token starts no other workflow.
+A browser test can measure each part at a set time of an animation, or take a screenshot. Playwright compares a screenshot with an approved one within a tolerance and, when they differ, leaves both and their difference. Browsers draw some pixels differently on another system or processor: Docker on an Apple Silicon Mac runs arm64, and GitHub's runners x86. A pull request shows old and new images side by side. Git LFS keeps files outside the repository, and every checkout of them counts towards a transfer quota. A workflow run by hand must be on `main`, while one that a label on a pull request starts runs from its branch. GitHub holds the checks of a commit that a workflow makes with its own token until someone approves them.
 
 As [ci-checks.md](/docs/decisions/ci-checks.md) decides, `ci.yml` checks every pull request and push to `main`, and only `games.yml` and `infra.yml` wait for their checks. No ruleset on `main` requires a pull request or a passing check, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides. The site deploys in about 1.5 minutes, and the browser tests take 1 to 2 in CI.
 
@@ -28,7 +28,7 @@ Where the approved screenshots live:
 Where the approved screenshots are made:
 
 - Locally, in the same Docker image. No workflow with write access. On an Apple Silicon Mac they differ from what CI draws.
-- In CI, by a workflow run by hand on the branch. The same kind of machine as the check. It needs its file on `main` and write access, and its commit needs another push to be checked.
+- In CI, by a workflow run by hand on the branch. The same kind of machine as the check. It needs its file on `main` and write access, and its commit needs an approval to be checked.
 - In CI, by a workflow that a label on the pull request starts. The same, but it runs from the branch, and the label must exist.
 
 Whether the deploy waits for the tests:
