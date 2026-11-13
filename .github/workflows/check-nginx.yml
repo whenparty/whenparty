@@ -28,3 +28,12 @@ jobs:
             -v "$PWD/infra/nginx/conf.d:/etc/nginx/conf.d:ro" \
             -v "$certs:/etc/nginx/certs:ro" \
             "$image" nginx -t
+
+      - name: Run the smoke tests of the proxy
+        run: |
+          failed=0
+          for test in infra/tests/*.smoke.sh; do
+            echo "== $test"
+            sh "$test" || failed=1
+          done
+          exit "$failed"
