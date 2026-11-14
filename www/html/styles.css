@@ -97,8 +97,8 @@ h1 { margin: 0; font-size: 44px; line-height: 48px; font-weight: 600; letter-spa
 .places { position: relative; padding-bottom: 40px; }
 .places ul { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 
-.balloon { --tilt: -3deg; --anchor: 184px 196px; position: relative; z-index: 1; width: 200px; height: 210px; }
-.balloon-soon { --tilt: 6deg; margin-top: -24px; }
+.balloon { --tilt: -3deg; --anchor: 184px 196px; --inflate: .9s; --inflate-delay: .55s; position: relative; z-index: 1; width: 200px; height: 210px; }
+.balloon-soon { --tilt: 6deg; --inflate-delay: .75s; margin-top: -24px; }
 
 .balloon-float {
   position: relative;
@@ -175,8 +175,9 @@ a.balloon-float:focus-visible .balloon-outline { stroke: var(--focus); stroke-wi
   .about.rise { animation-delay: .35s; }
   .contact.rise { animation-delay: .5s; }
 
-  .balloon-float { animation: inflate .9s var(--spring) .55s backwards, bob 5.5s ease-in-out 1.45s infinite; }
-  .balloon-soon .balloon-float { animation-delay: .75s, 1.65s; animation-duration: .9s, 6.5s; }
+  .balloon-float { animation: inflate var(--inflate) var(--spring) var(--inflate-delay) backwards, bob 5.5s ease-in-out calc(var(--inflate-delay) + var(--inflate)) infinite; }
+  .balloon-soon .balloon-float { animation-duration: var(--inflate), 6.5s; }
+  .balloon-art { animation: refilter var(--inflate) var(--inflate-delay) backwards; }
   .weight { animation: rise .6s ease-out .9s backwards; }
 
   a.balloon-float { transition: scale .35s var(--spring); }
@@ -199,6 +200,7 @@ a.balloon-float:focus-visible .balloon-outline { stroke: var(--focus); stroke-wi
 }
 @keyframes rise { from { opacity: 0; translate: 0 12px; } }
 @keyframes inflate { from { opacity: 0; scale: .2; } }
+@keyframes refilter { from { fill-opacity: .99; stroke-opacity: .99; } }
 
 @keyframes bob {
   0%, 100% { rotate: var(--tilt); }
