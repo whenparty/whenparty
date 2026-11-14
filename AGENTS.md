@@ -29,6 +29,7 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 - [decisions.md](/docs/conventions/decisions.md): decision records.
 - [tests.md](/docs/conventions/tests.md): test files.
 - [code.md](/docs/conventions/code.md): source code and test code, the files code loads, such as styles and assets, and configs and scripts, including `.github/workflows`.
+- [serving.md](/docs/conventions/serving.md): how the files that the repository serves reach browsers, for those files and the builds and configs that produce and serve them.
 - [workflow.md](/docs/conventions/workflow.md): how to start a task, when to stop and ask, when to write a decision record, and how to bring a long document under the word limit.
 - [workflow-specs.md](/docs/conventions/workflow-specs.md): how specifications and code change, and when to stop and ask about them.
 - [workflow-checks.md](/docs/conventions/workflow-checks.md): what to check in documents and code while working on a change.

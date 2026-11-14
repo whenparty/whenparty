@@ -1,0 +1,12 @@
+{
+  "name": "www",
+  "private": true,
+  "description": "Browser tests of the When Party site at www.when.party",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}

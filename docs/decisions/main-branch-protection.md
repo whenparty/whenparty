@@ -9,7 +9,7 @@ A push to `main` starts the deploy workflows of what it changes. [ci-checks.md](
 Two problems reach the VPS on a direct push, because no deploy checks for them before it deploys and `ci.yml` reports them only after:
 
 - a temporary site that takes a game's name, which deploys anyway, overwrites the game's `latest` image when the site has a `Dockerfile`, and makes every deploy of `games/` fail until the site is renamed, as [names.md](/temp-sites/docs/names.md) says;
-- a game host missing from `games.conf`, which deploys a game whose players cannot connect, as [game-hosts-check.md](/docs/decisions/game-hosts-check.md) says.
+- a container that takes, or lacks, a name that nginx reaches for the games, which breaks their requests, as [game-names-check.md](/docs/decisions/game-names-check.md) says.
 
 A commit that fails a check of `games.yml` or `infra.yml` also reaches `main` on a direct push. It deploys nothing broken, and every later deploy of that project fails until a fix follows.
 
@@ -23,7 +23,7 @@ A commit that fails a check of `games.yml` or `infra.yml` also reaches `main` on
 
 ## Decision
 
-A ruleset that only blocks force pushes and deletion of `main`, with no bypass, so neither the user's credentials nor an agent using them can force push without first turning it off. It keeps the history of `main` from an accidental force push or deletion at no cost to a quick change. A ruleset that requires a pull request and `result` would keep every problem above off `main`. Of them, only the two that reach the VPS break anything live: one game, or the deploys of `games/`, until a fix follows. A commit that fails a deploy's checks deploys nothing broken. The user fixes each with a follow-up push. While no one else has write access, that costs less than a pull request for every small change. Once someone else gets write access, a second ruleset that requires a pull request and `result`, with the admin role allowed to bypass it, becomes worth its cost.
+A ruleset that only blocks force pushes and deletion of `main`, with no bypass, so neither the user's credentials nor an agent using them can force push without first turning it off. It keeps the history of `main` from an accidental force push or deletion at no cost to a quick change. A ruleset that requires a pull request and `result` would keep every problem above off `main`. Of them, only the two that reach the VPS break anything live: the games, or the deploys of `games/`, until a fix follows. A commit that fails a deploy's checks deploys nothing broken. The user fixes each with a follow-up push. While no one else has write access, that costs less than a pull request for every small change. Once someone else gets write access, a second ruleset that requires a pull request and `result`, with the admin role allowed to bypass it, becomes worth its cost.
 
 ## Consequences
 

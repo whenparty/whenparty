@@ -6,6 +6,6 @@ A thing that the requirements of a specification file describe and that has stat
 
 Requirement tests verify behaviour through the public interface of the project or module, whichever files implement it. A test of internal code needs a specific risk that requirement tests do not cover. Tests of one specification do not re-verify rules that another specification states.
 
-Use unit tests by default. Add non-browser [integration tests](/docs/glossary.md#integration-test) only when unit tests cannot verify a required interaction, and browser integration tests only when a non-browser one cannot, such as a connection through the TURN relay. A browser integration test file ends in `.browser.test.ts`, such as `1-match.browser.test.ts`, and otherwise follows the naming rules above.
+Use unit tests by default, and [integration tests](/docs/glossary.md#integration-test) only when unit tests cannot verify a required interaction. Run a test in Node by default, and in a real browser, with Playwright, only when it needs one, such as how a page looks and moves or a connection through the TURN relay. A test file that runs in a browser ends in `.browser.test.ts`, such as `1-connection.browser.test.ts`, and otherwise follows the naming rules above. A package's default test command skips these files; a separate command runs them.
 
 Use controlled time for deadlines. Do not wait through application timeouts. Bound real network waits.

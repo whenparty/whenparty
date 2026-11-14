@@ -16,6 +16,10 @@ on:
         required: false
         type: string
         default: ''
+      network:
+        description: Docker network that the project's compose file joins as an external network
+        required: true
+        type: string
 
 env:
   SERVICES_DIR: /opt/services/whenparty
@@ -173,7 +177,8 @@ jobs:
             PROJECT_EXISTS="${{ steps.project_dir.outputs.exists }}"
             IMAGE_OVERRIDE="${{ steps.deploy_image.outputs.value }}"
 
-            docker network inspect wp_tempsites >/dev/null 2>&1 || docker network create wp_tempsites
+            NETWORK="${{ inputs.network }}"
+            docker network inspect "$NETWORK" >/dev/null 2>&1 || docker network create "$NETWORK"
 
             if [ "$PROJECT_EXISTS" = "true" ]; then
               if [ ! -d "$PROJECT_DIR" ]; then

@@ -37,7 +37,7 @@ What the deploy leaves behind:
 - It copies the folder to the same path under `/opt/services/whenparty/` and runs `docker compose up -d --remove-orphans` there, with `IMAGE` set to the `sha-<commit>` image when it built one. The copy never deletes files, so a file removed from a folder that still exists stays on the VPS.
 - When the folder's `compose.yml` names `TURN_SECRET`, it writes the secret to a private `.env` next to it when the secret is set, and otherwise warns. [github-setup.md](/.github/docs/github-setup.md) says which deployments use it.
 - When the folder is gone, it runs `docker compose down` on the VPS and deletes the folder there.
-- It creates the `wp_tempsites` network when it is missing.
+- It creates the network that its caller names when it is missing: `games.yml` names `wp_games`, and `temp-sites.yml` names `wp_tempsites`.
 
 Deployment names of `games/` and `temp-sites/projects/` share one namespace, and `check-project-names.yml` checks it.
 

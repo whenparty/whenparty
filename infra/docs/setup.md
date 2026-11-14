@@ -10,7 +10,7 @@ The certificates folder must exist before the first deploy:
 mkdir -p /opt/services/whenparty/infra/nginx/certs
 ```
 
-`infra.yml` creates the `wp_www` and `wp_tempsites` networks. The site deploys through `site.yml` do not create `wp_www`, so on a new VPS the proxy deploys before `www/` and `nii-au/`.
+`infra.yml` creates the `wp_www`, `wp_tempsites` and `wp_games` networks. The site deploys through `site.yml` do not create `wp_www`, so on a new VPS the proxy deploys before `www/` and `nii-au/`.
 
 ## Certificates
 

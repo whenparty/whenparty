@@ -20,6 +20,10 @@ The workflows push images and upload scan results with the `GITHUB_TOKEN` that G
 - The repository needs Write access to each package, under Package settings → Manage Actions access. A package first pushed from this repository gets it automatically.
 - The VPS pulls images without logging in, so every package must be public. A new package first pushed by these workflows is public at once, as `index` was in run 41627417949 of `games.yml`. After each push, `site.yml` and `deploy-project.yml` also ask the GitHub API with their `GITHUB_TOKEN` to make the package public. That call answers HTTP 404, and the step has `continue-on-error`, so it shows as passed. When a package is private, the deploy fails at the pull on the VPS until the user makes the package public in its settings and re-runs the failed jobs.
 
+## Labels
+
+[www-snapshots.yml](/.github/workflows/www-snapshots.yml) runs when the `update-snapshots` label is added to a pull request, so the repository needs that label, under Issues → Labels, as [tests.md](/www/docs/tests.md) says.
+
 ## `main` branch
 
 A ruleset on `main`, under Settings → Rules → Rulesets, blocks force pushes and deletion of the branch, with no bypass. It requires no pull request and no status check, so a direct push to `main` works. The user set it by hand, and nothing in the repository creates or checks it. A force push to `main` needs the user to set the ruleset's enforcement status to Disabled, run the force push and set it back to Active. In Claude Code, [ruleset-guard.sh](/.claude/hooks/ruleset-guard.sh) denies an agent's commands that change a ruleset or branch protection, as [ruleset-guard.md](/.claude/hooks/docs/ruleset-guard.md) describes. [main-branch-protection.md](/docs/decisions/main-branch-protection.md) explains why.
