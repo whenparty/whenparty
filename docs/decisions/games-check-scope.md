@@ -34,7 +34,7 @@ What `games.yml` runs before a deploy:
 
 ## Decision
 
-`ci.yml` runs the changed packages and those that depend on them, so the browser integration tests of a title will not run for changes to other titles. Finding the affected packages costs less than running them. A build tool would cost more upkeep than it saves for six packages.
+`ci.yml` runs the changed packages and those that depend on them, so the browser tests the open questions expect will not run for changes to other titles. Finding the affected packages costs less than that once those tests exist. A build tool would cost more upkeep than it saves for six packages.
 
 A shared workflow finds the changed packages with pnpm's git filter on the runner. pnpm already knows the workspace, so the workflow adds only what pnpm cannot: it ignores Markdown, handles `platform/turn/` on its own, and makes every package affected when pnpm selects the root package or fails. One more action costs less than a mapping that has to follow every change to the package layout.
 

@@ -11,6 +11,6 @@ These rules say what to check while working on a change that the workflow files,
 
 ## Code
 
-- During implementation, run the typechecks, unit tests and non-browser [integration tests](/docs/glossary.md#integration-test) of the packages the change touches.
-- Before reporting a change as done, run them also for the packages that depend on those, and run the browser integration tests of the affected requirements, as the next bullet defines them. The documents on how to work in the project that holds the packages give the commands, and [checks.md](/.github/docs/checks.md) says which browser integration tests CI runs.
+- During implementation, run the typechecks and the tests that run in Node of the packages the change touches, as the [testing rules](/docs/conventions/tests.md) tell them from the tests that run in a browser.
+- Before reporting a change as done, run them also for the packages that depend on those, and run the browser tests of the affected requirements, as the next bullet defines them. The documents on how to work in the project that holds the packages give the commands, and [checks.md](/.github/docs/checks.md) says which browser tests CI runs.
 - Before reporting a change as done, check each affected requirement against the code and its tests. Affected requirements are those the branch changes in `docs/specs/` since it left `main`, those that link to a specification file the branch changes, and those of other specifications that link to a file of the innermost project or module that contains a changed file. `git grep -i --untracked` in `*/docs/specs/*` finds them by the name of each changed specification file and of each such project's or module's folder; keep the matches whose link leads there.

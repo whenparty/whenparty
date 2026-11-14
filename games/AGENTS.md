@@ -14,6 +14,6 @@ Games own match rules and results. Shared platform code owns transport and parti
 
 ## Verification
 
-Run package scripts from `games/`. `pnpm --filter <package> test` runs one workspace's tests; `pnpm test` and `pnpm typecheck` run the whole workspace.
+Run package scripts from `games/`. `pnpm --filter <package> test` runs one workspace's tests, and `pnpm --filter <package> test --test-name-pattern '\b1-3 '` only those of its requirement `1-3`; `pnpm test` and `pnpm typecheck` run the whole workspace.
 
 To run a title locally, start signaling with `pnpm --filter @whenparty/signaling start` and the title's dev script. [games-changes.md](/.github/docs/games-changes.md) says which packages a change checks and which [deployments](/docs/glossary.md#deployment) it redeploys, and [deploys.md](/.github/docs/deploys.md) how they deploy. [checks.md](/.github/docs/checks.md) says what else changes with the Node image of the Dockerfiles here. Compose files identify deployments. Deployment names share a namespace with `temp-sites/projects/`.
