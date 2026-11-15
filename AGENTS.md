@@ -25,7 +25,7 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 
 - [writing.md](/docs/conventions/writing.md): every document, and responses where its rules say so. The other conventions files add rules for the kinds of files they cover.
 - [folder-docs.md](/docs/conventions/folder-docs.md): every `AGENTS.md` and `README.md`, the documents on how to work in a folder, and where what code cannot express goes.
-- [specs.md](/docs/conventions/specs.md): specifications, `docs/PLANNED.md` and the list of relying requirements in an `AGENTS.md`.
+- [specs.md](/docs/conventions/specs.md): specifications, `docs/PLANNED.md` and the part of a project's `AGENTS.md` that says which parts of the project need a specification.
 - [decisions.md](/docs/conventions/decisions.md): decision records.
 - [tests.md](/docs/conventions/tests.md): test files.
 - [code.md](/docs/conventions/code.md): source code and test code, the files code loads, such as styles and assets, and configs and scripts, including `.github/workflows`.

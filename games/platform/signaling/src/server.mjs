@@ -1,33 +1,26 @@
 import {once} from 'node:events'
 import {createServer} from 'node:http'
 import {createWsRelayServer} from '@trystero-p2p/ws-relay/server'
+import {createTransportServer} from '@whenparty/transport/server'
+import {WebSocketServer} from 'ws'
 import {isAllowedOrigin} from './origin.mjs'
 import {turnCredentials} from './turn.mjs'
 
-// Well below nginx's 90 s proxy_read_timeout and Cloudflare's ~100 s WebSocket idle timeout
 const defaultHeartbeatMs = 30_000
 
-// A player's tab holds one socket with 2 subscriptions (the room and its own peer topic). It sends
-// messages under 1 KB: about 5 for each other player in the room while it connects to them, then
-// one a minute. These limits leave a wide margin over that, and keep one client from taking the
-// server's capacity. nginx allows 64 connections per IP (infra/nginx/conf.d/temp-sites.conf), so
-// it takes 79 IPs to fill the server, and subscriptions never run out before connections do.
 const defaultLimits = {
   maxConnections: 5_000,
   maxSubscriptions: 40_000,
   maxSubscriptionsPerSocket: 8,
-  // Bytes. A larger message closes the socket with 1009.
   maxPayload: 64 * 1024,
-  // Messages a socket may send at once (enough to join a room of 40), refilled at messagesPerSecond
   messageBurst: 200,
   messagesPerSecond: 20
 }
 
+const platformMessageBytes = 65_536
+
 const logError = error => console.error(`signaling error: ${error.message}`)
 
-// GET /turn-credentials hands a game page short-lived TURN credentials (see turn.mjs). Only the
-// game sites may ask, like for the WebSocket, and nothing may cache the answer. Without TURN
-// settings it is a 404 the page may read, so that it connects without TURN quietly.
 const handleHttp = turn => (request, response) => {
   if (request.method === 'GET' && request.url === '/health') {
     response.writeHead(200, {'Content-Type': 'text/plain'}).end('OK')
@@ -58,9 +51,6 @@ const handleHttp = turn => (request, response) => {
   response.writeHead(404).end()
 }
 
-// The ws-relay server never pings. Ping every client each interval and drop the ones that
-// did not answer the previous ping: idle sockets stay open through nginx and Cloudflare,
-// and dead connections (a phone that lost its network) release their subscriptions.
 const startHeartbeat = (wss, intervalMs) => {
   const alive = new WeakSet()
 
@@ -82,14 +72,11 @@ const startHeartbeat = (wss, intervalMs) => {
   return () => clearInterval(timer)
 }
 
-// Closes a socket that sends more than messageBurst messages at once, or more than
-// messagesPerSecond for long. The client reconnects after a few seconds.
 const limitMessageRate = (wss, {messageBurst, messagesPerSecond}) => {
   wss.on('connection', socket => {
     let budget = messageBurst
     let lastMessageAt = performance.now()
 
-    // Ahead of ws-relay's own listener, which ignores messages from a closing socket
     socket.prependListener('message', () => {
       const now = performance.now()
       budget = Math.min(messageBurst, budget + ((now - lastMessageAt) / 1000) * messagesPerSecond)
@@ -105,12 +92,12 @@ const limitMessageRate = (wss, {messageBurst, messagesPerSecond}) => {
   })
 }
 
-// turn: {secret, urls, ttlSeconds} for /turn-credentials, or null (see turnFromEnv)
-export const startSignalingServer = async ({port, heartbeatMs = defaultHeartbeatMs, limits, turn = null} = {}) => {
+export const startSignalingServer = async ({port, heartbeatMs = defaultHeartbeatMs, limits, turn = null, parts = {}} = {}) => {
   const {maxConnections, maxSubscriptions, maxSubscriptionsPerSocket, maxPayload, ...rate} = {...defaultLimits, ...limits}
   const server = createServer(handleHttp(turn))
   const wsRelay = createWsRelayServer({
-    server,
+    port: undefined,
+    noServer: true,
     onError: logError,
     maxPayload,
     maxSubscriptions,
@@ -128,11 +115,26 @@ export const startSignalingServer = async ({port, heartbeatMs = defaultHeartbeat
   const stopHeartbeat = startHeartbeat(wsRelay.wss, heartbeatMs)
   limitMessageRate(wsRelay.wss, rate)
 
+  const platform = new WebSocketServer({noServer: true, maxPayload: platformMessageBytes})
+  const transport = createTransportServer({
+    parts,
+    turnSecret: turn?.secret ?? null,
+    upgrade: (request, socket, head, done) => platform.handleUpgrade(request, socket, head, done)
+  })
+
+  server.on('upgrade', (request, socket, head) => {
+    if (!transport.handleUpgrade(request, socket, head)) {
+      wsRelay.wss.handleUpgrade(request, socket, head, relaySocket => wsRelay.wss.emit('connection', relaySocket, request))
+    }
+  })
+
   server.listen(port)
   await once(server, 'listening')
 
   const close = async () => {
     stopHeartbeat()
+    transport.close()
+    platform.close()
     await wsRelay.close()
     server.close()
     await once(server, 'close')

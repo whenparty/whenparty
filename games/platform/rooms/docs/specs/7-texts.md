@@ -1,0 +1,7 @@
+# Texts
+
+- `7-1` A text is a string of at most 65,024 bytes of UTF-8 without lone surrogates.
+- `7-2` A participant's page sends texts to the owner's page, and the owner's page sends a text to one participant or to all participants whose peer connections are open for rooms ([1-8](1-room.md)). The receiving app gets each text with the sender's number.
+- `7-3` Sending fails ([1-14](1-room.md)) when what the app sends is not a text, when the app has left or the room has ended for the page, when a participant's page is not in the room ([3-1](3-participant.md)), or when the owner's page sends to a number that it does not know, that it removed or whose peer connection is not open for rooms. Sending to all participants sends to each participant whose peer connection is open for rooms, and succeeds when there are none.
+- `7-4` The rooms module hands each text that the app sends to the transport at once, and gives the app each text in the order that the transport delivers it, so a text that a page sends while its peer connection is open for rooms arrives once and in the order sent, unless the peer connection closes before it arrives ([4-2](../../../transport/docs/specs/4-delivery.md)).
+- `7-5` A page drops a text that arrives over a peer connection before the connection is open for rooms on that page, and drops what arrives over a peer connection in a form that the rooms module does not send to that page.

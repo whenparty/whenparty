@@ -1,0 +1,14 @@
+{
+  "name": "@whenparty/transport",
+  "private": true,
+  "description": "Signaling connections and peer connections between the pages of the games on *.when.party",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"src/**/!(*.browser).test.ts\""
+  }
+}

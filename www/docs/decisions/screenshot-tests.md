@@ -44,6 +44,6 @@ The deploy does not wait for the tests. CI tests pull requests before they merge
 
 ## Consequences
 
-- [page.test.ts](../../tests/page.test.ts) and [playwright.config.ts](../../playwright.config.ts).
+- [page.browser.test.ts](../../tests/page.browser.test.ts) and [playwright.config.ts](../../playwright.config.ts).
 - [tests.md](../tests.md).
 - [check-www.yml](/.github/workflows/check-www.yml), [www-snapshots.yml](/.github/workflows/www-snapshots.yml) and [checks.md](/.github/docs/checks.md).

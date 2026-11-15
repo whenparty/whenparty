@@ -1,9 +1,10 @@
+import {createRoomsServer, roomsModule} from '@whenparty/rooms/server'
 import {startSignalingServer} from './server.mjs'
 import {turnFromEnv} from './turn.mjs'
 
 const turn = turnFromEnv(process.env)
-const server = await startSignalingServer({port: Number(process.env.PORT ?? 8080), turn})
-console.log(`Trystero signaling server listening on port ${server.port}, TURN credentials ${turn ? 'on' : 'off'}`)
+const server = await startSignalingServer({port: Number(process.env.PORT ?? 8080), turn, parts: {[roomsModule]: createRoomsServer()}})
+console.log(`Signaling server listening on port ${server.port}, TURN credentials ${turn ? 'on' : 'off'}`)
 
 const shutdown = async () => {
   await server.close()

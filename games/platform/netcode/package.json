@@ -1,0 +1,17 @@
+{
+  "name": "@whenparty/netcode",
+  "private": true,
+  "description": "Games played in a room: the host's page holds the state, seats players and sends snapshots",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@whenparty/rooms": "workspace:*"
+  }
+}

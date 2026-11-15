@@ -17,7 +17,3 @@
 - [games-routing.md](/docs/decisions/games-routing.md): why nginx passes each title to its container by the first segment of the path, without Traefik.
 - [former-game-hosts.md](/docs/decisions/former-game-hosts.md): why `games.conf` names no former host of a title and redirects none.
 - [/temp-sites/docs/decisions/routing.md](/temp-sites/docs/decisions/routing.md): why `temp-sites.conf` passes the temporary sites to Traefik, not to their containers.
-
-Requirements of other specifications that rely on `infra/`:
-
-- [`1-4`](/games/index/docs/specs/1-catalog.md) of the index page relies on [`4-4`](docs/specs/4-games.md).

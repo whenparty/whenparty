@@ -1,0 +1,17 @@
+# Matches
+
+- `5-1` On the host's page, a match runs from its start (5-2) until it ends (5-4, 5-7), as this diagram shows.
+  ```mermaid
+  stateDiagram-v2
+    [*] --> none
+    none --> running: host starts a match
+    running --> none: over answers yes
+    running --> none: netcode ends the match
+  ```
+- `5-2` When the host's page starts a match while none runs, the match starts when "can start" answers yes or, for a title without "can start", when every seat has a player, and when "initial state" does not fail ([1-4](1-rules.md)). Then the match number grows by 1, so the first match is match 1, and the state becomes what "initial state" returned. When a match runs, "can start" does not answer yes, a seat is free without "can start", or "initial state" fails, the netcode tells the host's page "cannot start", and nothing changes. On another page, starting a match does nothing, and [10-2](10-recovery.md) says what it does before recovery ends.
+- `5-3` In the change that starts a match, after "initial state", the netcode calls "presence" with "lost" for each player that is lost ([4-8](4-seats.md)), in the order of the seats, and then with "hidden" for each player whose page is hidden, the host included, in the order of the seats.
+- `5-4` The netcode calls "over" after the rest of each change in which a match runs, the one that starts it included. When "over" answers yes, no match runs from that change on.
+- `5-5` The match ID is the pair of the term of the host's page that started the match ([4-3](../../../rooms/docs/specs/4-owner.md)) and the match number. The snapshot holds it with the match, and recovering that match from the record keeps it ([10-1](10-recovery.md)). Before the first match, and in a snapshot without a match that recovery makes, its term is that of the host's page that made the snapshot.
+- `5-6` While a match runs, the netcode calls "presence" with a player's seat and each event that the rooms module tells about the player, "lost", "back", "hidden" and "visible" ([6-5](../../../rooms/docs/specs/6-presence.md)), and the state becomes what "presence" returns; each call is a change of its own. After each "back", the netcode calls "presence" with the visibility that the rooms module tells with it, "visible" or "hidden". The host's page tells these events about the host itself: "hidden" when the host's page becomes hidden, and "visible" when it becomes visible. Events about a spectator call no "presence". While no match runs, the netcode calls no "presence", for "left" neither; then, and for a title without "presence", the events of this requirement change only the context ([1-2](1-rules.md)). 5-7 says what "left" does while a match runs.
+- `5-7` When a spectator leaves while a match runs, the netcode calls no "presence", and the match goes on. When a player leaves while a match runs, its leave ([4-6](4-seats.md)) and the call of "presence" with "left" for its seat are one change. When the title has no "presence", or "presence" fails for "left", the netcode ends the match in that change.
+- `5-8` When a call of "presence" fails ([1-4](1-rules.md)), the state stays as it was before that call. A call that would be a change of its own (5-6) then makes no change; in a change that makes other calls too, which are the start of a match (5-3) and the end of recovery ([10-3](10-recovery.md)), the change goes on; and for "left", 5-7 says what follows.

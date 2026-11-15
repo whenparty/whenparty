@@ -1,0 +1,5 @@
+# Who may call
+
+- `5-1` Each signaling connection has a list of the peer IDs that may call it, empty when the connection opens and gone when it closes. The page that opened the connection, or any server part, adds peer IDs to the list and removes them. A change applies before any later message from the same page or server part, and the one that made it learns whether it applied. The transport server checks the list only when a call reaches it ([6-1](6-calls.md)), so a change touches no attempt under way and no open peer connection.
+- `5-2` When the list has 64 peer IDs, adding one that it lacks fails, and so does adding a peer ID that no open signaling connection has. Adding a peer ID that the list has, or removing one that it lacks, applies and changes nothing. When the signaling connection of a listed peer ID closes, the peer ID leaves the list by itself. A change to the list of a signaling connection that is not open fails.
+- `5-3` When the page's signaling connection closes before the answer to a change that the page made arrives, the change fails.
