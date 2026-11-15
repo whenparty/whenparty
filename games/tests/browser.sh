@@ -24,6 +24,7 @@ trap cleanup EXIT
   cat "$turn/turnserver.conf"
   echo "max-allocate-lifetime=$GAMES_TURN_ALLOCATION_SECONDS"
 } > "$config"
+chmod 644 "$config"
 
 docker run -d --name "$name" --network "$name" --ip "$GAMES_TURN_HOST" \
   -e TURN_SECRET="$GAMES_TURN_SECRET" \
