@@ -1,13 +1,13 @@
-FROM node:24.22.0-alpine3.24 AS build
+FROM node:26.13.1-alpine3.24 AS build
 
 WORKDIR /games
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY platform/p2p/ platform/p2p/
 COPY titles/tictactoe/ titles/tictactoe/
-RUN corepack enable \
-  && pnpm install --frozen-lockfile --include-workspace-root --filter @whenparty/tictactoe... \
-  && pnpm --filter @whenparty/tictactoe build
+RUN --mount=type=bind,from=ghcr.io/pnpm/pnpm:12.21.0-alpine,source=/opt/pnpm,target=/opt/pnpm \
+  /opt/pnpm/pnpm install --frozen-lockfile --include-workspace-root --filter @whenparty/tictactoe... \
+  && /opt/pnpm/pnpm --filter @whenparty/tictactoe build
 
 FROM nginx:1.31.8-alpine
 
