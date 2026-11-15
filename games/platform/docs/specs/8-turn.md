@@ -1,5 +1,0 @@
-# TURN
-
-- `8-1` The signaling server gives credentials for the [TURN server](../../turn/AGENTS.md) only in answer to a request over a signaling connection ([1-1](../../transport/docs/specs/1-signaling.md)), at most three times on each connection. To every later request on that connection, and to every request when it has no TURN secret, it answers with no TURN addresses and no credentials.
-- `8-2` Credentials come with the TURN addresses that the signaling server is configured with and a lifetime of 86,400 seconds. The username is the expiry time in Unix seconds, the time of the answer plus the lifetime, then a colon and a random string. The password is the base64 HMAC-SHA1 of the username under the TURN secret, so that coturn with `use-auth-secret` accepts them until the expiry time.
-- `8-3` Before each new peer connection ([2-1](../../transport/docs/specs/2-connection.md)), a page asks for credentials when it has none, or when half of the lifetime of the ones it has passed, and uses the ones it has otherwise.

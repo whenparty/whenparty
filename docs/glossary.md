@@ -10,11 +10,11 @@ A project inside another project, such as each game in `games/titles/` or each f
 
 ## Module
 
-A part of a project that the documentation of the project names as a module. Its boundary is what other modules rely on, such as how a page connects to another page or how a room lets participants in.
+A part of a project, or of another module, that the documentation of the project names as a module, such as the transport module of the games platform.
 
 ## Deployment
 
-A folder that a deploy workflow deploys on its own with its Compose file, `compose.yml` or `docker-compose.yml`, such as `www/` or `games/platform/signaling/`. A project can hold several deployments: in `games/`, each title, the index page, the signaling server in `platform/signaling/` and the TURN server in `platform/turn/` are deployments, while the platform's other packages ship inside the titles. File and variable names in code, such as `deploy-project.yml`, call a deployment a project. In `temp-sites/`, each subproject is one deployment, and `traefik/` is one more.
+A folder that a deploy workflow deploys on its own with its Compose file, `compose.yml` or `docker-compose.yml`, such as `www/` or `games/platform/signaling/`. A project can hold several deployments: in `games/`, each title, the index page, the signaling server in `platform/signaling/` and the TURN server in `platform/turn/` are deployments. File and variable names in code, such as `deploy-project.yml`, call a deployment a project. In `temp-sites/`, each subproject is one deployment, and `traefik/` is one more.
 
 ## Integration test
 

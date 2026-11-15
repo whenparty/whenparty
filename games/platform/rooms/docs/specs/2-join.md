@@ -1,23 +1,27 @@
 # Joining
 
-- `2-1` When a page joins a room with text that is not a room code ([1-2](1-room.md)), joining fails with "no room" before the page opens a signaling connection. Otherwise the rooms server answers with the first row of this table that applies, or fails as [1-4](1-room.md) says:
-  | When | Answer |
-  | --- | --- |
-  | no open room of the app ID has the code | joining fails with "no room" |
-  | no page of the owner has an open signaling connection | joining fails with "owner away" |
-  | 12 participants count in the room (2-5), the owner included | joining fails with "full" |
-  | otherwise | the server asks the owner's controlling page (2-2) |
-- `2-2` The owner's app is told of the join request with the public number that the participant would get, and lets the participant in or refuses it. When it refuses, joining fails with "refused". When the owner's page has not answered 10 seconds after the server asked it, joining fails with "owner away".
-- `2-3` When the owner lets the participant in, the rooms server gives the participant a token and the room's next public number, 2, 3 and on, which the room never gives again, even after a failed join. It tells the page the room's waiting time, makes the page the participant's controlling page ([5-2](5-pages.md)) and tells the owner's controlling page its peer ID. The page then connects to the owner's controlling page ([2-1](../../../transport/docs/specs/2-connection.md)). The owner's page accepts an incoming peer connection only from a page that the rooms server named to it as a participant's controlling page, and refuses every other.
-- `2-4` When the peer connection to the owner opens, the join completes: the page is told its public number, and the owner's app is told that the participant joined. When it has not opened 30 seconds after the server let the participant in, or closes before it opened, joining fails with "unreachable", the page closes it, and the participant leaves the room ([4-5](4-presence.md)) without the owner's app being told.
-- `2-5` A participant counts in the room from when the rooms server asks the owner about it until its join fails or it leaves the room.
-- `2-6` When a page joins a room whose code its record holds with a token ([5-1](5-pages.md)), it returns instead, with the answer of the first row of this table that applies, or fails as [1-4](1-room.md) says:
-  | When | Answer |
-  | --- | --- |
-  | no open room of the app ID has the code | the page deletes its record, and returning fails with "no room" |
-  | the room has no participant with the token, and the page was in the room before | the participant has left the room, as [4-8](4-presence.md) says |
-  | the room has no participant with the token | the page deletes the token from its record and joins as a new participant (2-1) |
-  | the token is the owner's | the page becomes the owner's controlling page, as [5-5](5-pages.md) says |
-  | no page of the owner has an open signaling connection | the page keeps the token and asks again every 5 seconds |
-  | otherwise | the page becomes the participant's controlling page and connects to the owner, as 2-3 and 2-4 say, without asking the owner's app |
-- `2-7` A returning page that has asked again for the room's waiting time without an answer other than "owner away" stops, and the room ends for it as [4-4](4-presence.md) says.
+- `2-1` A page that joins a room as a new participant goes through these states until it is in the room ([3-1](3-participant.md)) or joining fails. Before "asking", joining can fail as 2-2, [9-2](9-tab.md) and [9-6](9-tab.md) say, and in any state the app can leave ([8-3](8-ending.md)).
+  ```mermaid
+  stateDiagram-v2
+    [*] --> asking: join (2-3)
+    asking --> waiting: owner away (2-4)
+    waiting --> asking: 5 s later (2-4)
+    asking --> asked: asked (2-3)
+    asked --> waiting: owner away (2-6)
+    asked --> admitted: let in (2-7)
+    admitted --> [*]: in the room (2-8)
+    asking --> [*]: fails (2-3, 2-5)
+    waiting --> [*]: fails (2-5)
+    asked --> [*]: fails (2-5, 2-6)
+    admitted --> [*]: fails (2-10, 2-11)
+  ```
+- `2-2` When the app joins with join data that is not join data ([1-15](1-room.md)), the call fails ([1-14](1-room.md)). Otherwise, when the app joins with an app ID, a text for the code and join data, the page takes the lock. Then, when the app ID is not valid ([1-2](1-room.md)), joining fails with "bad app", and when the text does not make a room code ([1-3](1-room.md)), with "no room", in both cases before the page opens a signaling connection. Otherwise the page goes on as the record decides ([9-5](9-tab.md)).
+- `2-3` When the page joins as a new participant ([9-5](9-tab.md)), it asks the rooms server over a signaling connection to join, with the join data. When the answer ([12-2](12-server-answers.md)) is "asked", the app is told "asked"; when it is "owner away", the page waits as 2-4 says; and when it is "no room", "full" or "busy", joining fails with that reason.
+- `2-4` When the answer is "owner away", the page waits for the owner: it asks to join again over the same signaling connection 5 seconds later, and again after each "owner away". The app is told that the page waits for the owner once, when the wait starts, and the wait ends with the first other answer. While it waits, the page has no number and does not count in the room.
+- `2-5` Until the page is let in, joining fails with "offline" when its signaling connection cannot open ([1-13](1-room.md)) or closes, or when a request gets no answer ([1-12](1-room.md)).
+- `2-6` After "asked", the page acts on the final answer ([11-4](11-server-participants.md)): on "let in" as 2-7 says; on "refused" joining fails with "refused", and the app gets the join data of the refusal, if it has any; on "owner away" the page waits as 2-4 says; and on "no room" joining fails with "no room".
+- `2-7` When the owner's page lets the participant in, the joining page gets the participant's token and number, the room's waiting time and the peer ID of the owner's page, tells the app that the owner let it in, and connects to the owner's page. It does not write the record before the join completes.
+- `2-8` The join completes when the page's peer connection to the owner's page first opens for rooms ([1-8](1-room.md)): the app is told the number, and the page writes the record ([9-4](9-tab.md)) and is in the room.
+- `2-9` After the page is let in, each peer connection that it starts to the owner's page is an attempt. When an attempt closes before it opens for rooms, the page asks the rooms server to return with its token ([3-4](3-participant.md)). When the answer gives the owner page's peer ID, the page starts the next attempt to it at once, or 5 seconds after the previous attempt started when that is later. When the answer is "owner away", or the request gets no answer ([1-12](1-room.md)), or its signaling connection cannot open ([1-13](1-room.md)) or closes before the answer, the page asks again 5 seconds later. No attempt starts later than 30 seconds after the page was let in, and the page closes every attempt 45 seconds after the page was let in.
+- `2-10` When the join has not completed 45 seconds after the page was let in, or earlier when no attempt is open and none may start, joining fails: with "offline" when the signaling connection for the page's latest return request could not open ([1-13](1-room.md)) or is still opening, and with "unreachable" otherwise. The page then tells the rooms server that it leaves, when its signaling connection is open.
+- `2-11` While the page is let in and the join has not completed, joining fails with "no room" when a return gets "no room", and with "unreachable" when a return gets "removed".

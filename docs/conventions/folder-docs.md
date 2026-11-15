@@ -13,6 +13,8 @@ The root `AGENTS.md` also says which folders must have an `AGENTS.md` or a `READ
 
 Every `AGENTS.md` other than the root is on the map of the nearest folder above it that has an `AGENTS.md`, so the maps form one tree from the root.
 
+A [module](/docs/glossary.md#module) whose code lies in several folders, none inside another, keeps its `AGENTS.md` and `docs/` in one of them, and that `AGENTS.md` names the others.
+
 The other documents that the map links to, apart from the specification, the decision records and the `AGENTS.md` of its parts, say how to work in the folder: its key files, architecture constraints, the commands and checks for changing its code, how to set up, deploy, run, use and troubleshoot what it holds, and what the code cannot express but you need to know to change it.
 
 ## README.md

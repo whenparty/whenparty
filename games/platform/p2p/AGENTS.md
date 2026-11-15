@@ -1,6 +1,8 @@
 # P2P
 
-Read [STATES.md](STATES.md) for session rules. [src/room-state.ts](src/room-state.ts) defines the game interface; [src/handover.ts](src/handover.ts) decides which snapshots a tab takes; [src/protocol.ts](src/protocol.ts) validates messages.
+`p2p/` is the p2p [module](/docs/glossary.md#module) of the [platform](../AGENTS.md), which calisthenics plays through; tictactoe's `vite.config.ts` still imports its dev headers. It has no specification: its session rules are in [STATES.md](STATES.md).
+
+[src/room-state.ts](src/room-state.ts) defines the game interface; [src/handover.ts](src/handover.ts) decides which snapshots a tab takes; [src/protocol.ts](src/protocol.ts) validates messages.
 
 Keep rules and transitions pure. [src/session-machine.ts](src/session-machine.ts) decides transitions; [src/session.ts](src/session.ts) runs effects. The creator keeps the host role. Player identity survives reloads; a connection identifies one tab. Only the controlling connection can act for a player. Games decide whether availability permits play.
 

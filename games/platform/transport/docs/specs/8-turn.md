@@ -1,0 +1,6 @@
+# TURN
+
+- `8-1` The TURN server is coturn at `turn.when.party`, the [deployment](/docs/glossary.md#deployment) in [`games/platform/turn/`](../../../turn/AGENTS.md). The transport server answers each request for TURN credentials on an open signaling connection. When it has no TURN secret, its answer is empty.
+- `8-2` Otherwise the answer names the TURN server's two addresses, `turn:turn.when.party:3478` over UDP and over TCP, and credentials. The username is the expiry time in Unix seconds, a colon and 16 random hexadecimal characters, and the expiry time is 86,400 seconds after the answer, rounded down to a whole second. The password is the base64 HMAC-SHA1 of the username under the TURN secret, as coturn checks it with `use-auth-secret`.
+- `8-5` When two pages reach each other only through the TURN server, their peer connection opens through it when both sides reach coturn at an address of 8-2, both have credentials that coturn accepts, and coturn has a free allocation for each. When only one side has such credentials, the peer connection opens only when the other side can send UDP to the relayed address that coturn gives the first side, because coturn relays to the other side only over UDP.
+- `8-6` A peer connection that is open through the TURN server does not close when its credentials expire.

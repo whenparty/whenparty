@@ -1,0 +1,14 @@
+# Host recovery
+
+- `10-1` When the host's page returns by record ([2-5](2-page.md)), the host recovers the game from the record ([9-6](9-snapshots.md)) in the change that ends recovery (10-3). It takes the record's snapshot when the record's versions equal its own ([3-4](3-entry.md)) and the snapshot has the form of [9-2](9-snapshots.md), with a state that is null or passes "is state". Otherwise it takes a snapshot without a match, with the record's room time, or 0 without one, and the match number of the record's snapshot, or 0 without one, in which the host sits on the first seat, the participants of the roster ([5-2](../../../rooms/docs/specs/5-owner-return.md)) on the next seats in ascending order of public numbers, and those that find no seat in the queue in that order.
+- `10-2` Until the rooms module gives the page its term and roster ([5-1](../../../rooms/docs/specs/5-owner-return.md) and [5-2](../../../rooms/docs/specs/5-owner-return.md)), the host makes no change, sets no timer, accepts no action, and tells the page nothing but that it is entering ([2-6](2-page.md)). Starting a match then does nothing.
+- `10-3` When the rooms module gives the term ([4-3](../../../rooms/docs/specs/4-owner.md)) and the roster, the host ends recovery with one change, the first of the new term, in these steps:
+  1. Room time is set as [6-3](6-time.md) says.
+  2. Every participant that the roster lacks leaves its seat or the queue ([4-6](4-seats.md)), in ascending order of public numbers. While a match runs, a player's leave is as [5-7](5-matches.md) says; once the netcode has ended the match, it calls "presence" for no one else.
+  3. Every participant of the roster that the snapshot lacks joins the end of the queue, in ascending order of public numbers. Every participant of the roster counts as lost from then until "back" ([4-8](4-seats.md)), and as not hidden until the rooms module tells otherwise.
+  4. While a match runs, the netcode calls "presence" with "lost" for each player of the roster in the order of the seats, and then with "visible" or "hidden" for the host's seat, as the host's page is now.
+  5. While a match runs, the netcode calls "over" ([5-4](5-matches.md)); when no match runs then, the first spectators of the queue take the free seats ([4-5](4-seats.md)).
+
+  The host is not in the roster, and it keeps its seat ([4-7](4-seats.md)).
+- `10-4` Right after the change that ends recovery, before any other cause, the host makes a batch ([7-1](7-deadlines.md)) when a match runs, and sets its timer.
+- `10-5` A host's page whose scripts the browser suspended and resumed keeps its game and does not recover.
