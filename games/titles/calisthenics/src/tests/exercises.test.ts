@@ -174,7 +174,7 @@ test('the head and torso clear the horizontal bar throughout the pull-up and mus
           for (let vertex = 0; vertex < skin.count; vertex++) {
             let dominant = 0
             for (let k = 1; k < 4; k++) if (weights.getComponent(vertex, k) > weights.getComponent(vertex, dominant)) dominant = k
-            const name = object.skeleton.bones[skin.getComponent(vertex, dominant)]!.name
+            const name: string = object.skeleton.bones[skin.getComponent(vertex, dominant)]!.name
             if (!/^(head|neck|spine|pelvis)/.test(name)) continue
             object.getVertexPosition(vertex, p)
             assert.ok(

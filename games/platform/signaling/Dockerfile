@@ -1,4 +1,4 @@
-FROM node:24.22.0-alpine3.24
+FROM node:26.13.1-alpine3.24
 
 WORKDIR /games
 
@@ -6,8 +6,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY platform/signaling/package.json platform/signaling/
 COPY platform/transport/package.json platform/transport/
 COPY platform/rooms/package.json platform/rooms/
-RUN corepack enable \
-  && pnpm install --frozen-lockfile --prod --filter @whenparty/signaling... \
+RUN --mount=type=bind,from=ghcr.io/pnpm/pnpm:12.21.0-alpine,source=/opt/pnpm,target=/opt/pnpm \
+  /opt/pnpm/pnpm install --frozen-lockfile --prod --filter @whenparty/signaling... \
   && rm -rf /root/.local/share/pnpm /root/.cache
 
 COPY platform/signaling/src/ platform/signaling/src/
