@@ -22,9 +22,9 @@ const ensureOpen = (w: World): void => {
   }
 }
 
-const setup = async (state: State, {opening = false, lostAgo = 1_000} = {}): Promise<World> => {
+const setup = async (state: State, opening: boolean): Promise<World> => {
   const h = pageHarness()
-  const lostAt = h.clock.now() - lostAgo
+  const lostAt = h.clock.now() - 1_000
   h.putRecord(h.ownerRecord({serverLostSince: lostAt, numbers: [{n: 2, joined: true, lostSince: null}]}))
   h.rooms.return(app, h.handlers)
   await settle()
@@ -95,27 +95,24 @@ const checkNext = (w: World, next: string, reason: string | undefined): void => 
 }
 
 const scenario = (state: State, event: Event): Scenario<Outcome> => {
-  const run =
-    (when?: string): Check<Outcome> =>
-    async outcome => {
-      const lostAgo = when === 'the waiting time has passed since the owner connection was lost' ? 600_000 : 1_000
-      const w = await setup(state, {opening: event === 'signalingCannotOpen', lostAgo})
-      fire[event](w)
-      await settle()
-      for (const name of outcome.effects) {
-        assert.ok(effect[name], `no check of ${name}`)
-        effect[name](w)
-      }
-      if (!outcome.effects.includes('appToldTermAndRoster')) {
-        assert.deepEqual(w.h.told('ownerReturned'), [])
-      }
-      checkNext(w, outcome.next, outcome.reason)
+  const run: Check<Outcome> = async outcome => {
+    const w = await setup(state, event === 'signalingCannotOpen')
+    fire[event](w)
+    await settle()
+    for (const name of outcome.effects) {
+      assert.ok(effect[name], `no check of ${name}`)
+      effect[name](w)
     }
+    if (!outcome.effects.includes('appToldTermAndRoster')) {
+      assert.deepEqual(w.h.told('ownerReturned'), [])
+    }
+    checkNext(w, outcome.next, outcome.reason)
+  }
   const cell = table[state][event]
   if ('ids' in cell && 'branches' in cell.outcome) {
-    return Object.fromEntries(cell.outcome.branches.map(branch => [branch.when, run(branch.when)]))
+    return Object.fromEntries(cell.outcome.branches.map(branch => [branch.when, run]))
   }
-  return run()
+  return run
 }
 
 const forState = (state: State) =>

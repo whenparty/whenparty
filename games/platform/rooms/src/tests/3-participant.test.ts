@@ -250,10 +250,9 @@ const check = async (w: World, outcome: Outcome): Promise<void> => {
   await checkNext(w, outcome.next, outcome.reason)
 }
 
-const branchSetup: {readonly [when: string]: {readonly history?: History; readonly fromRecordCode?: boolean; readonly waited?: boolean}} = {
+const branchSetup: {readonly [when: string]: {readonly history?: History; readonly fromRecordCode?: boolean}} = {
   'the latest answer to its returns gave the owner page peer ID, and its latest peer connection closed with no relay': {history: 'noRelay'},
   'the latest answer to its returns gave the owner page peer ID': {history: 'timeout'},
-  'the waiting time has passed since the owner was lost': {waited: true},
   'the return started from a join with the record code': {fromRecordCode: true},
   otherwise: {}
 }
@@ -268,9 +267,6 @@ const scenario = (state: State, event: Event): Scenario<Outcome> => {
       if (state === 'in' && event === 'previousConnectionEvent') {
         await comeBack(w)
         markWorld(w)
-      }
-      if (branch.waited) {
-        w.h.clock.jump(600_000)
       }
       await fire[event](w)
       await check(w, outcome)

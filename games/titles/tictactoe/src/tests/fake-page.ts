@@ -8,6 +8,7 @@ export class FakeNetcode implements Netcode {
   phase: Phase = 'none'
   readonly calls: string[] = []
   tookSnapshot = false
+  actAnswer: ActProblem | null = null
 
   parseCode(text: string): string | null {
     const code = text.replace(/[\s-]/gu, '').replace(/[a-z]/g, letter => letter.toUpperCase())
@@ -34,7 +35,7 @@ export class FakeNetcode implements Netcode {
 
   act(action: Json): ActProblem | null {
     this.calls.push(`act ${JSON.stringify(action)}`)
-    return null
+    return this.actAnswer
   }
 
   roomTime(): number | null {

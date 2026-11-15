@@ -250,12 +250,47 @@ test('1-4 when a function fails in a change that gives a snapshot, the host page
   }
 })
 
+const failingAnswers: readonly (() => boolean)[] = [
+  () => {
+    throw new Error('rule')
+  },
+  () => 1 as unknown as boolean
+]
+
+const replaceRule = (h: Harness, name: 'isAction' | 'isState' | 'over', rule: () => boolean): void => {
+  Object.assign(h.title.rules, {[name]: rule})
+}
+
+test('1-4 when is action fails its answer counts as no', () => {
+  for (const isAction of failingAnswers) {
+    const h = harness()
+    running(h)
+    replaceRule(h, 'isAction', isAction)
+    assert.equal(h.netcode.act('x'), 'not an action')
+  }
+})
+
+test('1-4 when is state fails its answer counts as no', () => {
+  for (const isState of failingAnswers) {
+    const h = harness()
+    running(h)
+    const before = lastSnapshot(h).snapshot
+    replaceRule(h, 'isState', isState)
+    const mark = h.told.length
+    h.netcode.act('x')
+    assert.deepEqual(snapshotsAndErrors(h, mark), ['rules error'])
+    assert.deepEqual(lastSnapshot(h).snapshot, before)
+  }
+})
+
 test('1-4 when over fails its answer counts as no', () => {
-  const h = harness()
-  running(h)
-  h.failing.over = true
-  h.netcode.act('win')
-  assert.equal(lastSnapshot(h).snapshot.running, true)
+  for (const over of failingAnswers) {
+    const h = harness()
+    running(h)
+    replaceRule(h, 'over', over)
+    h.netcode.act('win')
+    assert.equal(lastSnapshot(h).snapshot.running, true)
+  }
 })
 
 test('1-4 when admit or can start fails its answer counts as no', () => {

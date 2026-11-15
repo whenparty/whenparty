@@ -50,7 +50,7 @@ export const test = base.extend<{newPlayer: (url?: string) => Promise<Page>; pla
   }
 })
 
-export const statusOf = (page: Page): Locator => page.locator('#status')
+const statusOf = (page: Page): Locator => page.locator('#status')
 
 export const codeOf = async (page: Page): Promise<string> => {
   const code = page.locator('#room-code')
