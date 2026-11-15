@@ -42,8 +42,10 @@ test("2-3 2-4 2-14 a page that enters by the form puts the code in the netcode's
   await expect(guest).toHaveURL(`${pageUrl}#${code}`)
   expect(await guest.evaluate(() => history.length)).toBe(entries)
   await expect(guest.locator('#room-code')).toHaveText(code)
+  await expect(guest.locator('#status')).toHaveText('You are O. X to move.', {timeout: networkWaitMs})
   const invited = await newPlayer(`${pageUrl}#${code}`)
   await expect(invited.locator('#room-code')).toHaveText(code)
+  await host.getByRole('button', {name: 'Let in'}).click({timeout: networkWaitMs})
   await expect(invited.locator('#status')).toHaveText('You are watching. X to move.', {timeout: networkWaitMs})
 })
 
