@@ -20,14 +20,13 @@ type Effect =
   | 'no server part is told'
   | 'it counts as delivered, and the transport goes on'
 
-type Outcome = { readonly state: State; readonly effect: Effect }
+type Outcome = {readonly state: State; readonly effect: Effect}
 
-type Cell = { readonly ids: readonly string[]; readonly outcome: Outcome } | { readonly impossible: string }
+type Cell = {readonly ids: readonly string[]; readonly outcome: Outcome} | {readonly impossible: string}
 
-const noPeerId =
-  'a server part can address a connection only by its peer ID, which an opening connection does not have yet (1-3, 2-2)'
+const noPeerId = 'a server part can address a connection only by its peer ID, which an opening connection does not have yet (1-3, 2-2)'
 
-export const table: { readonly [S in State]: { readonly [E in Event]: Cell } } = {
+export const table: {readonly [S in State]: {readonly [E in Event]: Cell}} = {
   opening: {
     'the server reads a module message from the connection': {
       impossible: 'a module message before the peer ID is a message that the page part does not send, which closes the connection (7-4)'
@@ -38,14 +37,14 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell } } =
     'a server part sends a module message to the peer ID of the connection, which has no channel of its module': {
       impossible: noPeerId
     },
-    'a server part sends a value that is not a module message': { impossible: noPeerId },
+    'a server part sends a value that is not a module message': {impossible: noPeerId},
     'the connection closes with no message from it waiting unread': {
       ids: ['2-3'],
-      outcome: { state: 'closed', effect: 'no server part is told' }
+      outcome: {state: 'closed', effect: 'no server part is told'}
     },
     'the connection closes while messages from it wait unread': {
       ids: ['2-3'],
-      outcome: { state: 'closed', effect: 'no server part is told' }
+      outcome: {state: 'closed', effect: 'no server part is told'}
     },
     'a handler of a server part throws or its promise rejects': {
       impossible: 'the server passes server parts nothing about a connection without a peer ID (2-1, 2-3)'
@@ -54,19 +53,19 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell } } =
   open: {
     'the server reads a module message from the connection': {
       ids: ['2-1'],
-      outcome: { state: 'open', effect: 'the server part gets it with the peer ID' }
+      outcome: {state: 'open', effect: 'the server part gets it with the peer ID'}
     },
     'a server part sends a module message to the peer ID of the connection, which has a channel of its module': {
       ids: ['2-2'],
-      outcome: { state: 'open', effect: 'the page gets it' }
+      outcome: {state: 'open', effect: 'the page gets it'}
     },
     'a server part sends a module message to the peer ID of the connection, which has no channel of its module': {
       ids: ['2-2'],
-      outcome: { state: 'open', effect: 'the server drops it, telling the server part nothing' }
+      outcome: {state: 'open', effect: 'the server drops it, telling the server part nothing'}
     },
     'a server part sends a value that is not a module message': {
       ids: ['2-2'],
-      outcome: { state: 'open', effect: 'sending fails' }
+      outcome: {state: 'open', effect: 'sending fails'}
     },
     'the connection closes with no message from it waiting unread': {
       ids: ['2-3'],
@@ -85,7 +84,7 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell } } =
     },
     'a handler of a server part throws or its promise rejects': {
       ids: ['2-4'],
-      outcome: { state: 'open', effect: 'it counts as delivered, and the transport goes on' }
+      outcome: {state: 'open', effect: 'it counts as delivered, and the transport goes on'}
     }
   },
   closed: {
@@ -94,21 +93,21 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell } } =
     },
     'a server part sends a module message to the peer ID of the connection, which has a channel of its module': {
       ids: ['2-2'],
-      outcome: { state: 'closed', effect: 'the server drops it, telling the server part nothing' }
+      outcome: {state: 'closed', effect: 'the server drops it, telling the server part nothing'}
     },
     'a server part sends a module message to the peer ID of the connection, which has no channel of its module': {
       ids: ['2-2'],
-      outcome: { state: 'closed', effect: 'the server drops it, telling the server part nothing' }
+      outcome: {state: 'closed', effect: 'the server drops it, telling the server part nothing'}
     },
     'a server part sends a value that is not a module message': {
       ids: ['2-2'],
-      outcome: { state: 'closed', effect: 'sending fails' }
+      outcome: {state: 'closed', effect: 'sending fails'}
     },
-    'the connection closes with no message from it waiting unread': { impossible: 'a connection closes once' },
-    'the connection closes while messages from it wait unread': { impossible: 'a connection closes once' },
+    'the connection closes with no message from it waiting unread': {impossible: 'a connection closes once'},
+    'the connection closes while messages from it wait unread': {impossible: 'a connection closes once'},
     'a handler of a server part throws or its promise rejects': {
       ids: ['2-4'],
-      outcome: { state: 'closed', effect: 'it counts as delivered, and the transport goes on' }
+      outcome: {state: 'closed', effect: 'it counts as delivered, and the transport goes on'}
     }
   }
 }

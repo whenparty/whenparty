@@ -44,27 +44,31 @@ type Simple = {
   readonly effects: readonly Effect[]
 }
 
-type Outcome = Simple | { readonly branches: readonly { readonly when: string; readonly outcome: Simple }[] }
+type Outcome = Simple | {readonly branches: readonly {readonly when: string; readonly outcome: Simple}[]}
 
-type Cell<O> = { readonly ids: readonly string[]; readonly outcome: O } | { readonly impossible: string }
+type Cell<O> = {readonly ids: readonly string[]; readonly outcome: O} | {readonly impossible: string}
 
-const noJoinRequest = { impossible: 'no join request of the page waits for an answer' } as const
-const afterAskedOnly = { impossible: 'the server sends this answer only after "asked"' } as const
-const finalAnswers = { impossible: 'after "asked" only a final answer comes' } as const
-const appIdChecked = { impossible: 'the page checks the app ID before it asks' } as const
-const notLetIn = { impossible: 'the page has no token and no peer connection before it is let in' } as const
-const noReturnRequest = { impossible: 'no return request of the page waits for an answer' } as const
-const noTimer = { impossible: 'no 5-second wait runs in this state' } as const
-const notOpening = { impossible: 'the page is not opening a signaling connection in this state' } as const
-const notNeeded = { impossible: 'no request waits for an answer and the page does not wait to ask to join again' } as const
-const noAttempt = { impossible: 'no attempt is open in this state' } as const
-const failedAt30s = { impossible: 'joining failed at 30 seconds, when no attempt was open' } as const
-const passed30s = { impossible: '30 seconds have already passed' } as const
-const before30s = { impossible: '30 seconds pass before 45 seconds' } as const
+const noJoinRequest = {impossible: 'no join request of the page waits for an answer'} as const
+const afterAskedOnly = {impossible: 'the server sends this answer only after "asked"'} as const
+const finalAnswers = {impossible: 'after "asked" only a final answer comes'} as const
+const appIdChecked = {impossible: 'the page checks the app ID before it asks'} as const
+const notLetIn = {impossible: 'the page has no token and no peer connection before it is let in'} as const
+const noReturnRequest = {impossible: 'no return request of the page waits for an answer'} as const
+const noTimer = {impossible: 'no 5-second wait runs in this state'} as const
+const notOpening = {impossible: 'the page is not opening a signaling connection in this state'} as const
+const notNeeded = {impossible: 'no request waits for an answer and the page does not wait to ask to join again'} as const
+const noAttempt = {impossible: 'no attempt is open in this state'} as const
+const failedAt30s = {impossible: 'joining failed at 30 seconds, when no attempt was open'} as const
+const passed30s = {impossible: '30 seconds have already passed'} as const
+const before30s = {impossible: '30 seconds pass before 45 seconds'} as const
 
-const go = (next: State | 'in', ids: readonly string[], effects: readonly Effect[] = []): Cell<Outcome> => ({ ids, outcome: { next, effects } })
-const fail = (reason: Reason, ids: readonly string[], effects: readonly Effect[] = []): Cell<Outcome> => ({ ids, outcome: { next: 'failed', reason, effects } })
-const unreachableLeaving = (ids: readonly string[], effects: readonly Effect[] = []): Cell<Outcome> => fail('unreachable', ids, [...effects, 'tellsServerLeaveIfSignalingOpen'])
+const go = (next: State | 'in', ids: readonly string[], effects: readonly Effect[] = []): Cell<Outcome> => ({ids, outcome: {next, effects}})
+const fail = (reason: Reason, ids: readonly string[], effects: readonly Effect[] = []): Cell<Outcome> => ({
+  ids,
+  outcome: {next: 'failed', reason, effects}
+})
+const unreachableLeaving = (ids: readonly string[], effects: readonly Effect[] = []): Cell<Outcome> =>
+  fail('unreachable', ids, [...effects, 'tellsServerLeaveIfSignalingOpen'])
 
 const beforeLetIn = {
   returnOwnerPeer: notLetIn,
@@ -74,7 +78,7 @@ const beforeLetIn = {
   attemptOpensForRooms: notLetIn,
   attemptCloses: notLetIn,
   passes30s: notLetIn,
-  passes45s: notLetIn,
+  passes45s: notLetIn
 } as const
 
 const afterLetIn = {
@@ -85,7 +89,7 @@ const afterLetIn = {
   joinBusy: noJoinRequest,
   joinBadApp: noJoinRequest,
   joinLetIn: noJoinRequest,
-  joinRefused: noJoinRequest,
+  joinRefused: noJoinRequest
 } as const
 
 const noReturn = {
@@ -95,10 +99,10 @@ const noReturn = {
   returnRemoved: noReturnRequest,
   noAnswer: noReturnRequest,
   signalingCannotOpen: notOpening,
-  signalingClosesWhileNeeded: notNeeded,
+  signalingClosesWhileNeeded: notNeeded
 } as const
 
-export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outcome> } } = {
+export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome>}} = {
   asking: {
     ...beforeLetIn,
     joinAsked: go('asked', ['2-3'], ['appToldAsked']),
@@ -112,7 +116,7 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outco
     noAnswer: fail('offline', ['2-5']),
     timer5s: noTimer,
     signalingCannotOpen: fail('offline', ['2-5']),
-    signalingClosesWhileNeeded: fail('offline', ['2-5']),
+    signalingClosesWhileNeeded: fail('offline', ['2-5'])
   },
   askingAgain: {
     ...beforeLetIn,
@@ -126,8 +130,8 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outco
     joinRefused: afterAskedOnly,
     noAnswer: fail('offline', ['2-5']),
     timer5s: noTimer,
-    signalingCannotOpen: { impossible: 'the page asks again over the signaling connection that is already open' },
-    signalingClosesWhileNeeded: fail('offline', ['2-5']),
+    signalingCannotOpen: {impossible: 'the page asks again over the signaling connection that is already open'},
+    signalingClosesWhileNeeded: fail('offline', ['2-5'])
   },
   waiting: {
     ...beforeLetIn,
@@ -142,7 +146,7 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outco
     noAnswer: noJoinRequest,
     timer5s: go('askingAgain', ['2-4'], ['asksToJoin']),
     signalingCannotOpen: notOpening,
-    signalingClosesWhileNeeded: fail('offline', ['2-5']),
+    signalingClosesWhileNeeded: fail('offline', ['2-5'])
   },
   asked: {
     ...beforeLetIn,
@@ -157,7 +161,7 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outco
     noAnswer: fail('offline', ['2-5']),
     timer5s: noTimer,
     signalingCannotOpen: notOpening,
-    signalingClosesWhileNeeded: fail('offline', ['2-5']),
+    signalingClosesWhileNeeded: fail('offline', ['2-5'])
   },
   attempting: {
     ...afterLetIn,
@@ -166,7 +170,7 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outco
     attemptOpensForRooms: go('in', ['2-8'], ['appToldNumber', 'writesRecord']),
     attemptCloses: go('returning', ['2-9'], ['asksToReturn']),
     passes30s: go('lateAttempting', ['2-9']),
-    passes45s: before30s,
+    passes45s: before30s
   },
   returning: {
     ...afterLetIn,
@@ -174,10 +178,10 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outco
       ids: ['2-9'],
       outcome: {
         branches: [
-          { when: '5 seconds have passed since the previous attempt started', outcome: { next: 'attempting', effects: ['connectsToOwner'] } },
-          { when: 'otherwise', outcome: { next: 'spacing', effects: [] } },
-        ],
-      },
+          {when: '5 seconds have passed since the previous attempt started', outcome: {next: 'attempting', effects: ['connectsToOwner']}},
+          {when: 'otherwise', outcome: {next: 'spacing', effects: []}}
+        ]
+      }
     },
     returnOwnerAway: go('pausing', ['2-9'], ['asksAgainIn5s']),
     returnNoRoom: fail('no room', ['2-11']),
@@ -192,12 +196,15 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outco
       ids: ['2-10'],
       outcome: {
         branches: [
-          { when: 'the signaling connection of the return request is still opening', outcome: { next: 'failed', reason: 'offline', effects: [] } },
-          { when: 'otherwise', outcome: { next: 'failed', reason: 'unreachable', effects: ['tellsServerLeaveIfSignalingOpen'] } },
-        ],
-      },
+          {
+            when: 'the signaling connection of the return request is still opening',
+            outcome: {next: 'failed', reason: 'offline', effects: []}
+          },
+          {when: 'otherwise', outcome: {next: 'failed', reason: 'unreachable', effects: ['tellsServerLeaveIfSignalingOpen']}}
+        ]
+      }
     },
-    passes45s: failedAt30s,
+    passes45s: failedAt30s
   },
   pausing: {
     ...afterLetIn,
@@ -209,12 +216,15 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outco
       ids: ['2-10'],
       outcome: {
         branches: [
-          { when: 'the signaling connection of the latest return request could not open', outcome: { next: 'failed', reason: 'offline', effects: [] } },
-          { when: 'otherwise', outcome: { next: 'failed', reason: 'unreachable', effects: ['tellsServerLeaveIfSignalingOpen'] } },
-        ],
-      },
+          {
+            when: 'the signaling connection of the latest return request could not open',
+            outcome: {next: 'failed', reason: 'offline', effects: []}
+          },
+          {when: 'otherwise', outcome: {next: 'failed', reason: 'unreachable', effects: ['tellsServerLeaveIfSignalingOpen']}}
+        ]
+      }
     },
-    passes45s: failedAt30s,
+    passes45s: failedAt30s
   },
   spacing: {
     ...afterLetIn,
@@ -223,7 +233,7 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outco
     attemptOpensForRooms: noAttempt,
     attemptCloses: noAttempt,
     passes30s: unreachableLeaving(['2-10']),
-    passes45s: failedAt30s,
+    passes45s: failedAt30s
   },
   lateAttempting: {
     ...afterLetIn,
@@ -232,6 +242,6 @@ export const table: { readonly [S in State]: { readonly [E in Event]: Cell<Outco
     attemptOpensForRooms: go('in', ['2-8'], ['appToldNumber', 'writesRecord']),
     attemptCloses: unreachableLeaving(['2-10']),
     passes30s: passed30s,
-    passes45s: unreachableLeaving(['2-9', '2-10'], ['closesAttempt']),
-  },
+    passes45s: unreachableLeaving(['2-9', '2-10'], ['closesAttempt'])
+  }
 }

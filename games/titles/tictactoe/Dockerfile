@@ -4,6 +4,9 @@ WORKDIR /games
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY platform/p2p/ platform/p2p/
+COPY platform/transport/ platform/transport/
+COPY platform/rooms/ platform/rooms/
+COPY platform/netcode/ platform/netcode/
 COPY titles/tictactoe/ titles/tictactoe/
 RUN corepack enable \
   && pnpm install --frozen-lockfile --include-workspace-root --filter @whenparty/tictactoe... \

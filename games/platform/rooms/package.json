@@ -1,0 +1,17 @@
+{
+  "name": "@whenparty/rooms",
+  "private": true,
+  "description": "Rooms of the pages of the games on *.when.party, over the transport",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"src/**/!(*.browser).test.ts\""
+  },
+  "dependencies": {
+    "@whenparty/transport": "workspace:*"
+  }
+}

@@ -1,16 +1,18 @@
-# Build context: games/, so pnpm can use the workspace lockfile
 FROM node:24.22.0-alpine3.24
 
 WORKDIR /games
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY platform/signaling/package.json platform/signaling/
+COPY platform/transport/package.json platform/transport/
+COPY platform/rooms/package.json platform/rooms/
 RUN corepack enable \
-  && pnpm install --frozen-lockfile --prod --filter @whenparty/signaling \
+  && pnpm install --frozen-lockfile --prod --filter @whenparty/signaling... \
   && rm -rf /root/.local/share/pnpm /root/.cache
 
-# games/.dockerignore keeps the tests out of the image
 COPY platform/signaling/src/ platform/signaling/src/
+COPY platform/transport/src/ platform/transport/src/
+COPY platform/rooms/src/ platform/rooms/src/
 
 USER node
 

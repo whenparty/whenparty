@@ -7,21 +7,19 @@
   | the game ended, or entering failed, with "other version" and this page's versions are older, or with "outdated" and this page's side is older | This game was updated. Reload the page. |
   | starting or entering failed, or the game ended, with "outdated", and the server's side is older | The game server is being updated. Try again in a few minutes. |
   | entering failed with "other version", and the host's versions are older | The host of CODE runs an older version of the game. Ask them to reload the page. |
-  | the game ended with "removed", on a participant's page | You were away too long, so you left this game. |
-  | the game ended with "owner away", on the host's page | You were away too long, so the game is over. |
+  | the game ended with "removed" | You were away too long, so you left this game. |
+  | the game ended with "owner away" | The connection was lost for too long, so the game is over. |
   | the game ended with "idle" | Nobody played for a while, so the room is closed. |
   | the game ended with "unreachable" or "no relay" | Lost the connection to the host and could not get it back. |
-  | the game ended with "owner away" | The host did not come back, so the game is over. |
-  | the game ended, on the host's page | The game server lost this room, so the game is over. |
-  | the game ended | The host closed the room, so the game is over. |
+  | the game ended with "room closed" | The room is closed, so the game is over. |
   | starting or entering failed with "bad rules" | This game has an error and cannot start. |
   | starting or entering failed with "busy" | The game server is busy. Try again in a few minutes. |
   | starting or entering failed with "outdated", "bad app" or "bad wait" | This game was updated. Reload the page. |
-  | entering failed with "no room" after the page waited for the host | The host closed room CODE. |
+  | entering failed with "no room" after the page waited for the host | Room CODE is closed. |
   | entering failed with "no room" | Nobody hosts CODE. Check the code with the room creator. |
   | entering failed with "owner away" | The host of CODE is offline. Try again in a moment. |
   | entering failed with "full" | Room CODE is full. |
   | entering failed with "refused" | The host of CODE did not let you in. |
-  | entering failed with "unreachable" | Found room CODE, but could not connect to its host. A network on the way blocks the connection. Try again in a moment, or switch between Wi-Fi and mobile data. |
+  | entering failed with "unreachable" | Found room CODE, but could not connect to its host. A network on the way may block the connection. Try again in a moment, or switch between Wi-Fi and mobile data. |
   | starting or entering failed with "offline" | Cannot reach the game server. Check your internet connection. |
   | starting or entering failed with "open elsewhere" | This game is open in another tab. Close it and reload this page. |

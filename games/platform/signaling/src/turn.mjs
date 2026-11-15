@@ -1,7 +1,3 @@
-// Short-lived credentials for the TURN server (games/platform/turn), in coturn's TURN REST API
-// format: the username is the expiry time and a random ID, and the password is its HMAC-SHA1
-// under the secret that coturn shares. The secret never leaves the servers, and a password that
-// leaks stops working at the expiry time.
 import {createHmac, randomBytes} from 'node:crypto'
 
 export const turnCredentials = ({secret, urls, ttlSeconds}, now = Date.now()) => {
@@ -11,7 +7,6 @@ export const turnCredentials = ({secret, urls, ttlSeconds}, now = Date.now()) =>
   return {urls, username, credential, ttlSeconds}
 }
 
-// The TURN settings from the environment, or null without TURN_SECRET
 export const turnFromEnv = env => {
   if (!env.TURN_SECRET) {
     return null
@@ -23,8 +18,6 @@ export const turnFromEnv = env => {
       .split(',')
       .map(url => url.trim())
       .filter(Boolean),
-    // Longer than a game: coturn checks the expiry again whenever the browser refreshes its
-    // allocation, every few minutes, so a session outlives its credentials only by that much
     ttlSeconds: Number(env.TURN_TTL_SECONDS ?? 86_400)
   }
 }

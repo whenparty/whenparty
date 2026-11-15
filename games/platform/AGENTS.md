@@ -11,6 +11,7 @@
 - [docs/decisions/layers.md](docs/decisions/layers.md): why the platform is these three modules and why its servers run in deployments that are not modules of their own. Read it before moving code or rules between the modules.
 - [docs/decisions/room-storage.md](docs/decisions/room-storage.md): why rooms live only in the memory of the rooms server.
 - [docs/decisions/turn-credentials-limit.md](docs/decisions/turn-credentials-limit.md): why the platform gives TURN credentials without a limit.
+- [docs/decisions/websocket-library.md](docs/decisions/websocket-library.md): why the signaling deployment, not the transport package, depends on `ws` and completes the upgrades that the transport server accepts.
 - [hosting.md](../titles/docs/hosting.md): the storage keys of the platform and of the titles, which share one origin. Read it before the platform stores anything in the browser.
 
 The transport, rooms and netcode modules need a [specification](/docs/conventions/specs.md). The platform itself, the p2p module and the code in `signaling/` need none.
