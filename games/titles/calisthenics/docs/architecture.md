@@ -1,0 +1,12 @@
+# Architecture
+
+[.dependency-cruiser.cjs](../.dependency-cruiser.cjs) checks the import rules below.
+
+- [src/core/](../src/core/index.ts) is the game's mechanics: rules, championship state and what each screen shows. It has no browser, page, network or three.js code. Within the game it imports nothing outside `src/core/`, and from the [p2p module](../../../platform/p2p/AGENTS.md) and three.js it imports only types.
+- `src/core/` holds every rule of the [specification](specs/) that decides state or numbers, including those that only the 3D interface shows, such as the podium steps of [4-4](specs/4-presentation.md) and the repetitions of [5-4](specs/5-movements.md).
+- `src/core/` also holds the state that players share, such as the choices in an athlete's profile.
+- Wording, default looks and anything else that only changes how the game looks belong to frontends, not to `src/core/`.
+- [src/connection.ts](../src/connection.ts) connects a page to a room of the p2p module: it creates and joins rooms, keeps the player across reloads and puts the room code in the address. Within the game it imports only `src/core/`.
+- Each folder in `src/frontends/` other than `shared/` is one interface from the specification: `text/` is loaded by `text.html`, `3d/` by `index.html`. Its `main.ts` connects to the room and passes the room state and the player's actions to the elements it shows. Within the game a frontend imports from `src/core/`, `src/connection.ts` and `src/frontends/shared/`, and nothing from another frontend.
+- [src/frontends/shared/](../src/frontends/shared/) holds texts, page elements and assets, such as the favicon, that more than one frontend uses. Texts are functions of `src/core/` data. Elements build their own markup inside an element the frontend gives them. Within the game it imports `src/core/` and only types from `src/connection.ts`.
+- [src/frontends/3d/assets/](../src/frontends/3d/assets/) holds the 3D assets. When you add or change one, update its attribution in [CREDITS.txt](../src/frontends/3d/assets/CREDITS.txt) there.

@@ -1,4 +1,3 @@
-// Import rules of the architecture in AGENTS.md. `pnpm test` runs them.
 module.exports = {
   forbidden: [
     {
@@ -10,7 +9,7 @@ module.exports = {
     },
     {
       name: 'core-has-no-runtime-platform-or-three',
-      comment: 'src/core/ has no browser, network or three.js code; it may use types of the P2P platform.',
+      comment: 'src/core/ has no browser, network or three.js code; it may use types of the p2p module.',
       severity: 'error',
       from: {path: '^src/core/'},
       to: {path: ['/platform/p2p/', '/node_modules/three/'], dependencyTypesNot: ['type-only']}
