@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
 import {applyIntent, createRoomState, joinPlayer} from '@whenparty/p2p'
-import {bodyVolume, calisthenics, createChampionship, isMove, podiumOf, type Championship} from '../core/index.ts'
+import {bodyVolume, calisthenics, createChampionship, isMove, podiumOf, startingCondition, type Championship} from '../core/index.ts'
 import {appearanceOf, defaultAppearance} from '../frontends/3d/appearance.ts'
+import {demonstrationMotion, performanceMotion} from '../frontends/3d/presentation.ts'
+import {positionOf, withAthleteModel} from './athlete-fixtures.ts'
 import {lobbyOf, move, must, plan, started} from './fixtures.ts'
 
 describe('4-presentation', () => {
@@ -98,4 +100,16 @@ describe('4-presentation', () => {
     assert.equal(twelve.length, 12)
     assert.ok(twelve.every(row => row.place === 1))
   })
+
+  it('4-5 shows still poses instead of animations for reduced motion', () =>
+    withAthleteModel(athlete => {
+      athlete.update({name: 'Athlete'}, startingCondition().levels)
+      for (let challenge = 0; challenge < 10; challenge++)
+        for (const motions of [demonstrationMotion(challenge), performanceMotion('full', challenge)]) {
+          athlete.play(motions, true)
+          const still = positionOf(athlete, 'pelvis')
+          athlete.tick(30)
+          assert.ok(positionOf(athlete, 'pelvis').distanceTo(still) < 1e-6, `challenge ${challenge}: ${motions[0]!.clip} moves`)
+        }
+    }))
 })

@@ -1,4 +1,3 @@
-// The room and championship controls more than one frontend shows. It builds its own markup.
 import {ROOM_CODE_LENGTH, normalizeRoomCode, seatOf} from '@whenparty/p2p'
 import {
   actionsOf,
@@ -45,9 +44,7 @@ export interface PanelActions {
 }
 
 export interface PanelOptions {
-  // Room time for a visit, so the turn clock counts down between snapshots
-  clock: (visit: Visit | null) => number
-  // A frontend's own lobby controls, shown below the player list
+  roomTimeOf: (visit: Visit | null) => number
   lobbyExtra?: HTMLElement
 }
 
@@ -173,7 +170,7 @@ const countOf = (plan: Plan, key: ActionKey) => (key === 'rest' ? plan.rest : (p
 const withCount = (plan: Plan, key: ActionKey, count: number): Plan =>
   key === 'rest' ? {...plan, rest: count} : {...plan, training: {...plan.training, [key]: count}}
 
-export const mountPanel = (container: HTMLElement, actions: PanelActions, {clock, lobbyExtra}: PanelOptions) => {
+export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomTimeOf, lobbyExtra}: PanelOptions) => {
   container.innerHTML = markup
 
   const find = <T extends Element>(selector: string): T => {
@@ -187,7 +184,6 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {clock
   }
 
   let visit: Visit | null = null
-  // An unconfirmed plan lives only in this page
   let draft: Draft = {key: '', plan: emptyPlan(), note: ''}
 
   const entry = find<HTMLElement>('#entry')
@@ -342,7 +338,7 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {clock
   const updatePerformanceClock = () => {
     const turn = visit?.view?.room?.game.performance
     if (!turn) return
-    const remaining = turn.endsAt === null ? turn.remainingMs : Math.max(0, turn.endsAt - clock(visit))
+    const remaining = turn.endsAt === null ? turn.remainingMs : Math.max(0, turn.endsAt - roomTimeOf(visit))
     performanceClock.textContent =
       turn.endsAt === null ? `Paused · ${Math.ceil(remaining / 1000)} s remaining` : `${Math.ceil(remaining / 1000)} s remaining`
   }

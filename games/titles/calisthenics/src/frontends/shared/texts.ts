@@ -1,4 +1,3 @@
-// Wording that more than one frontend shows, as functions of the core's data
 import {seatOf} from '@whenparty/p2p'
 import {
   actionsPerPlan,

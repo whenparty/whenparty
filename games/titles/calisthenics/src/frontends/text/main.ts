@@ -6,7 +6,7 @@ const interfaceLink = document.getElementById('interface-link') as HTMLAnchorEle
 const panel = mountPanel(
   document.getElementById('panel')!,
   {create: () => room.create(), join: code => room.join(code), send: move => room.send(move)},
-  {clock: visitNow}
+  {roomTimeOf: visitNow}
 )
 const room = openRoom(visit => {
   panel.render(visit)

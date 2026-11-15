@@ -1,4 +1,3 @@
-// Championships in a given state, built through the core's moves
 import assert from 'node:assert/strict'
 import {
   applyMove,
@@ -45,7 +44,6 @@ export const confirmAll = (state: Championship, plans: Record<string, Plan> = {}
     .filter(athlete => !athlete.plan)
     .reduce((each, athlete) => must(move(each, athlete.seat, {type: 'confirm', plan: plans[athlete.seat] ?? rests})), state)
 
-// Every athlete confirms its plan, then the host starts the challenge
 export const performing = (state: Championship, plans: Record<string, Plan> = {}) =>
   must(move(confirmAll(state, plans), '1', {type: 'perform'}))
 
@@ -59,7 +57,6 @@ export const finishPerformances = (state: Championship) => {
 
 export const perform = (state: Championship, plans: Record<string, Plan> = {}) => finishPerformances(performing(state, plans))
 
-// The host opens the next challenge's announcement, then its preparation
 export const prepare = (state: Championship) => train(must(move(state, '1', {type: 'next'})))
 
 export const withAthlete = (state: Championship, seat: string, change: Partial<Athlete>): Championship => ({
@@ -67,7 +64,6 @@ export const withAthlete = (state: Championship, seat: string, change: Partial<A
   athletes: state.athletes.map(athlete => (athlete.seat === seat ? {...athlete, ...change} : athlete))
 })
 
-// Plans that complete every challenge in full
 export const perfectPlans: readonly Plan[] = [
   plan({arms: 1, chest: 1, stamina: 1}),
   plan({legs: 1}, 2),
@@ -81,7 +77,6 @@ export const perfectPlans: readonly Plan[] = [
   plan({arms: 1}, 2)
 ]
 
-// Plays all ten challenges with a plan per seat for each one
 export const playAll = (state: Championship, plansOf: (challenge: number) => Record<string, Plan>) =>
   Array.from({length: 10}, (_, index) => index).reduce(
     (each, index) => (index === 0 ? perform(each, plansOf(index)) : perform(prepare(each), plansOf(index))),

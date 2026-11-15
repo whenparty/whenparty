@@ -1,4 +1,3 @@
-// How each challenge is performed and how far an athlete gets in it
 import type {Levels} from './athlete.ts'
 import {challenges, shortOf, type Completion} from './challenges.ts'
 

@@ -1,5 +1,3 @@
-// The championship as the host runs it: pure functions over plain JSON data, so every peer can
-// render the same state in any interface. See ../../docs/specs/.
 import type {GameRules, RoomContext, SeatPresence} from '@whenparty/p2p'
 import {
   actionsPerPlan,
@@ -23,7 +21,6 @@ export const minAthletes = 2
 export const maxNameLength = 20
 export const performanceMs = 12000
 
-// What a player chooses about their athlete in the lobby
 export interface Profile {
   name: string
   appearance?: Partial<Appearance>
@@ -41,11 +38,8 @@ export interface Athlete {
   levels: Levels
   energy: number
   points: number
-  // The plan confirmed for the current challenge
   plan: Plan | null
-  // The result of the last challenge performed
   result: Result | null
-  // Its player left the room, so nobody plays this athlete any more
   left: boolean
 }
 
@@ -59,12 +53,9 @@ export interface Performance {
 
 export interface Championship {
   stage: Stage
-  // Index into challenges
   challenge: number
-  // Lobby profiles by seat
   profiles: Record<string, Profile>
   athletes: Athlete[]
-  // Seats whose player is absent right now
   away: string[]
   performance?: Performance | null
 }
@@ -81,7 +72,6 @@ export type Move =
 
 export const createChampionship = (): Championship => ({stage: 'lobby', challenge: 0, profiles: {}, athletes: [], away: []})
 
-// The creator keeps the first seat for the room's lifetime
 export const isHostSeat = (seat: string) => seat === seats[0]
 
 export const normalizeProfile = (profile: Profile): Profile | null => {
@@ -113,7 +103,6 @@ export const canStart = (state: Championship, occupiedSeats: readonly string[]) 
     return profile !== undefined && normalizeProfile(profile) !== null
   })
 
-// Nobody may move the championship on while an athlete has no player here
 export const isPaused = (state: Championship) => state.athletes.some(athlete => athlete.left || state.away.includes(athlete.seat))
 
 export const canPerform = (state: Championship) =>
@@ -356,7 +345,6 @@ export const calisthenics: GameRules<Championship, Move> = {
   seats,
   createState: createChampionship,
   applyMove,
-  // A championship is never restarted in its room (3-3), and the platform restarts only finished games
   isOver: () => false,
   onPresence: (state, seat, presence, {now}) => notePresence(state, seat, presence, now),
   deadlinesOf: performanceDeadlines,
