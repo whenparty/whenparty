@@ -12,13 +12,13 @@ Each deploy workflow runs on a push to `main` that changes a file in its folder 
 | `traefik.yml` | `temp-sites/traefik/` | itself | the Traefik router | yes |
 | `games.yml` | `games/` | itself, `deploy-project.yml` | each [deployment](/docs/glossary.md#deployment) a change reaches, through `deploy-project.yml` | yes |
 
-So merging a change to `site.yml` redeploys all three sites, and a change to `infra.yml` or `traefik.yml` redeploys what it deploys. `games.yml` and `temp-sites.yml` deploy only the deployments that a change reaches, so a change to their workflows or to `deploy-project.yml` alone deploys nothing. No deploy workflow lists a `check-*.yml` file, so a change to a check deploys nothing. [image-scan.md](/.github/docs/image-scan.md) says which deploys scan their images and when a scan stops a deploy.
+So merging a change to `site.yml` redeploys all three sites, and a change to `infra.yml` or `traefik.yml` redeploys what it deploys. `games.yml` and `temp-sites.yml` deploy only the deployments that a change reaches, so a change to their workflows or to `deploy-project.yml` alone deploys nothing. No deploy workflow lists a `check-*.yml` file, so a change to a check deploys nothing.
+
+[setup.md](/infra/docs/setup.md#vps) says how the Docker networks that the deployments share with nginx are created, and [image-scan.md](/.github/docs/image-scan.md) how the images are scanned.
 
 ## infra.yml
 
-`infra.yml` deploys only after `check-nginx.yml` passes. It copies `docker-compose.yml`, `nginx/conf.d/` and `scripts/` to `/opt/services/whenparty/infra/`, runs `docker compose up -d`, checks the configs with `nginx -t` in the running container and reloads nginx. It also keeps the Cloudflare address list and its hourly job in place, as [cloudflare-ip-list.md](/infra/docs/cloudflare-ip-list.md) says.
-
-Before it starts nginx, it creates the networks that nginx joins when they are missing. nginx does not start while a network in its `docker-compose.yml` is missing, so a new network there also goes into the networks that `infra.yml` creates.
+`infra.yml` deploys only after `check-nginx.yml` passes. It copies `docker-compose.yml`, `nginx/conf.d/` and `scripts/` to `/opt/services/whenparty/infra/`, runs `docker compose up -d`, checks the configs with `nginx -t` in the running container and reloads nginx. It also keeps the hourly job that refreshes the Cloudflare address list in place, as [cloudflare-ip-list.md](/infra/docs/cloudflare-ip-list.md) says.
 
 What the deploy leaves behind:
 
@@ -28,7 +28,7 @@ What the deploy leaves behind:
 
 ## site.yml
 
-`site.yml` deploys `www/`, `blog/` or `nii-au/` as the image `ghcr.io/whenparty/<folder>:latest`. It copies only the folder's `docker-compose.yml` to the VPS, so another file that the compose file needs never reaches the VPS. It does not create the `wp_www` network that the three sites join, as [setup.md](/infra/docs/setup.md#vps) says.
+`site.yml` deploys `www/`, `blog/` or `nii-au/` as the image `ghcr.io/whenparty/<folder>:latest`. It copies only the folder's `docker-compose.yml` to the VPS, so another file that the compose file needs never reaches the VPS.
 
 ## deploy-project.yml
 
@@ -38,7 +38,6 @@ What the deploy leaves behind:
 - It copies the folder to the same path under `/opt/services/whenparty/` and runs `docker compose up -d --remove-orphans` there, with `IMAGE` set to the `sha-<commit>` image when it built one. The copy never deletes files, so a file removed from a folder that still exists stays on the VPS.
 - When the folder's `compose.yml` names `TURN_SECRET`, it writes the secret to a private `.env` next to it when the secret is set, and otherwise warns. [github-setup.md](/.github/docs/github-setup.md) says which deployments use it.
 - When the folder is gone, it runs `docker compose down` on the VPS and deletes the folder there.
-- It creates the network that its caller names when it is missing: `games.yml` names `wp_games`, and `temp-sites.yml` names `wp_tempsites`.
 
 Deployment names of `games/` and `temp-sites/projects/` share one namespace, and `check-project-names.yml` checks it.
 

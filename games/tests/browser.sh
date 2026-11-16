@@ -43,7 +43,7 @@ for _ in $(seq 1 30); do
   sleep 1
 done
 if [ "$ready" != true ]; then
-  echo 'coturn did not answer STUN within 30 s' >&2
+  echo 'coturn did not answer STUN in 30 tries' >&2
   docker logs "$name" 2>&1 | tail -30 >&2
   exit 1
 fi

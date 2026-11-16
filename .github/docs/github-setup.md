@@ -18,7 +18,7 @@ The workflows push images and upload scan results with the `GITHUB_TOKEN` that G
 `site.yml` and `deploy-project.yml` push images to `ghcr.io/whenparty/<name>`: `www`, `blog`, `nii-au`, and every deployment of `temp-sites/projects/` and `games/` that has a `Dockerfile`, such as `signaling` and each game.
 
 - The repository needs Write access to each package, under Package settings → Manage Actions access. A package first pushed from this repository gets it automatically.
-- The VPS pulls images without logging in, so every package must be public. A new package first pushed by these workflows is public at once, as `index` was in run 41627417949 of `games.yml`. After each push, `site.yml` and `deploy-project.yml` also ask the GitHub API with their `GITHUB_TOKEN` to make the package public. That call answers HTTP 404, and the step has `continue-on-error`, so it shows as passed. When a package is private, the deploy fails at the pull on the VPS until the user makes the package public in its settings and re-runs the failed jobs.
+- The VPS pulls images without logging in, so every package must be public. A new package first pushed by these workflows is public at once, as `index` was in run 41627417949 of `games.yml`. When a package is private, the deploy fails at the pull on the VPS. The GitHub API cannot change the visibility of a package, so the user makes the package public in its settings and re-runs the failed jobs.
 
 ## Labels
 

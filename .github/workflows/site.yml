@@ -14,6 +14,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -23,67 +24,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image
+      - name: Build and push image
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           context: ${{ inputs.site }}
-          push: false
-          load: true
+          push: true
           tags: ${{ env.IMAGE }}
-
-      - name: Scan image for vulnerabilities
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ env.IMAGE }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@ce5e7eeac396d720fe2d802714996c8ce561e311 # v3.39.0
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-          category: trivy-${{ inputs.site }}
-
-      - name: Fail on critical vulnerabilities
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ env.IMAGE }}
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL'
-
-      - name: Push image
-        run: docker push "$IMAGE"
-
-      - name: Make package public
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OWNER: ${{ github.repository_owner }}
-          OWNER_TYPE: ${{ github.event.repository.owner.type }}
-          PACKAGE: ${{ inputs.site }}
-        run: |
-          set -euo pipefail
-
-          if [ "$OWNER_TYPE" = "Organization" ]; then
-            gh api \
-              --method PUT \
-              -H "Accept: application/vnd.github+json" \
-              "/orgs/$OWNER/packages/container/$PACKAGE/visibility" \
-              -f visibility=public
-          else
-            gh api \
-              --method PUT \
-              -H "Accept: application/vnd.github+json" \
-              "/user/packages/container/$PACKAGE/visibility" \
-              -f visibility=public
-          fi
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

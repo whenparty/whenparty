@@ -15,6 +15,7 @@ jobs:
   deploy:
     needs: validate
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -38,13 +39,9 @@ jobs:
           script: |
             set -euo pipefail
             cd /opt/services/whenparty/infra
-            docker network inspect wp_www >/dev/null 2>&1 || docker network create wp_www
-            docker network inspect wp_tempsites >/dev/null 2>&1 || docker network create wp_tempsites
-            docker network inspect wp_games >/dev/null 2>&1 || docker network create wp_games
             chmod +x scripts/*.sh
             docker compose pull
             docker compose up -d
-            grep -qs '^set_real_ip_from' nginx/conf.d/cloudflare_real_ip.conf || ./scripts/update-cloudflare-real-ip.sh
             docker exec nginx nginx -t
             docker exec nginx nginx -s reload
             CF_IP_SCRIPT=/opt/services/whenparty/infra/scripts/update-cloudflare-real-ip.sh

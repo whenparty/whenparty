@@ -12,7 +12,11 @@ A tag can be moved to other code, but a SHA cannot, and the deploy jobs hold the
 
 ## Permissions of reusable workflows
 
-A reusable workflow gets only the permissions and secrets its caller passes. A caller of `deploy-project.yml` must grant `contents: read` and `packages: write`, and a caller of `site.yml` must also grant `security-events: write`. Both pass `secrets: inherit`, because the deploys log in to the VPS with the repository secrets. The checks keep their tokens read-only, as [checks.md](/.github/docs/checks.md) says.
+A reusable workflow gets only the permissions and secrets its caller passes. A caller of `deploy-project.yml` or `site.yml` must grant `contents: read` and `packages: write`. Both pass `secrets: inherit`, because the deploys log in to the VPS with the repository secrets. The checks keep their tokens read-only, as [checks.md](/.github/docs/checks.md) says.
+
+## Timeouts
+
+Every job that runs steps sets `timeout-minutes: 15`. The jobs take under three minutes, and a job without a limit runs for up to six hours when a step hangs. A job that calls a reusable workflow cannot set a limit, so the jobs of that workflow do.
 
 ## Trying a change
 

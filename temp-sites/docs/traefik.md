@@ -4,7 +4,7 @@
 
 ## What other code relies on
 
-- The nginx proxy reaches the router as `traefik-tempsites:8000` on the `wp_tempsites` network, as [temp-sites.conf](/infra/nginx/conf.d/temp-sites.conf) sets. A change to the container name or the `web` entrypoint's port needs the same change there, as [sites.md](/infra/docs/sites.md) says. The network name also appears in [infra/docker-compose.yml](/infra/docker-compose.yml), in the deploy workflows that create the network, and in the `compose.yml` of every site.
+- The nginx proxy reaches the router as `traefik-tempsites:8000` on the `wp_tempsites` network, as [temp-sites.conf](/infra/nginx/conf.d/temp-sites.conf) sets. A change to the container name or the `web` entrypoint's port needs the same change there, as [sites.md](/infra/docs/sites.md) says. The network name also appears in [infra/docker-compose.yml](/infra/docker-compose.yml), in the networks that [setup.md](/infra/docs/setup.md#vps) creates on the VPS, and in the `compose.yml` of every site.
 - The `web` entrypoint on port 8000 is not published on the host, so every request reaches Traefik through nginx, with its certificate check, headers and limits. Publishing it would let requests skip them.
 - Traefik routes only containers that set `traefik.enable=true`, and reaches them only over `wp_tempsites`. Every site relies on the `web` entrypoint by that name.
 - The router `unknown-host` matches every host at priority 1 and sends what no other router matches to `noop@internal`, which answers 418. `temp-sites.conf` turns that 418 into its page for unknown hosts, as requirement `3-3` of the [proxy's specification](/infra/docs/specs/3-sites.md) says, so a change to the router or the status needs the same change there.
