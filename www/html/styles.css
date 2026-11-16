@@ -204,7 +204,7 @@ a.balloon-float:focus-visible .balloon-outline { stroke: var(--focus); stroke-wi
   .contact.rise { animation-delay: .5s; }
 
   .balloon-float { animation: inflate var(--inflate) var(--spring) var(--inflate-delay) backwards, bob var(--bob) ease-in-out calc(var(--inflate-delay) + var(--inflate)) infinite; }
-  .balloon-art { animation: refilter var(--inflate) var(--inflate-delay) backwards; }
+  .balloon-art { animation: refilter calc(var(--inflate) + 1s) linear var(--inflate-delay) backwards; }
   .weight { animation: rise .6s ease-out .9s backwards; }
 
   a.balloon-float { transition: scale .35s var(--spring); }
@@ -214,6 +214,7 @@ a.balloon-float:focus-visible .balloon-outline { stroke: var(--focus); stroke-wi
   .is-leaving, .is-leaving :is(.balloon-fill, .knot) { pointer-events: none; }
   .is-leaving :is(.intro, .contact, .balloon:not(.is-flying), .rope, .weight) { opacity: 0; translate: 0 12px; }
   .is-flying .balloon-float { animation: takeoff .9s cubic-bezier(.45, 0, .85, .4) forwards; }
+  .is-flying .balloon-art { animation: none; }
   .string { transition: opacity .12s ease-out; }
   .is-flying .string-side { opacity: 0; }
   .is-flying:nth-child(odd) .string-short, .is-flying:nth-child(even) .string-long { display: inline; }
