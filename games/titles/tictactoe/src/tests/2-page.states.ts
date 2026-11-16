@@ -23,6 +23,9 @@ type Event =
   | 'cellClickMoves'
   | 'cellClickOther'
   | 'moveRefused'
+  | 'canActTold'
+  | 'cannotActTold'
+  | 'moveAnsweredWithProblem'
   | 'firstMatchReady'
   | 'nextMatchReady'
   | 'seatFreedAfterWin'
@@ -46,6 +49,7 @@ type Outcome = {
     | 'answer the request'
   readonly shows?: string
   readonly address?: "the code in the netcode's form, replacing the history entry" | 'no code'
+  readonly clickOnEmptyCellOfOwnTurn?: 'makes the move' | 'does nothing'
 }
 
 type Cell<O> = {readonly ids: readonly string[]; readonly outcome: O} | {readonly impossible: string}
@@ -72,7 +76,15 @@ const notPlaying = {impossible: 'the page plays only after starting completed wi
 const noSnapshotYet = {impossible: 'the page has taken no snapshot in the game, so nothing that one shows is there yet'} as const
 const completed = {impossible: 'starting or entering completed, so it does not fail (netcode 2-1)'} as const
 const onlyWhenStarting = {impossible: 'the netcode tells the room code only to a page that starts a game, once (netcode 2-3)'} as const
-const cannotActYet = {impossible: 'the page cannot act, so it makes no move, before its first snapshot (netcode 8-1)'} as const
+const noMoveYet = {
+  impossible: 'the page makes no move before the netcode tells it its first snapshot, which gives its seat and whose move it is (2-8)'
+} as const
+const canActComesWithSnapshot = {
+  impossible:
+    'the page cannot act before its first snapshot (netcode 8-1), and it can act from the change that takes that snapshot, in which the netcode also tells the page the snapshot (netcode 2-10), so the page is told that snapshot before any change to cannot act'
+} as const
+const noMoveAfterEnd = {impossible: 'a page cannot act after its game ended or failed'} as const
+const noMoveAfterStartFailed = {impossible: 'a page cannot act after starting failed'} as const
 
 const loadingRow = {
   startPressed: notOpenYet,
@@ -95,6 +107,9 @@ const loadingRow = {
   cellClickMoves: notOpenYet,
   cellClickOther: notOpenYet,
   moveRefused: notOpenYet,
+  canActTold: notOpenYet,
+  cannotActTold: notOpenYet,
+  moveAnsweredWithProblem: notOpenYet,
   firstMatchReady: notOpenYet,
   nextMatchReady: notOpenYet,
   seatFreedAfterWin: notOpenYet,
@@ -136,7 +151,14 @@ const playing = (state: 'hostRoom' | 'participantRoom') =>
     addressNotCode: {ids: ['2-5'], outcome: {next: 'lobby', netcode: 'leave', shows: 'the lobby'}},
     leavePressed: {ids: ['2-6'], outcome: {next: 'lobby', netcode: 'leave', shows: 'the lobby', address: 'no code'}},
     startingOrEnteringFails: completed,
-    gameEnds: endsWith('roomOver'),
+    gameEnds: {
+      ids: ['2-11', '2-9', '2-10', '2-13', '2-8'],
+      outcome: {
+        next: 'roomOver',
+        shows: 'the room view without "you host", the next-match button and requests',
+        clickOnEmptyCellOfOwnTurn: 'does nothing'
+      }
+    },
     copyPressed: {ids: ['2-3'], outcome: {next: state, shows: 'the invite link is being copied'}},
     snapshotTaken: {ids: ['2-3'], outcome: {next: state, shows: 'the board with the marks of that snapshot'}},
     snapshotWithOtherRole: keepsHost,
@@ -151,6 +173,9 @@ const playing = (state: 'hostRoom' | 'participantRoom') =>
     cellClickMoves: {ids: ['2-8'], outcome: {next: state, netcode: 'act'}},
     cellClickOther: {ids: ['2-8'], outcome: {next: state}},
     moveRefused: {ids: ['2-8'], outcome: {next: state}},
+    canActTold: {ids: ['2-8'], outcome: {next: state, clickOnEmptyCellOfOwnTurn: 'makes the move'}},
+    cannotActTold: {ids: ['2-8'], outcome: {next: state, clickOnEmptyCellOfOwnTurn: 'does nothing'}},
+    moveAnsweredWithProblem: {ids: ['2-3', '2-8'], outcome: {next: state, netcode: 'act'}},
     matchWon: {ids: ['2-7'], outcome: {next: state, shows: 'the winning cells in their own colour'}}
   }) as const
 
@@ -202,6 +227,9 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     cellClickMoves: noRoomView,
     cellClickOther: noRoomView,
     moveRefused: noGame,
+    canActTold: noGame,
+    cannotActTold: noGame,
+    moveAnsweredWithProblem: noRoomView,
     firstMatchReady: noGame,
     nextMatchReady: noGame,
     seatFreedAfterWin: noGame,
@@ -243,6 +271,9 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     cellClickMoves: notPlaying,
     cellClickOther: {ids: ['2-8'], outcome: {next: 'starting'}},
     moveRefused: notPlaying,
+    canActTold: notPlaying,
+    cannotActTold: notPlaying,
+    moveAnsweredWithProblem: notPlaying,
     firstMatchReady: notPlaying,
     nextMatchReady: notPlaying,
     seatFreedAfterWin: notPlaying,
@@ -293,9 +324,12 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
       ids: ['2-7', '2-9'],
       outcome: {next: 'participantRoom', shows: 'the winning cells in their own colour, and no button that starts the next match'}
     },
-    cellClickMoves: cannotActYet,
+    cellClickMoves: noMoveYet,
     cellClickOther: {ids: ['2-8'], outcome: {next: 'entering'}},
-    moveRefused: cannotActYet,
+    moveRefused: noMoveYet,
+    canActTold: {ids: ['2-8'], outcome: {next: 'entering', clickOnEmptyCellOfOwnTurn: 'makes the move'}},
+    cannotActTold: canActComesWithSnapshot,
+    moveAnsweredWithProblem: noMoveYet,
     firstMatchReady: {ids: ['2-9'], outcome: {next: 'participantRoom', shows: 'no button that starts the next match'}},
     nextMatchReady: {ids: ['2-9'], outcome: {next: 'participantRoom', shows: 'no button that starts the next match'}},
     startNextPressed: {impossible: "only the host's page shows the button that starts the next match (2-9)"},
@@ -365,9 +399,12 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     otherRoleNextMatchReady: afterEnd,
     otherRoleSeatFreeAfterWin: afterEnd,
     otherRoleMatchWon: afterEnd,
-    cellClickMoves: {impossible: 'a page cannot act after its game ended or failed'},
+    cellClickMoves: noMoveAfterEnd,
     cellClickOther: {ids: ['2-8'], outcome: {next: 'roomOver'}},
     moveRefused: afterEnd,
+    canActTold: afterEnd,
+    cannotActTold: afterEnd,
+    moveAnsweredWithProblem: noMoveAfterEnd,
     firstMatchReady: afterEnd,
     nextMatchReady: afterEnd,
     seatFreedAfterWin: afterEnd,
@@ -399,9 +436,12 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     otherRoleNextMatchReady: afterEnd,
     otherRoleSeatFreeAfterWin: afterEnd,
     otherRoleMatchWon: afterEnd,
-    cellClickMoves: {impossible: 'a page cannot act after starting failed'},
+    cellClickMoves: noMoveAfterStartFailed,
     cellClickOther: {ids: ['2-8'], outcome: {next: 'startFailed'}},
     moveRefused: afterEnd,
+    canActTold: afterEnd,
+    cannotActTold: afterEnd,
+    moveAnsweredWithProblem: noMoveAfterStartFailed,
     firstMatchReady: afterEnd,
     nextMatchReady: afterEnd,
     seatFreedAfterWin: afterEnd,

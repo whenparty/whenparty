@@ -20,7 +20,9 @@ type Simple = {
   readonly effects: readonly Effect[]
 }
 
-type Outcome = Simple | {readonly branches: readonly {readonly when: string; readonly outcome: Simple}[]}
+type Branch = {readonly when: string; readonly outcome: Simple} | {readonly when: string; readonly impossible: string}
+
+type Outcome = Simple | {readonly branches: readonly Branch[]}
 
 type Cell<O> = {readonly ids: readonly string[]; readonly outcome: O} | {readonly impossible: string}
 
@@ -45,7 +47,8 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
         branches: [
           {
             when: 'the waiting time has passed since the owner connection was lost',
-            outcome: {next: 'ended', reason: 'owner away', effects: []}
+            impossible:
+              'the room ends for the page when the waiting time passes (5-4), so no return of the page waits for an answer after it'
           },
           {when: 'otherwise', outcome: {next: 'ended', reason: 'room closed', effects: []}}
         ]

@@ -31,8 +31,13 @@ export type Notice =
 
 const notices: Notice[] = []
 let turn: Turn = 'from server'
+let turnHost = ''
 let signaling: SignalingConnection | null = null
 let peer: PeerConnection | null = null
+let rtc: RTCPeerConnection | null = null
+const allocating: RTCPeerConnection[] = []
+const noAllocationErrors = new Set([486, 508])
+let refusedAllocation = false
 
 const handlers: PeerHandlers = {
   open: (path, roundTripMs) => notices.push({kind: 'open', path, roundTripMs}),
@@ -52,18 +57,41 @@ const iceServersFor = (options: PageOptions, servers: readonly TurnServers[]): R
   }))
 }
 
+const refusesAllocation = async (credentials: Credentials): Promise<boolean> => {
+  const connection = new RTCPeerConnection({
+    iceServers: [{urls: `turn:${turnHost}:3478?transport=udp`, ...credentials}],
+    iceTransportPolicy: 'relay'
+  })
+  allocating.push(connection)
+  connection.createDataChannel('allocation')
+  const refused = new Promise<boolean>(resolve => {
+    connection.onicecandidateerror = event => noAllocationErrors.has(event.errorCode) && resolve(true)
+    connection.onicecandidate = event => event.candidate?.type === 'relay' && resolve(false)
+    connection.onicegatheringstatechange = () => connection.iceGatheringState === 'complete' && resolve(false)
+  })
+  await connection.setLocalDescription(await connection.createOffer())
+  return refused
+}
+
 const harness = {
   open(options: PageOptions): void {
     turn = options.turn
+    turnHost = options.turnHost
     const transport = createTransport({
       clock: systemClock,
       signalingUrl: options.signalingUrl,
       openSocket: url => new WebSocket(url) as unknown as SocketLike,
-      createPeerConnection: ({iceServers}) =>
-        new RTCPeerConnection({
+      createPeerConnection: ({iceServers}) => {
+        const created = new RTCPeerConnection({
           iceServers: iceServersFor(options, iceServers),
           iceTransportPolicy: options.relayOnly ? 'relay' : 'all'
-        }) as unknown as PeerConnectionLike,
+        })
+        created.addEventListener('icecandidateerror', event => {
+          refusedAllocation ||= noAllocationErrors.has(event.errorCode)
+        })
+        rtc = created
+        return created as unknown as PeerConnectionLike
+      },
       onPageHide: listener => addEventListener('pagehide', listener)
     })
     signaling = transport.openSignaling({})
@@ -75,6 +103,15 @@ const harness = {
   useTurn(used: Turn): void {
     turn = used
   },
+  async useUpAllocations(credentials: Credentials, connections: number): Promise<boolean> {
+    for (let opened = 0; opened < connections; opened++) {
+      if (await refusesAllocation(credentials)) {
+        return true
+      }
+    }
+    return false
+  },
+  refusedWithOtherDescription: (): boolean => refusedAllocation && rtc?.remoteDescription != null,
   peerId: (): string | null => (signaling?.state === 'open' ? signaling.peerId : null),
   allow: (peerId: string): Promise<boolean> => signaling?.allow(peerId) ?? Promise.resolve(false),
   connect(peerId: string): void {

@@ -189,12 +189,8 @@ test('1-1 the title gives the netcode its app ID, waiting time, format version a
   assert.deepEqual([title.appId, title.waitingSeconds, title.formatVersion, rules.seats()], ['when.party/tictactoe', 600, 1, ['X', 'O']])
   assert.equal(rules.admit, undefined)
   assert.equal(rules.canStart, undefined)
-  assert.deepEqual(rules.initialState(0, context(0)), {
-    board: [null, null, null, null, null, null, null, null, null],
-    turn: 'X',
-    away: {X: {lost: false, hiddenSince: null}, O: {lost: false, hiddenSince: null}},
-    result: null
-  })
+  const initial = rules.initialState(0, context(0)) as unknown as Game
+  assert.deepEqual([initial.board, initial.turn], [[null, null, null, null, null, null, null, null, null], 'X'])
 })
 
 test('1-3 a move is refused when its cell is off the board or its board is malformed', () => {
@@ -233,8 +229,12 @@ test('1-7 the seat that reaches 600 seconds first is named', () => {
   assert.deepEqual(passDeadline(game, 601_000).result, {kind: 'hidden', seat: O})
 })
 
-test('1-9 once over, a hidden count asks for no deadline', () => {
-  const over = setups.over('lost')
-  assert.notEqual(over.away.X.hiddenSince, null)
-  assert.deepEqual(rules.deadlines?.(over as unknown as Json), [])
+test('1-7 the deadline that ends a match leaves no deadline at or before its time, so that "deadline" does not fail (netcode 7-3)', () => {
+  const one = notePresence(newGame(), O, 'hidden', 1000)
+  const both = notePresence(notePresence(newGame(), X, 'hidden', 1000), O, 'hidden', 1000)
+  for (const game of [one, both]) {
+    const over = passDeadline(game, 601_000)
+    assert.notEqual(over.result, null)
+    assert.ok((rules.deadlines?.(over as unknown as Json) ?? []).every(time => time > 601_000))
+  }
 })

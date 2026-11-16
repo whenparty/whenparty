@@ -369,10 +369,7 @@ class RoomsServer implements ServerPartHandlers {
     if (!isRequestId(r) || typeof code !== 'string' || typeof token !== 'string' || typeof page !== 'string' || !isLeaves(leaves)) {
       return
     }
-    if (!isAppId(app)) {
-      return
-    }
-    const room = this.#room(app, code)
+    const room = isAppId(app) ? this.#room(app, code) : undefined
     if (!room) {
       return this.#answer(peerId, r, 'no room')
     }
