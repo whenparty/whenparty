@@ -5,6 +5,7 @@ date: 2026-11-16
 audio:
   file: influence-without-authority.45d97fc5.mp3
   minutes: 24
+credits: Idea and editing by Nikolai Krivous. Written by Claude Opus 5.5.
 ---
 
 ## Authority versus influence

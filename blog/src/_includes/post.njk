@@ -28,7 +28,7 @@ layout: base.njk
 {{ content | safe }}
   </article>
 
-  <p class="note">Written with help from AI. My views as of {{ page.date | longDate }}; later posts may see it differently.</p>
+  <p class="note">{{ credits or "Written with help from AI." }} My views as of {{ page.date | longDate }}; later posts may see it differently.</p>
   {% set previous = collections.posts | getPreviousCollectionItem %}
   {% set next = collections.posts | getNextCollectionItem %}
   <nav class="pager" aria-label="More posts">

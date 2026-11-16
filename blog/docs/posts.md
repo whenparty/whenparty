@@ -14,6 +14,7 @@ A post keeps the views of its date. When the views change, a new post says so an
 | `cover` | no | the file name of the picture beside the title and in the post's entry in the list. Without it, the entry shows an empty frame. |
 | `coverAlt` | with `cover` | what the picture shows, for readers who cannot see it |
 | `audio` | no | `file`, the name of the MP3 file in the audio folder, and `minutes`, its length. Without it, the post has no player. |
+| `credits` | no | who did what, in sentences that end with a full stop, such as `Idea and editing by Nikolai Krivous. Written by Claude Opus 5.5.` It starts the line under the post, before `My views as of` and the date. Without it, the line starts with `Written with help from AI.` |
 | `draft` | no | `true` keeps the post off the site; the local preview shows it |
 
 - An image alone in its paragraph, with blank lines around it, becomes a taped card across the text: `![what it shows](name.webp "caption")`. With `#side` after the file name, the card stands at the side and the text flows around it: `![what it shows](name.webp#side "caption")`. Put a side card before the paragraph it belongs to. The caption is optional, the description in square brackets is not. On screens narrower than 600 px every card in the text spans it.
