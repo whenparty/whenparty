@@ -4,7 +4,7 @@
 
 The games in `games/titles/` play through the platform in `games/platform/`. A page of a game needs a connection to a server and connections to other pages, a room that lets participants in and tells who is present, and a game state that the participants share. Voice and video calls between pages, which the platform is expected to carry later, need the same connections and rooms but no game state.
 
-Pages reach two servers. The signaling server at `signaling.when.party` passes messages between pages that are not connected yet. The TURN server, coturn at `turn.when.party`, relays the traffic of pages that cannot connect directly; it needs a container of its own on the host network, with its own UDP ports, as [turn/AGENTS.md](../../turn/AGENTS.md) says. Each runs as a [deployment](/docs/glossary.md#deployment) of its own.
+Pages reach two servers. The signaling server at `signaling.when.party` passes messages between pages that are not connected yet. The TURN server, coturn at `turn.when.party`, relays the traffic of pages that cannot connect directly; it needs a container of its own on the host network, with its own UDP ports, as [deployment.md](../../turn/docs/deployment.md) of the turn deployment says. Each runs as a [deployment](/docs/glossary.md#deployment) of its own.
 
 How pages connect changes with browsers, WebRTC and coturn. Who may join a room, and how long a room waits for someone, change with the needs of each game and of calls. Libraries that give rooms over connections keep rooms as a layer above them, such as Socket.IO, Phoenix, Jitsi and Colyseus, or make the room the interface of one package that hides the connections, such as Trystero and LiveKit.
 

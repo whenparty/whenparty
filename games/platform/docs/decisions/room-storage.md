@@ -17,4 +17,4 @@ Rooms only in memory. A restart costs the games that run at that moment, whose p
 ## Consequences
 
 - The rooms specification: [10-1](../../rooms/docs/specs/10-server-room.md).
-- [signaling/AGENTS.md](../../signaling/AGENTS.md) says that a deploy ends every room.
+- [server.md](../../signaling/docs/server.md#image-and-deploys) of the signaling deployment says that a deploy ends every room.

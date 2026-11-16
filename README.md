@@ -19,7 +19,7 @@ flowchart LR
   player[Player browser] -->|"direct, not through Cloudflare"| turn["TURN relay: turn.when.party"]
 ```
 
-The games in [games/](/games/AGENTS.md) send game data directly between players' browsers. The signaling server at `signaling.when.party` helps the players find each other. When two browsers cannot connect directly, they relay through the TURN server, which players reach without Cloudflare or nginx.
+The games in [games/](/games/README.md) send game data directly between players' browsers. The signaling server at `signaling.when.party` helps the players find each other. When two browsers cannot connect directly, they relay through the TURN server, which players reach without Cloudflare or nginx.
 
 ## How changes reach the VPS
 
@@ -33,7 +33,7 @@ A push to `main` deploys only the parts whose files it changes. A change to Mark
 | `nii-au/` | `nii-au.yml` | the `www.nii.au` site |
 | `temp-sites/projects/` | `temp-sites.yml` | each temporary site that changed |
 | `temp-sites/traefik/` | `traefik.yml` | the Traefik router |
-| `games/` | `games.yml` | each game, the signaling server and the TURN relay, when a change reaches them |
+| `games/` | `games.yml` | each game, the index page, the signaling server and the TURN relay, when a change reaches them |
 
 The [workflows](/.github/workflows/) live in `.github/workflows/`. Each site and game runs as a container from an image that the workflow builds and pushes to the GitHub Container Registry, and the VPS pulls it from there.
 

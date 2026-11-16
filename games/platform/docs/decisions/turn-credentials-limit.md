@@ -25,4 +25,4 @@ No limit. Each limit leaves a way around it while the other address gives creden
 ## Consequences
 
 - The transport specification: [3-4](../../transport/docs/specs/3-connection.md) and [8-1](../../transport/docs/specs/8-turn.md).
-- [signaling/AGENTS.md](../../signaling/AGENTS.md) describes `GET /turn-credentials`.
+- [server.md](../../signaling/docs/server.md) of the signaling deployment describes `GET /turn-credentials`.

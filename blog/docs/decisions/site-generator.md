@@ -2,7 +2,7 @@
 
 ## Context
 
-A post is a Markdown file with front matter and images, and posts can run to several thousand words with tables and pictures. The pages share one layout, the list of posts changes with every post, and each image needs a URL that changes with its content, as [serving.md](/docs/conventions/serving.md) requires. The pictures go in two ways, across the text or at its side, chosen per picture. The site is static and served by nginx like `www/` and `nii-au/`. The other code of the repository runs on Node, and the Dockerfiles in `games/` build in `node:26.13.1-alpine3.24`.
+A post is a Markdown file with front matter and images, and posts can run to several thousand words with tables and pictures. The pages share one layout, the list of posts changes with every post, and each image needs a URL that changes with its content, as [serving.md](/docs/conventions/serving.md) requires. The pictures go in two ways, across the text or at its side, chosen per picture. The site is static and served by nginx like `www/` and `nii-au/`. The other code of the repository runs on Node, and the Dockerfiles in `games/` build in a Node Alpine image.
 
 ## Options
 
@@ -13,7 +13,7 @@ A post is a Markdown file with front matter and images, and posts can run to sev
 
 ## Decision
 
-Eleventy. Against pages by hand, it keeps posts in Markdown and makes the list and the `?v=` of every image follow from the files. Against Astro and Hugo, it does what the blog needs with one dependency on the Node the repository already uses,.
+Eleventy. Against pages by hand, it keeps posts in Markdown and makes the list and the `?v=` of every image follow from the files. Against Astro and Hugo, it does what the blog needs with one dependency on the Node the repository already uses.
 
 ## Consequences
 
