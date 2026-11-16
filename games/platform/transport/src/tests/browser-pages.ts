@@ -57,12 +57,16 @@ const peerIdOf = async (page: Page): Promise<string> => {
   return String(await peerId.jsonValue())
 }
 
-export const connect = async ([caller, callee]: readonly [Page, Page]): Promise<void> => {
+export const call = async ([caller, callee]: readonly [Page, Page]): Promise<void> => {
   const callerId = await peerIdOf(caller)
   const calleeId = await peerIdOf(callee)
   expect(await callee.evaluate(peerId => harness.allow(peerId), callerId)).toBe(true)
   await caller.evaluate(peerId => harness.connect(peerId), calleeId)
-  for (const page of [caller, callee]) {
+}
+
+export const connect = async (pages: readonly [Page, Page]): Promise<void> => {
+  await call(pages)
+  for (const page of pages) {
     await expect.poll(() => page.evaluate(() => harness.state()), {timeout: networkWaitMs}).toBe('open')
   }
 }

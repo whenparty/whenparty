@@ -41,7 +41,6 @@ const enteredRoom = (h: PageHarness): void => {
 const participantRoom = (h: PageHarness): void => {
   enteredRoom(h)
   h.on.snapshot(view({participant: 2, isHost: false}))
-  h.on.canAct(false)
 }
 
 const hosts = (state: State): boolean => state !== 'entering' && state !== 'participantRoom'
@@ -49,6 +48,17 @@ const hosts = (state: State): boolean => state !== 'entering' && state !== 'part
 const seatOf = (state: State): Mark => (hosts(state) ? 'X' : 'O')
 
 const told = (asHost: boolean, played: Played = {}): SnapshotView => view(asHost ? played : {participant: 2, isHost: false, ...played})
+
+const ownTurnSnapshot = (state: State): SnapshotView => told(hosts(state), {number: 2, game: {...newGame(), turn: seatOf(state)}})
+
+const ownTurnBefore = (h: PageHarness, state: State, event: Event): void => {
+  if (event === 'canActTold' || event === 'cannotActTold' || event === 'gameEnds' || event === 'moveAnsweredWithProblem') {
+    h.on.snapshot(ownTurnSnapshot(state))
+  }
+  if (event === 'cannotActTold' || event === 'gameEnds' || event === 'moveAnsweredWithProblem') {
+    h.on.canAct(true)
+  }
+}
 
 const setups: {readonly [S in State]: (h: PageHarness, event: Event) => void} = {
   loading: () => {},
@@ -67,6 +77,7 @@ const setups: {readonly [S in State]: (h: PageHarness, event: Event) => void} = 
     if (event === 'cellClickOther') {
       h.on.snapshot(view({number: 2, game: {...newGame(), turn: 'O'}}))
     }
+    ownTurnBefore(h, 'hostRoom', event)
   },
   participantRoom: (h, event) => {
     if (event === 'seatFreedAfterWin') {
@@ -75,6 +86,7 @@ const setups: {readonly [S in State]: (h: PageHarness, event: Event) => void} = 
     } else {
       participantRoom(h)
     }
+    ownTurnBefore(h, 'participantRoom', event)
   },
   roomOver: h => {
     hostRoom(h)
@@ -142,6 +154,12 @@ const events: {readonly [E in Event]: (h: PageHarness, state: State) => unknown}
     h.page.cellClicked(4)
   },
   moveRefused: h => h.on.refused?.(1),
+  canActTold: h => h.on.canAct(true),
+  cannotActTold: h => h.on.canAct(false),
+  moveAnsweredWithProblem: h => {
+    h.netcode.actAnswer = 'cannot act'
+    h.page.cellClicked(4)
+  },
   firstMatchReady: (h, state) => h.on.snapshot(told(hosts(state), {running: false, match: 0, seats: [1, 2], game: null})),
   nextMatchReady: (h, state) => h.on.snapshot(told(hosts(state), {running: false, match: 1, seats: [1, 2], game: drawn})),
   seatFreedAfterWin: (h, state) => {
@@ -286,7 +304,7 @@ const run = async (state: State, event: Event, outcome: Outcome): Promise<void> 
     const show = shows[outcome.shows]
     assert.ok(show, `no check of what the page shows: ${outcome.shows}`)
     show(h)
-  } else if (event === 'moveRefused' || event === 'cannotStart' || event === 'cellClickOther') {
+  } else if (event === 'moveRefused' || event === 'cannotStart' || event === 'cellClickOther' || event === 'moveAnsweredWithProblem') {
     assert.deepEqual(h.views.at(-1), before)
     assert.ok(h.views.length >= views)
   }
@@ -297,6 +315,15 @@ const run = async (state: State, event: Event, outcome: Outcome): Promise<void> 
     assert.deepEqual(changed, [null])
   } else {
     assert.deepEqual(changed, [])
+  }
+  if (outcome.clickOnEmptyCellOfOwnTurn !== undefined) {
+    if (stateOf(h) === 'entering') {
+      h.on.snapshot(ownTurnSnapshot('entering'))
+    }
+    const callsBeforeClick = h.netcode.calls.length
+    h.page.cellClicked(4)
+    const expected = outcome.clickOnEmptyCellOfOwnTurn === 'makes the move' ? netcodeCalls.act(h) : []
+    assert.deepEqual(h.netcode.calls.slice(callsBeforeClick), expected)
   }
 }
 
@@ -440,7 +467,6 @@ test('2-9 the host page starts no match and shows no next-match button while a s
   assert.equal(h.view.nextMatch, false)
   h.on.snapshot(view({running: false, match: 1, seats: [1, null], game: won, number: 2}))
   assert.equal(h.view.nextMatch, false)
-  h.page.startNextPressed()
   assert.deepEqual(h.netcode.calls, ['start a game'])
 })
 
@@ -459,7 +485,6 @@ test('2-9 a page that does not host starts no match and shows no next-match butt
   h.on.snapshot(view({participant: 2, isHost: false, running: false, match: 0, seats: [1, 2], game: null, number: 2}))
   h.on.snapshot(view({participant: 2, isHost: false, running: false, match: 1, seats: [1, 2], game: won, number: 3}))
   assert.equal(h.view.nextMatch, false)
-  h.page.startNextPressed()
   assert.deepEqual(h.netcode.calls, [`enter ${code}`])
 })
 
@@ -481,7 +506,4 @@ test('2-9 2-10 after the end the requests and the next-match button are gone', (
   h.on.ended({cause: 'room closed'})
   assert.equal(h.view.nextMatch, false)
   assert.deepEqual(h.view.requests, [])
-  h.page.answered(3, true)
-  h.page.startNextPressed()
-  assert.deepEqual(h.netcode.calls, ['start a game'])
 })

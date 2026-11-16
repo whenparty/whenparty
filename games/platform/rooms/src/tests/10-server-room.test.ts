@@ -220,6 +220,13 @@ test('10-4 a created room has term 1, and its owner connection and page are thos
   assert.equal(h.reconnect('owner 2', room, {page: 'page of owner'})?.t, 'roster')
 })
 
+test('10-6 a reconnect with an app ID that is not valid gets "no room"', () => {
+  const h = serverHarness()
+  const room = h.create('owner')
+  h.close('owner')
+  assert.equal(h.reconnect('owner 2', {...room, app: 'Not valid'}, {page: 'page of owner'})?.a, 'no room')
+})
+
 test('10-3 a room closes when the waiting time passes without an owner connection, and not a millisecond before', () => {
   const h = serverHarness()
   const room = h.create('owner', 60)

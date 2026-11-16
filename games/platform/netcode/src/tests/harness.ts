@@ -29,7 +29,6 @@ export interface Failing {
   presence: Set<string>
   deadline: Set<number>
   deadlines: boolean
-  over: boolean
   deadlinesAlways: number | null
   initialDue: readonly number[]
   chainBelow: number | null
@@ -79,9 +78,6 @@ const testRules = (calls: Call[], failing: Failing, options: TitleOptions): Rule
     },
     over: state => {
       record('over')
-      if (failing.over) {
-        throw new Error('over')
-      }
       return (state as unknown as Play).over === true
     },
     isAction: value => value !== 'not an action',
@@ -142,7 +138,6 @@ export const harness = (options: TitleOptions = {}): Harness => {
     presence: new Set(),
     deadline: new Set(),
     deadlines: false,
-    over: false,
     deadlinesAlways: null,
     initialDue: [],
     chainBelow: null

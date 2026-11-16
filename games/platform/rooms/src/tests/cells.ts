@@ -3,7 +3,9 @@ import {test} from 'node:test'
 
 type Cell = {readonly ids: readonly string[]; readonly outcome: unknown} | {readonly impossible: string}
 
-type Branches = {readonly branches: readonly {readonly when: string; readonly outcome: unknown}[]}
+type Branch = {readonly when: string; readonly outcome: unknown} | {readonly when: string; readonly impossible: string}
+
+type Branches = {readonly branches: readonly Branch[]}
 
 export type Check<O> = (outcome: O) => void | Promise<void>
 
@@ -29,6 +31,9 @@ export const testCells = <T extends {readonly [state: string]: {readonly [event:
       const ids = cell.ids.join(' ')
       if (isBranches(cell.outcome)) {
         for (const branch of cell.outcome.branches) {
+          if (!('outcome' in branch)) {
+            continue
+          }
           const check = typeof scenario === 'object' ? scenario[branch.when] : undefined
           const title = `${ids} ${name}: ${state}, ${event}, when ${branch.when}`
           if (typeof check === 'object') {
