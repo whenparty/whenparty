@@ -2,7 +2,7 @@
 
 ## Context
 
-The blog is a section of When Party, and the page of `www.when.party` links to it with a balloon of its own, as it links to the games. Its posts are Markdown, so its pages need a build step, and a new post comes every week or two.
+The blog is a section of When Party, and the page of `www.when.party` is to link to it with a balloon of its own, as it links to the games. Its posts are Markdown, so its pages need a build step, and a new post comes every week or two.
 
 `www/` is one page written by hand, without a build step or package dependencies for the page. Its browser tests compare storyboards of the balloon takeoff with approved screenshots, as [screenshot-tests.md](/www/docs/decisions/screenshot-tests.md) decides, and `www.yml` deploys it on every change in `www/` other than Markdown.
 
