@@ -109,6 +109,7 @@ figcaption { margin-top: 8px; color: var(--ink-muted); font-size: 14px; line-hei
 .post-body blockquote { margin: 0 0 18px; padding-left: 16px; border-left: 2px solid var(--sage); color: var(--ink-muted); }
 
 .table-wrap { overflow-x: auto; margin: 24px 0; }
+.formula { overflow-x: auto; margin: 24px 0; font-size: 22px; }
 table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 15px; line-height: 23px; }
 th, td { padding: 10px 12px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--graphite-faint); }
 thead th { border-bottom: 2px solid var(--graphite); }
