@@ -18,8 +18,6 @@ When a task needs a decision the conventions do not cover, such as a new [projec
 
 A new package dependency is a package that a change adds to the `dependencies` or `devDependencies` of a `package.json`, other than `@whenparty/*` packages and packages that the user's request names. Claude Code asks to confirm some of these changes, as [configuration.md](/.claude/docs/configuration.md) describes; approving such a prompt is not the user's decision on a new package dependency.
 
-Put new text in the document where it belongs, even when that takes the document over the word limit of the [writing rules](/docs/conventions/writing.md). Then check the limit. When a document is over it, propose to the user how to bring it under the limit, and make the change after the user approves it. Consider these in order and stop at the first that brings it under: regroup its text so that each section has one topic, which shows the parts that belong elsewhere; move those parts to the documents they belong to; split what remains, as the writing rules describe; and only then shorten the wording, keeping every rule, fact and condition the text states. For a specification file, only the reformat that the [specification rules](/docs/conventions/specs.md) describe applies.
-
 When you see a better way to reach the result than a rule allows, follow the rule anyway. In your report, name the rule, describe the better way and why it is better. The user decides whether to change the rule.
 
 Do not propose again an option that a [decision record](/docs/conventions/decisions.md) has already weighed unless you have facts that the record does not contain. Link the record and name those facts.

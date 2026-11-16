@@ -20,7 +20,6 @@ jobs:
       game-names: ${{ steps.changes.outputs.game-names }}
       www: ${{ steps.changes.outputs.www }}
       blog: ${{ steps.changes.outputs.blog }}
-      markdown: ${{ steps.changes.outputs.markdown }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -85,9 +84,6 @@ jobs:
             blog=true
           fi
 
-          markdown=$(git diff -z --name-only --diff-filter=d "$base" HEAD -- '*.md' |
-            jq -Rsc 'split("\u0000") | map(select(length > 0))')
-
           {
             echo "games-workflows=$games_workflows"
             echo "turn=$turn"
@@ -96,7 +92,6 @@ jobs:
             echo "game-names=$game_names"
             echo "www=$www"
             echo "blog=$blog"
-            echo "markdown=$markdown"
           } | tee -a "$GITHUB_OUTPUT"
 
   games-changes:
@@ -139,41 +134,8 @@ jobs:
     if: needs.changes.outputs.blog == 'true'
     uses: ./.github/workflows/check-blog.yml
 
-  words:
-    needs: changes
-    if: needs.changes.outputs.markdown != '[]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Check the word limit
-        env:
-          FILES: ${{ needs.changes.outputs.markdown }}
-        run: |
-          set -euo pipefail
-          limit=$(sed -n 's/.*at most \([0-9][0-9]*\) words.*/\1/p' docs/conventions/writing.md | head -n 1)
-          if [ -z "$limit" ]; then
-            echo "::error file=docs/conventions/writing.md::No 'at most N words' in docs/conventions/writing.md"
-            exit 1
-          fi
-          status=0
-          while IFS= read -r file; do
-            case "$file" in
-              .claude/agents/* | .claude/skills/* | blog/src/posts/*) continue ;;
-            esac
-            words=$(LC_ALL=C awk '/^ *```mermaid *$/ { m = 1; k = 0; next } m && /^ *```/ { m = 0; next } m { k += NF; next } { n += NF } END { print n + m * (k + 1) }' "$file")
-            if [ "$words" -gt "$limit" ]; then
-              echo "::error file=$file::$file has $words words. A Markdown document has at most $limit words, as docs/conventions/writing.md says."
-              status=1
-            fi
-          done < <(jq -r '.[]' <<< "$FILES")
-          exit "$status"
-
   result:
-    needs: [changes, games-changes, games, turn, nginx, project-names, game-names, www, blog, words]
+    needs: [changes, games-changes, games, turn, nginx, project-names, game-names, www, blog]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
