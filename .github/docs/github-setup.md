@@ -9,7 +9,7 @@ These are the settings of the `whenparty/whenparty` repository and its packages 
 | `VPS_HOST`, `VPS_DEPLOY_KEY` | every deploy, to copy files to the VPS and run commands there over SSH |
 | `VPS_USER` | every deploy, as the deploy user. The deploy user runs `docker`, `docker compose` and `crontab` over SSH. |
 | `TRAEFIK_DASHBOARD_USER`, `TRAEFIK_DASHBOARD_PASSWORD` | `traefik.yml`, for the Traefik dashboard login. A new value takes effect at the next run of `traefik.yml`, which can be started by hand. |
-| `TURN_SECRET` | `deploy-project.yml`, for each deployment whose `compose.yml` names `TURN_SECRET`: the TURN relay and the signaling server, as the [TURN relay's documentation](/games/platform/turn/AGENTS.md) says |
+| `TURN_SECRET` | `deploy-project.yml`, for each deployment whose `compose.yml` names `TURN_SECRET`: the TURN relay and the signaling server, as the [TURN relay's documentation](/games/platform/turn/docs/deployment.md) says |
 
 The workflows push images and upload scan results with the `GITHUB_TOKEN` that GitHub gives every run.
 
