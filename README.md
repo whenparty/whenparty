@@ -23,7 +23,7 @@ The games in [games/](/games/AGENTS.md) send game data directly between players'
 
 ## How changes reach the VPS
 
-A push to `main` deploys only the parts whose files it changes. A change to Markdown files alone deploys nothing, apart from a post of the blog.
+A change reaches `main` through a pull request once `ci.yml` passes on it. A push to `main` deploys only the parts whose files it changes. A change to Markdown files alone deploys nothing, apart from a post of the blog.
 
 | Folder | Workflow | What it deploys |
 | --- | --- | --- |

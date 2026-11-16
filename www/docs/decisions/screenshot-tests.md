@@ -4,13 +4,13 @@
 
 `www/` is one static page without components or a specification, and most of what it does is animation: balloons inflate, bob and take off, their strings meet ropes, and the page fades. A mistake, such as a string that points at the rope while its balloon flies away, shows at once to a person who watches.
 
-A browser test can measure each part at a set time of an animation, or take a screenshot. Playwright compares a screenshot with an approved one within a tolerance and, when they differ, leaves both and their difference. Browsers draw some pixels differently on another system or processor: Docker on an Apple Silicon Mac runs arm64, and GitHub's runners x86. A pull request shows old and new images side by side. Git LFS keeps files outside the repository, and every checkout of them counts towards a transfer quota. A workflow run by hand must be on `main`, while one that a label on a pull request starts runs from its branch. GitHub holds the checks of a commit that a workflow makes with its own token until someone approves them.
+A browser test can measure each part at a set time of an animation, or take a screenshot. Playwright compares a screenshot with an approved one within a tolerance and, when they differ, leaves both and their difference. Browsers draw some pixels differently on another system or processor. A pull request shows old and new images side by side. Git LFS keeps files outside the repository, and every checkout of them counts towards a transfer quota.
 
-As [ci-checks.md](/docs/decisions/ci-checks.md) decides, `ci.yml` checks every pull request and push to `main`, and only `games.yml` and `infra.yml` wait for their checks. No ruleset on `main` requires a pull request or a passing check, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides. The site deploys in about 1.5 minutes, and the browser tests take 1 to 2 in CI.
+As [ci-checks.md](/docs/decisions/ci-checks.md) decides, `ci.yml` checks every pull request and push to `main`, and only `games.yml` and `infra.yml` wait for their checks. A ruleset on `main` requires a pull request and the `result` check of `ci.yml`, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides. The site deploys in about 1.5 minutes, and the browser tests take about half a minute in CI.
 
 ## Options
 
-This decision has four parts.
+This decision has three parts. Where the approved screenshots are made is decided in [screenshot-updates.md](screenshot-updates.md).
 
 How the animations are checked:
 
@@ -25,25 +25,19 @@ Where the approved screenshots live:
 - Git LFS. The repository stays small. It needs setup, CI checkouts with LFS, and the transfer quota.
 - Their hashes in git. The smallest. A hash allows no tolerance, so one pixel fails the test, and a failure has no approved image to compare with.
 
-Where the approved screenshots are made:
-
-- Locally, in the same Docker image. No workflow with write access. On an Apple Silicon Mac they differ from what CI draws.
-- In CI, by a workflow run by hand on the branch. The same kind of machine as the check. It needs its file on `main` and write access, and its commit needs an approval to be checked.
-- In CI, by a workflow that a label on the pull request starts. The same, but it runs from the branch, and the label must exist.
-
 Whether the deploy waits for the tests:
 
-- `www.yml` calls the check before it deploys. A failing test stops the page from going live. Every deploy takes 1 to 2 minutes longer.
-- The deploy does not wait. CI still tests every change to `www/`. A direct push that fails the tests is already live.
+- `www.yml` calls the check before it deploys. Failing tests stop the page from going live, even after a merge that combines changes that each passed alone. Every deploy takes about half a minute longer.
+- The deploy does not wait. A pull request that fails the tests cannot merge. A merge that combines changes that each passed alone can put a broken page live before `ci.yml` reports it.
 
 ## Decision
 
-Storyboards of the takeoff at a desktop and a phone width, compared with PNG files in git that a workflow in CI makes when a label asks for it, and a few tests without screenshots, such as when the link opens. Approving a sheet of frames by eye costs less than an assertion for every part, and it catches mistakes nobody foresaw. The page has no components for stories. A few hundred kilobytes per update do not justify Git LFS, and hashes would hide the difference that makes a failure useful. Screenshots from the machine type of the check keep a local Mac out of the approved images, and a label works on every pull request from a branch of this repository, even one that changes the workflow.
+Storyboards of the takeoff at a desktop and a phone width, compared with PNG files in git, and a few tests without screenshots, such as when the link opens. Approving a sheet of frames by eye costs less than an assertion for every part, and it catches mistakes nobody foresaw. The page has no components for stories. A few hundred kilobytes per update do not justify Git LFS, and hashes would hide the difference that makes a failure useful.
 
-The deploy does not wait for the tests. CI tests pull requests before they merge, and a quick change to the page stays quick.
+The deploy does not wait for the tests. A pull request that fails them cannot merge, and a merged change goes live at once. A merge that combines changes that each passed alone can put a broken page live until a fix follows, which costs less than half a minute on every deploy.
 
 ## Consequences
 
 - [page.browser.test.ts](../../tests/page.browser.test.ts) and [playwright.config.ts](../../playwright.config.ts).
 - [tests.md](../tests.md).
-- [check-www.yml](/.github/workflows/check-www.yml), [www-snapshots.yml](/.github/workflows/www-snapshots.yml) and [checks.md](/.github/docs/checks.md).
+- [check-www.yml](/.github/workflows/check-www.yml), which [www.yml](/.github/workflows/www.yml) does not call, and [checks.md](/.github/docs/checks.md).
