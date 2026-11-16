@@ -17,7 +17,7 @@ How the names stay apart:
 
 Whether the deploys call it:
 
-- Every deploy of a compose file that nginx can reach calls it: `games.yml`, `temp-sites.yml`, `traefik.yml`, `www.yml`, `nii-au.yml` and `infra.yml`. A direct push with a clash deploys nothing. Every temporary site then waits for a check, and a clash also stops deploys that do not touch it.
+- Every deploy of a compose file that nginx can reach calls it: `games.yml`, `temp-sites.yml`, `traefik.yml`, `www.yml`, `blog.yml`, `nii-au.yml` and `infra.yml`. A direct push with a clash deploys nothing. Every temporary site then waits for a check, and a clash also stops deploys that do not touch it.
 - No deploy calls it. A deploy does not depend on it. A direct push with a clash deploys, until the next push fixes it, and `ci.yml` reports it on that push.
 
 ## Decision

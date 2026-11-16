@@ -15,7 +15,7 @@
 
 - The workflow [traefik.yml](/.github/workflows/traefik.yml) runs on a push to `main` that changes it or a file in `traefik/` other than Markdown, or by hand from GitHub Actions, as [deploys.md](/.github/docs/deploys.md) describes.
 - It copies only `traefik/docker-compose.yml` and `traefik/traefik.yml` to `/opt/services/whenparty/temp-sites/traefik`. A new file that the router needs also needs a change to that copy step.
-- It writes `.env` with the dashboard credentials from the repository secrets `TRAEFIK_DASHBOARD_USER` and `TRAEFIK_DASHBOARD_PASSWORD`, pulls the image and recreates the container. So every deploy applies the static configuration, and every deploy interrupts the temp sites for a few seconds.
+- It writes `.env` with the dashboard credentials from the repository secrets `TRAEFIK_DASHBOARD_USER` and `TRAEFIK_DASHBOARD_PASSWORD`, with each `$` of the basic auth hash written as `$$`, because `docker compose` reads `$` in `.env` as the start of a variable. Then it pulls the image and recreates the container. So every deploy applies the static configuration, and every deploy interrupts the temp sites for a few seconds.
 - No check runs before the deploy. It fails when the dashboard does not answer with HTTP 401 within about 30 seconds, and then the router may be down for every site. Revert the change on `main`, which deploys the previous files.
 - [image-scan.md](/.github/docs/image-scan.md) says how the Traefik image is scanned.
 

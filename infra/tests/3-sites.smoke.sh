@@ -2,6 +2,7 @@
 . "$(dirname "$0")/proxy.sh"
 
 echo_stub www
+echo_stub blog
 echo_stub nii-au
 stub traefik-tempsites "server {
   listen 8000;
@@ -19,6 +20,8 @@ check '3-1 nii.au redirects' "$(request nii.au '/a?b=1')" 301
 check '3-1 nii.au redirects to www.nii.au' "$(header location)" 'https://www.nii.au/a?b=1'
 request www.when.party /a >/dev/null
 check_contains '3-1 www.when.party goes to www' "$(body)" 'www www.when.party /a|'
+request blog.when.party /a >/dev/null
+check_contains '3-1 blog.when.party goes to blog' "$(body)" 'blog blog.when.party /a|'
 request www.nii.au /a >/dev/null
 check_contains '3-1 www.nii.au goes to nii-au' "$(body)" 'nii-au www.nii.au /a|'
 request dtm-cleaning.when.party /a >/dev/null
@@ -26,7 +29,7 @@ check_contains '3-1 another host goes to the temporary sites' "$(body)" 'traefik
 request a.b.when.party /a >/dev/null
 check_contains '3-1 a host two levels below goes to the temporary sites' "$(body)" 'traefik-tempsites a.b.when.party /a|'
 
-for host in www.when.party www.nii.au dtm-cleaning.when.party; do
+for host in www.when.party blog.when.party www.nii.au dtm-cleaning.when.party; do
   check "3-2 a 404 of $host keeps its status" "$(request "$host" /missing)" 404
   check_contains "3-2 a 404 of $host shows the shared page" "$(body)" '<title>Page not found</title>'
   check_contains "3-2 the shared page links to the root of $host" "$(body)" 'href="/"'

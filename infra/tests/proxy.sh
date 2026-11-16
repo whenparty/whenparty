@@ -46,6 +46,7 @@ echo_stub() {
     location ~ status-502 { return 502 'stub 502'; }
     location ~ status-504 { return 504 'stub 504'; }
     location = /slow { limit_rate 20k; alias /etc/nginx/conf.d/slow.bin; }
+    location = /file { add_header Cache-Control 'public, max-age=60'; alias /etc/nginx/conf.d/slow.bin; }
     location / { return 200 '$1 \$host \$request_uri|\$http_x_real_ip|\$http_x_forwarded_for|\$http_x_forwarded_proto|\$http_upgrade|\$http_connection'; }
   }"
 }

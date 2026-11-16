@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7f4">
+  <title>{{ title }} · {{ titleSuffix }}</title>
+  <meta name="description" content="{{ description }}">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="{{ page | stylesUrl }}">
+</head>
+<body>
+  <header class="page-width site-header">
+    <a class="wordmark" href="/">when party <i>blog</i><span class="wordmark-period">.</span></a>
+  </header>
+  <main class="page-width">
+    {{ content | safe }}
+  </main>
+  <footer class="page-width site-footer">
+    <a href="https://www.when.party/">when.party</a>
+  </footer>
+</body>
+</html>

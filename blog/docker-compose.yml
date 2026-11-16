@@ -1,0 +1,27 @@
+services:
+  blog:
+    image: ghcr.io/whenparty/blog:latest
+    container_name: blog
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /run
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./audio:/usr/share/nginx/html/audio:ro
+    networks:
+      - wp_www
+
+networks:
+  wp_www:
+    external: true

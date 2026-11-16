@@ -1,6 +1,6 @@
 # Writing
 
-These rules apply to every document, and to responses where they say so. The other conventions files that the [map](/AGENTS.md) lists add rules for the kinds of files they cover, such as the [folder document rules](/docs/conventions/folder-docs.md).
+These rules apply to every [document](/docs/glossary.md#document), and to responses where they say so. The other conventions files that the [map](/AGENTS.md) lists add rules for the kinds of files they cover, such as the [folder document rules](/docs/conventions/folder-docs.md), and [links.md](/docs/conventions/links.md) says how documents link to other files.
 
 - Use the minimum text needed in documents and responses.
 - Describe only current behaviour. Replace or delete superseded text without adding change histories or before-and-after narratives. Keep history in Git. Reasons for a change belong in commit messages and in the pull request description when there is one. The [specification rules](/docs/conventions/specs.md) say how a specification and `docs/PLANNED.md` describe changes that are not on `main` yet.
@@ -17,9 +17,3 @@ These rules apply to every document, and to responses where they say so. The oth
 - In a README or a specification, show states and transitions, flows with branches and how parts connect as a diagram where that is shorter or clearer than sentences or lists. Draw it as Mermaid code in a `mermaid` code block, not as an image file or a drawing in plain text, and keep its labels to a few words. Other documents, such as an `AGENTS.md`, the files in a `docs/` folder other than a specification, and decision records, have no diagrams. A file tree is not a diagram and stays plain text in any document.
 - In any document, show items that share the same fields as a table where that is shorter or clearer than sentences or lists. The text around a diagram or table adds only what it cannot show.
 - Write for a reader who knows the repository documentation but not the discussions behind it. Do not refer to conversations or agreements. Define a term that can be read in more than one way in the [glossary](/docs/glossary.md), and link to it where it is used.
-
-## Links
-
-- Inside one of the [projects](/docs/glossary.md#project) that the [map](/AGENTS.md) lists, such as `games/`, including all its subprojects and modules, link with relative paths, such as `../p2p/AGENTS.md`. Link to anything outside that project with a path from the repository root that starts with `/`, such as `/infra/nginx/conf.d/`.
-- Documents outside those projects, such as the root `AGENTS.md` and `README.md` and everything in the root `docs/`, link to other files only with paths from the repository root.
-- A link to a heading in the same file uses only the anchor, such as `#subproject`.

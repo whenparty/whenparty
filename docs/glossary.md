@@ -19,3 +19,7 @@ A folder that a deploy workflow deploys on its own with its Compose file, `compo
 ## Integration test
 
 A unit test checks one function, class, file or component on its own. An integration test checks how several of them work together, such as a game's rules with the platform's room functions. Either kind runs in Node or in a real browser, as the [testing rules](/docs/conventions/tests.md) say.
+
+## Document
+
+A Markdown file of the repository, other than a post of the blog in `blog/src/posts/`, which is a page of the site.

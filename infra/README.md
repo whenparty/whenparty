@@ -8,7 +8,7 @@ On port 443 it terminates TLS with Cloudflare Origin Certificates for `when.part
 flowchart LR
   cloudflare["Cloudflare, with its client certificate"] -->|443| nginx[nginx proxy]
   direct[Direct request to the server] -->|443| reject["400 error or refused handshake"]
-  nginx -->|wp_www network| sites["www and nii-au containers"]
+  nginx -->|wp_www network| sites["www, blog and nii-au containers"]
   nginx -->|wp_games network| games["game and signaling containers"]
   nginx -->|wp_tempsites network| traefik["Traefik: temp sites"]
 ```

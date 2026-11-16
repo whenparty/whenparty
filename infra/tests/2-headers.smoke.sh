@@ -2,8 +2,10 @@
 . "$(dirname "$0")/proxy.sh"
 
 echo_stub www
+echo_stub blog
 echo_stub nii-au
 echo_stub index
+echo_stub games-tictactoe
 echo_stub signaling 8080
 pause_stub traefik-tempsites 8000
 proxy_start
@@ -32,6 +34,7 @@ while IFS='|' read -r host policy; do
   check "2-2 the Content-Security-Policy of $host" "$(header content-security-policy)" "$policy"
 done <<'EOF'
 www.when.party|default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://static.cloudflareinsights.com; frame-ancestors 'self';
+blog.when.party|default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://static.cloudflareinsights.com; frame-ancestors 'self';
 www.nii.au|default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; img-src 'self'; media-src 'self' blob:; connect-src 'self' https://static.cloudflareinsights.com; frame-ancestors 'self';
 games.when.party|default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://signaling.when.party https://signaling.when.party; frame-ancestors 'none';
 dtm-cleaning.when.party|default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';
@@ -49,6 +52,40 @@ check '2-3 the client address is appended to X-Forwarded-For' "$(printf '%s' "$s
 check '2-3 the site gets X-Forwarded-Proto: https' "$(printf '%s' "$seen" | cut -d '|' -f 4)" https
 check '2-3 a WebSocket upgrade keeps its Upgrade header' "$(printf '%s' "$seen" | cut -d '|' -f 5)" websocket
 check '2-3 a WebSocket upgrade gets Connection: upgrade' "$(printf '%s' "$seen" | cut -d '|' -f 6)" upgrade
+
+stub_header() {
+  docker exec "$1" wget -q -S -O /dev/null "http://127.0.0.1:$2/file" 2>&1 | tr -d '\r' |
+    awk -v name="$3" 'tolower($0) ~ "^ *" tolower(name) ":" { sub(/^ *[^:]*: */, ""); print; exit }'
+}
+cache_controls() {
+  printf '%s|%s' "$(header cache-control)" "$(tr -d '\r' < "$work/headers" | grep -ci '^cache-control:' || true)"
+}
+
+check_file_answers() {
+  check "2-8 a Range request on $2 gets the 206 of the site" "$(request "$2" "$3" -H 'Range: bytes=0-1')" 206
+  check "2-8 a Range request on $2 gets the Content-Range of the site" "$(header content-range)" 'bytes 0-1/204800'
+  check "2-9 a Range request on $2 gets the one Cache-Control of the site" "$(cache_controls)" 'public, max-age=60|1'
+  request "$2" "$3" >/dev/null
+  check "2-8 an answer on $2 gets the ETag of the site" "$(header etag)" "$(stub_header "$1" "$4" etag)"
+  check "2-8 an answer on $2 gets the Last-Modified of the site" "$(header last-modified)" "$(stub_header "$1" "$4" last-modified)"
+  check "2-9 an answer on $2 gets the one Cache-Control of the site" "$(cache_controls)" 'public, max-age=60|1'
+}
+
+for site in 'www www.when.party /file 80' 'blog blog.when.party /file 80' 'nii-au www.nii.au /file 80' \
+  'signaling signaling.when.party /file 8080' 'games-tictactoe games.when.party /tictactoe/file 80'; do
+  check_file_answers $site
+done
+request blog.when.party / >/dev/null
+check '2-9 an answer without Cache-Control gets none from the proxy' "$(cache_controls)" '|0'
+
+request blog.when.party /file >/dev/null
+etag=$(header etag)
+modified=$(header last-modified)
+check '2-8 If-Range with the ETag of the site gets a 206' "$(request blog.when.party /file -H 'Range: bytes=0-1' -H "If-Range: $etag")" 206
+check '2-8 If-Range with the Last-Modified of the site gets a 206' "$(request blog.when.party /file -H 'Range: bytes=0-1' -H "If-Range: $modified")" 206
+check '2-8 a Range past the end gets the 416 of the site' "$(request blog.when.party /file -H 'Range: bytes=999999-')" 416
+check '2-8 a Range past the end gets the Content-Range of the site' "$(header content-range)" 'bytes */204800'
+check '2-8 If-Range that does not match gets the 200 of the site' "$(request blog.when.party /file -H 'Range: bytes=0-1' -H 'If-Range: "other"')" 200
 
 head -c 1048576 /dev/zero > "$work/largest.bin"
 head -c 1048577 /dev/zero > "$work/too-large.bin"
@@ -95,5 +132,11 @@ docker stop nii-au >/dev/null
 proxy_edit default.conf 's/^proxy_connect_timeout .*;$/proxy_connect_timeout 1s;/'
 proxy_edit nii-au.conf "s/server nii-au:80 resolve;/server $gone:80;/"
 check '2-7 a site that does not accept the connection answers 504' "$(request www.nii.au / --max-time 4)" 504
+
+docker rm -f traefik-tempsites >/dev/null
+echo_stub traefik-tempsites 8000
+docker restart proxy-test-nginx >/dev/null
+proxy_wait
+check_file_answers traefik-tempsites dtm-cleaning.when.party /file 8000
 
 finish

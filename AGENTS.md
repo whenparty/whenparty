@@ -4,6 +4,7 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 
 - [`infra/`](/infra/AGENTS.md): the nginx proxy that terminates TLS for every site.
 - [`www/`](/www/AGENTS.md): the When Party site at `www.when.party`.
+- [`blog/`](/blog/AGENTS.md): the When Party blog at `blog.when.party`.
 - [`nii-au/`](/nii-au/AGENTS.md): the site at `www.nii.au`.
 - [`temp-sites/`](/temp-sites/AGENTS.md): temporary sites on `*.when.party` and the Traefik router that serves them.
 - [`games/`](/games/AGENTS.md): peer-to-peer browser games and the platform they share.
@@ -24,6 +25,7 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 ## Conventions files
 
 - [writing.md](/docs/conventions/writing.md): every document, and responses where its rules say so. The other conventions files add rules for the kinds of files they cover.
+- [links.md](/docs/conventions/links.md): the links in every document.
 - [folder-docs.md](/docs/conventions/folder-docs.md): every `AGENTS.md` and `README.md`, the documents on how to work in a folder, and where what code cannot express goes.
 - [specs.md](/docs/conventions/specs.md): specifications, `docs/PLANNED.md` and the part of a project's `AGENTS.md` that says which parts of the project need a specification.
 - [decisions.md](/docs/conventions/decisions.md): decision records.

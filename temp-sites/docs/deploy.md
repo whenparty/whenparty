@@ -19,4 +19,4 @@ Open the failed run in GitHub Actions and re-run its failed jobs. They deploy th
 
 ## Removing a site
 
-When a push deletes a site's folder, the deploy takes the site down and deletes its folder on the VPS, with any secrets and data in it. A renamed folder counts as a removed site and a new one, with a new package and, by convention, a new host. The GHCR package and the DNS record stay. The user deletes them by hand if the name will not be used again.
+When a push deletes a site's folder, the deploy takes the site down and deletes its folder on the VPS, with any secrets and data in it. A renamed folder counts as a removed site and a new one, with a new package and, by convention, a new host. The GHCR package stays. The user deletes it by hand if the name will not be used again.
