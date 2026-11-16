@@ -1,28 +1,15 @@
-// Which snapshots a tab takes as the room's state. One decision for every phase, so that the rules
-// about the creator's connections live in one place. STATES.md lists them; handover.test.ts checks each.
 import {hostOf, type Member, type RoomState} from './room-state.ts'
 
 export interface SnapshotSource {
   self: Member
   standing: 'waiting' | 'following' | 'hosting'
-  // Waiting as the creator after a reload
   restoring: boolean
   hidden: boolean
   known: RoomState<unknown> | null
   sender: string
 }
 
-export type SnapshotDecision =
-  | 'ignore'
-  // Take the room over as its creator, on this connection
-  | 'restore'
-  // The retained room already gave up on its creator
-  | 'expired'
-  // Host the room this snapshot names this connection for
-  | 'host'
-  // A rival tab of the creator hosts the same term: start a newer one
-  | 'outrank'
-  | 'follow'
+export type SnapshotDecision = 'ignore' | 'restore' | 'expired' | 'host' | 'outrank' | 'follow'
 
 export const decideSnapshot = (
   snapshot: RoomState<unknown>,
@@ -56,7 +43,6 @@ export const decideSnapshot = (
   }
 
   if (known && snapshot.term === known.term && host.peerId !== hostOf(known)?.peerId) {
-    // Two tabs of the creator host the same term: the lower connection ID keeps the room
     if (standing !== 'hosting' || !fromHost) {
       return 'ignore'
     }

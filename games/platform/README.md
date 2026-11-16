@@ -24,6 +24,6 @@ The transport server, with the rooms server in it, runs in the signaling server 
 | netcode | host | the room's owner in the game; its page keeps the game state and judges actions |
 | netcode | seat | a player's place in the game, such as X or O |
 | netcode | spectators' queue | the participants without a seat, in the order in which they get seats that free up |
-| netcode | match | one game on the host's page, from its start until it ends |
+| netcode | match | one round of a game, from its start on the host's page until it ends; a game can hold several matches, one after another |
 | netcode | snapshot | what the host's page holds about the game after a change, which it sends to the other pages |
-| netcode | action | a move that a participant's page sends to the host, which accepts it only from a player on a seat |
+| netcode | action | a move of a player on a seat while a match runs; the host judges every action, its own included, and the other pages send theirs to it |

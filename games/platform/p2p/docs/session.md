@@ -1,6 +1,6 @@
-# Session states
+# Session rules
 
-`step(model, event, env)` in `src/session-machine.ts` is pure. `session.ts` runs its effects and timers. Games own match rules and results.
+[src/session-machine.ts](../src/session-machine.ts) decides transitions with `step(model, event, env)`, and [src/session.ts](../src/session.ts) runs their effects and timers. [src/room-state.ts](../src/room-state.ts) holds the seats and the game as the host keeps them. Keep `step`, `decideSnapshot` and the functions of `room-state.ts` pure. [src/protocol.ts](../src/protocol.ts) validates the messages between pages. Games own match rules and results.
 
 ## Phases
 
@@ -13,9 +13,11 @@
 
 `room.hostId` identifies the creator throughout the room's lifetime. A guest cannot become its host. `term` increases when the same creator returns on another connection, so an old connection cannot replace it.
 
+A player keeps its identity across reloads, and a connection identifies one tab. Only a player's controlling connection can act for the player.
+
 ## Snapshot acceptance
 
-`decideSnapshot` in [src/handover.ts](src/handover.ts) is the one place that decides what a tab does with a snapshot; [its tests](src/tests/handover.test.ts) check every row.
+`decideSnapshot` in [src/handover.ts](../src/handover.ts) is the one place that decides what a tab does with a snapshot.
 
 | Tab | Snapshot | Decision |
 | --- | --- | --- |
@@ -41,8 +43,4 @@ The host advances elapsed `room.clock` before sending a snapshot. Receivers anch
 
 ## The game
 
-Games see the room through `RoomContext`: occupied seats, absent seats and room time. A game that waits for something lists its deadlines in `deadlinesOf`, in room time; the host keeps a timer for each and calls `onDeadline` when one is due, then broadcasts the result. `applyMove`, `onPresence` and `onDeadline` all run on the host.
-
-## Verification
-
-[Machine tests](src/tests/session-machine.test.ts) cover rules and deadlines; `invariantViolations` runs after every step there and in the fuzz. [Session tests](src/tests/session.test.ts) cover delivery, creator restoration and connection failure. [Seeded fuzz tests](src/tests/session-fuzz.test.ts) explore event interleavings and check that sessions converge or close without promoting guests.
+A game implements the interface `GameRules` of `room-state.ts` and sees the room through `RoomContext`: occupied seats, absent seats and room time. A game that waits for something lists its deadlines in `deadlinesOf`, in room time; the host keeps a timer for each and calls `onDeadline` when one is due, then broadcasts the result. `applyMove`, `onPresence` and `onDeadline` all run on the host.
