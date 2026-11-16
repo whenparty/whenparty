@@ -1,8 +1,8 @@
 # When Party site
 
-The site at [www.when.party](https://www.when.party); `when.party` redirects to it. It is one page: the name, a short introduction, a contact address, and balloons tied to a pencil rope: one opens the games at `games.when.party`, and a dashed one marked “soon” is not a link. A click on a balloon releases it: it flies up while the rest of the page fades, and then the site opens.
+The site at [www.when.party](https://www.when.party); `when.party` redirects to it. It is one page: the name, a short introduction, a contact address, and balloons tied to a pencil rope: one opens the games at `games.when.party`, one opens the blog at `blog.when.party`, and a dashed one marked “soon” is not a link. On wide screens the balloons are tied one under another along a rope with a weight at its end, in turn on its left and its right. On narrow screens they stand in a row over a horizontal rope, at alternating heights. A click on a balloon releases it: it flies up while the rest of the page fades, and then the site opens.
 
-It follows the Pencil & Gouache design system: graphite pencil lines on off-white paper, the Golos Text font, and color only on the navigation, here the denim gouache of the games balloon. The contact address sits on a faint graphite band. It follows the light or dark theme of the device and shows no motion to visitors who ask for reduced motion.
+It follows the Pencil & Gouache design system: graphite pencil lines on off-white paper, the Golos Text font, and color only on the navigation, here the denim gouache of the games balloon and the sage of the blog balloon. The contact address sits on a faint graphite band. It follows the light or dark theme of the device and shows no motion to visitors who ask for reduced motion.
 
 ```mermaid
 flowchart LR
