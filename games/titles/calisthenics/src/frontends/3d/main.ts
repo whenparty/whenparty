@@ -23,7 +23,7 @@ const lobbyExtra = (element<HTMLTemplateElement>('lobby-extra').content.firstEle
 const panel = mountPanel(
   element('panel'),
   {create: () => room.create(), join: code => room.join(code), send: move => room.send(move)},
-  {clock: visitNow, lobbyExtra}
+  {roomTimeOf: visitNow, lobbyExtra}
 )
 element<HTMLAnchorElement>('credits-link').href = creditsUrl
 let visit: Visit | null = null

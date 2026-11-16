@@ -1,4 +1,3 @@
-// The championship's challenges and how a performance scores
 import {characteristics, type Characteristic, type Counts, type Levels} from './athlete.ts'
 
 export interface Challenge {

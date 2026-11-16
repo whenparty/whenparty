@@ -1,4 +1,3 @@
-// Joining, keeping and leaving a championship room in the browser, for any interface
 import {createRoomCode, playerIdFrom, roomCodeFromHash, startSession} from '@whenparty/p2p'
 import type {Session, SessionView} from '@whenparty/p2p'
 import {calisthenics, type Championship, type Move} from './core/index.ts'
@@ -8,8 +7,6 @@ const hostHintMs = 10_000
 const hintRefreshMs = 2_000
 const hostingKey = 'calisthenics:hosting'
 
-// looking: not long enough to tell yet. unreachable: the room is there, but this network can't
-// connect to it. offline: no signaling server. nobody: nobody hosts the code.
 export type Search = 'looking' | 'unreachable' | 'offline' | 'nobody'
 
 export interface Visit {
@@ -67,7 +64,6 @@ const searchOf = ({session, view, hostIsLate}: Current): Search => {
   return session?.isSignalingOpen() === false ? 'offline' : 'nobody'
 }
 
-// Follows invite links in the page's hash, and reports every change of the visit
 export const openRoom = (onChange: (visit: Visit | null) => void): Room => {
   const playerId = playerIdFrom(() => localStorage)
   let current: Current | null = null

@@ -1,4 +1,3 @@
-// What each screen shows, whatever the interface draws it with
 import {actionsOf, energyAfter, planProblem, type Characteristic, type Counts, type Levels, type Plan, type PlanProblem} from './athlete.ts'
 import {challenges, completionOf, type Completion} from './challenges.ts'
 import {currentChallenge, type Athlete, type Championship, type Profile} from './championship.ts'

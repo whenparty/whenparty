@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "node --test && depcruise src"
+    "test": "node --test \"src/**/!(*.browser).test.ts\" && depcruise src"
   },
   "dependencies": {
     "@whenparty/p2p": "workspace:*",

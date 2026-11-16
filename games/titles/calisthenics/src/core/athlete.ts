@@ -1,4 +1,3 @@
-// An athlete's characteristics, energy and the plan that trains them
 export const characteristics = ['arms', 'chest', 'back', 'legs', 'abs', 'balance', 'stamina'] as const
 export type Characteristic = (typeof characteristics)[number]
 export type Levels = Record<Characteristic, number>
@@ -55,7 +54,6 @@ export const applyPlan = ({levels, energy}: Condition, plan: Plan): Condition =>
   energy: energyAfter(energy, plan)
 })
 
-// The plan without characteristics it does not train
 export const trimPlan = (plan: Plan): Plan => ({
   training: Object.fromEntries(characteristics.filter(each => plan.training[each]).map(each => [each, plan.training[each]])),
   rest: plan.rest

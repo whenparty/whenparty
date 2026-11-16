@@ -17,7 +17,8 @@ export default async () => {
   ])
   const pages = await Promise.all([
     createServer({configFile: false, root: games, server: {port: 5173, ...unwatched}}),
-    createServer({root: `${games}titles/tictactoe`, server: {port: 5174, ...unwatched}})
+    createServer({root: `${games}titles/tictactoe`, server: {port: 5174, ...unwatched}}),
+    createServer({root: `${games}titles/calisthenics`, server: {port: 5175, ...unwatched}})
   ])
   await Promise.all(pages.map(server => server.listen()))
   return async () => {
