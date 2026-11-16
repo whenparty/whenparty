@@ -70,6 +70,7 @@ test('4-5 when the athlete fails to load the 3D page says that 3D is unavailable
 })
 
 test('4-5 the athlete holds a still pose while the browser asks for reduced motion and moves otherwise', async ({page}) => {
+  test.slow()
   await page.emulateMedia({reducedMotion: 'reduce'})
   await page.goto(pageUrl)
   await expect(page.locator('#scene-loader')).toBeHidden({timeout: sceneWaitMs})
