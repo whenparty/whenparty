@@ -4,13 +4,22 @@ The proxy relies on this setup on the VPS and in Cloudflare. The GitHub secrets 
 
 ## VPS
 
-The certificates folder must exist before the first deploy:
+Before the first deploy, create the certificates folder and the Docker networks that nginx shares with the sites:
 
 ```bash
 mkdir -p /opt/services/whenparty/infra/nginx/certs
+docker network create wp_www
+docker network create wp_tempsites
+docker network create wp_games
 ```
 
-`infra.yml` creates the `wp_www`, `wp_tempsites` and `wp_games` networks. The site deploys through `site.yml` do not create `wp_www`, so on a new VPS the proxy deploys before `www/`, `blog/` and `nii-au/`.
+No deploy creates a network. Every Compose file names these networks as external, and `docker compose up` fails while one is missing. So a new network is created on the VPS before the first deploy whose Compose file names it.
+
+After the first deploy of `infra/`, write the list of Cloudflare addresses as the deploy user, as [cloudflare-ip-list.md](cloudflare-ip-list.md) says:
+
+```bash
+/opt/services/whenparty/infra/scripts/update-cloudflare-real-ip.sh
+```
 
 ## Certificates
 

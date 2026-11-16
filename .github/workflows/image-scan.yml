@@ -12,6 +12,7 @@ permissions:
 jobs:
   images:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       list: ${{ steps.list.outputs.list }}
     steps:
@@ -30,6 +31,7 @@ jobs:
   scan:
     needs: images
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:

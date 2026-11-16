@@ -23,6 +23,6 @@ nginx routes the games by the first segment of the path. Against the previous se
 ## Consequences
 
 - [games.conf](/infra/nginx/conf.d/games.conf), [default.conf](/infra/nginx/conf.d/default.conf), [docker-compose.yml](/infra/docker-compose.yml) and [games-conf.md](/infra/docs/games-conf.md).
-- [sites.md](/infra/docs/sites.md), and [deploys.md](/.github/docs/deploys.md) with the workflows it describes: [infra.yml](/.github/workflows/infra.yml), [deploy-project.yml](/.github/workflows/deploy-project.yml), [games.yml](/.github/workflows/games.yml) and [temp-sites.yml](/.github/workflows/temp-sites.yml).
+- [sites.md](/infra/docs/sites.md) and [setup.md](/infra/docs/setup.md#vps), which creates the network `wp_games` on the VPS.
 - [hosting.md](/games/titles/docs/hosting.md), the compose files of the [titles](/games/titles/), and those of the [index page](/games/index/compose.yml) and the [signaling server](/games/platform/signaling/compose.yml).
 - [traefik.md](/temp-sites/docs/traefik.md).

@@ -9,7 +9,7 @@
 - [sites.md](docs/sites.md): how the proxy reaches the container of each site, and how to add or remove a site. Read it before changing an upstream, the networks in `docker-compose.yml`, or the name of a container or network of a site.
 - [The infra.yml section of deploys.md](/.github/docs/deploys.md#infrayml): what `infra.yml` does on the VPS and what the deploy leaves behind. Read it before changing `infra.yml` or removing a file from `infra/`.
 - [cloudflare-ip-list.md](docs/cloudflare-ip-list.md): the list of Cloudflare addresses that nginx trusts for the client's address, and the hourly job that refreshes it. Read it before changing `scripts/` or the real IP settings in `default.conf`.
-- [setup.md](docs/setup.md): what the proxy needs on the VPS and in Cloudflare: folders, certificates and zone settings. Read it before setting up a VPS or a new domain, or replacing a certificate.
+- [setup.md](docs/setup.md): what the proxy needs on the VPS and in Cloudflare: folders, Docker networks, the first Cloudflare address list, certificates and zone settings. Read it before setting up a VPS or a new domain, adding a Docker network, or replacing a certificate.
 - [troubleshooting.md](docs/troubleshooting.md): what to check on the VPS when a site fails.
 - [decisions/default-server.md](docs/decisions/default-server.md): why the default server of port 443 refuses the handshake, and why it lives in `default.conf`.
 - [decisions/proxy-tests.md](docs/decisions/proxy-tests.md): why `check-nginx.yml` runs the smoke tests, so that a deploy of `infra/` waits for them.

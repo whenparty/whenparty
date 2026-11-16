@@ -1,18 +1,13 @@
 #!/bin/sh
-# Starts this coturn in Docker, with turnserver.conf and start.sh as deployed, and checks it with
-# coturn's own test client. With good credentials a client relays to a public peer and to another
-# relayed client, and is refused private peers. Bad credentials get no allocation.
-# From games/platform/turn: sh tests/smoke.sh
 set -eu
 cd "$(dirname "$0")/.."
 
 image=$(awk '$1 == "image:" {print $2}' compose.yml)
 name=turn-smoke-$$
 server_ip=11.11.11.10
+client_seconds=60
 failures=0
 
-# Addresses outside every denied range, so that two relayed clients may reach each other. The
-# network is internal: nothing leaves the host, and detect-external-ip finds nothing.
 docker network create --internal --subnet 11.11.11.0/24 "$name" >/dev/null
 cleanup() {
   docker rm -f "$name" >/dev/null 2>&1 || true
@@ -28,8 +23,6 @@ docker run -d --name "$name" --network "$name" --ip "$server_ip" \
   --cap-drop ALL --cap-add NET_BIND_SERVICE --security-opt no-new-privileges:true \
   --entrypoint /bin/sh "$image" /etc/coturn/start.sh >/dev/null
 
-# coturn starts once start.sh is done, and its lookup of the external address can wait for DNS
-# timeouts on this internal network. Wait until it answers STUN.
 ready=false
 for _ in $(seq 1 30); do
   if docker run --rm --network "$name" --entrypoint turnutils_stunclient "$image" "$server_ip" >/dev/null 2>&1; then
@@ -40,14 +33,14 @@ for _ in $(seq 1 30); do
 done
 
 if [ "$ready" != true ]; then
-  echo 'FAILED: coturn did not answer STUN within 30 s'
+  echo 'FAILED: coturn did not answer STUN in 30 tries'
   docker logs "$name" 2>&1 | tail -30
   exit 1
 fi
 
-# The client exits with 255 when it is refused, which some checks expect: only its output counts
 client() {
-  docker run --rm --network "$name" --entrypoint turnutils_uclient "$image" -v -l 100 "$@" "$server_ip" 2>&1 || true
+  docker run --rm --init --network "$name" --entrypoint timeout "$image" "$client_seconds" \
+    turnutils_uclient -v -l 100 "$@" "$server_ip" 2>&1 || echo "client exited with $?"
 }
 
 check() {
@@ -78,7 +71,6 @@ for peer in 10.0.0.1 172.17.0.1 192.168.1.1 100.64.0.1 169.254.169.254 127.0.0.1
   check "refuses the private peer $peer" "$(client -n 5 -m 1 -W smoke-test-secret -e "$peer" -r 3480)" 'error 403'
 done
 
-# With fewer messages the client keeps waiting after the last one
 relayed=$(client -n 20 -m 2 -W smoke-test-secret -y)
 check_not 'relays between two relayed clients' "$relayed" 'error 403'
 check 'loses no packets between two relayed clients' "$relayed" 'Total lost packets 0 '
