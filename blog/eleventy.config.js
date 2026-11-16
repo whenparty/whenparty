@@ -92,7 +92,7 @@ export default function (eleventyConfig) {
   eleventyConfig.addWatchTarget(postsDir);
   eleventyConfig.on("eleventy.after", ({ results }) => copyPostImages(results));
 
-  eleventyConfig.addFilter("newestFirst", posts => [...posts].reverse());
+  eleventyConfig.addFilter("newestFirst", (posts = []) => [...posts].reverse());
   eleventyConfig.addFilter("stylesUrl", () => versioned("/styles.css", "src/styles.css"));
   eleventyConfig.addFilter("postAsset", (post, file) => versioned(`${post.url}${file}`, path.join(path.dirname(post.inputPath), file)));
   eleventyConfig.addFilter("longDate", date =>

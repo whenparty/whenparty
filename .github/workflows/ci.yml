@@ -18,6 +18,7 @@ jobs:
       project-names: ${{ steps.changes.outputs.project-names }}
       game-names: ${{ steps.changes.outputs.game-names }}
       www: ${{ steps.changes.outputs.www }}
+      blog: ${{ steps.changes.outputs.blog }}
       markdown: ${{ steps.changes.outputs.markdown }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -78,6 +79,11 @@ jobs:
             www=true
           fi
 
+          blog=false
+          if touched '^blog/' || workflow_touched 'check-blog' || git diff --name-only "$base" HEAD -- 'blog/src/posts/' | grep -q .; then
+            blog=true
+          fi
+
           markdown=$(git diff -z --name-only --diff-filter=d "$base" HEAD -- '*.md' |
             jq -Rsc 'split("\u0000") | map(select(length > 0))')
 
@@ -88,6 +94,7 @@ jobs:
             echo "project-names=$project_names"
             echo "game-names=$game_names"
             echo "www=$www"
+            echo "blog=$blog"
             echo "markdown=$markdown"
           } | tee -a "$GITHUB_OUTPUT"
 
@@ -126,6 +133,11 @@ jobs:
     if: needs.changes.outputs.www == 'true'
     uses: ./.github/workflows/check-www.yml
 
+  blog:
+    needs: changes
+    if: needs.changes.outputs.blog == 'true'
+    uses: ./.github/workflows/check-blog.yml
+
   words:
     needs: changes
     if: needs.changes.outputs.markdown != '[]'
@@ -159,7 +171,7 @@ jobs:
           exit "$status"
 
   result:
-    needs: [changes, games-changes, games, turn, nginx, project-names, game-names, www, words]
+    needs: [changes, games-changes, games, turn, nginx, project-names, game-names, www, blog, words]
     if: always()
     runs-on: ubuntu-latest
     steps:
