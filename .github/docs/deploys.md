@@ -1,17 +1,18 @@
 # Deploys
 
-Each deploy workflow runs on a push to `main` that changes a file in its folder other than Markdown, or a workflow file in its `paths`.
+Each deploy workflow runs on a push to `main` that changes a file in its folder other than Markdown, or a workflow file in its `paths`. `blog.yml` also runs on a change to a post in `blog/src/posts/`.
 
 | Workflow | Folder | Also starts on a change to | Deploys | Manual run |
 | --- | --- | --- | --- | --- |
 | `infra.yml` | `infra/` | itself | the nginx proxy, as [infra.yml](#infrayml) says | no |
 | `www.yml` | `www/` | itself, `site.yml` | `www/` through `site.yml` | no |
+| `blog.yml` | `blog/` | itself, `site.yml` | `blog/` through `site.yml` | no |
 | `nii-au.yml` | `nii-au/` | itself, `site.yml` | `nii-au/` through `site.yml` | no |
 | `temp-sites.yml` | `temp-sites/projects/` | itself, `deploy-project.yml` | each changed project through `deploy-project.yml` | no |
 | `traefik.yml` | `temp-sites/traefik/` | itself | the Traefik router | yes |
 | `games.yml` | `games/` | itself, `deploy-project.yml` | each [deployment](/docs/glossary.md#deployment) a change reaches, through `deploy-project.yml` | yes |
 
-So merging a change to `site.yml` redeploys both sites, and a change to `infra.yml` or `traefik.yml` redeploys what it deploys. `games.yml` and `temp-sites.yml` deploy only the deployments that a change reaches, so a change to their workflows or to `deploy-project.yml` alone deploys nothing. No deploy workflow lists a `check-*.yml` file, so a change to a check deploys nothing. [image-scan.md](/.github/docs/image-scan.md) says which deploys scan their images and when a scan stops a deploy.
+So merging a change to `site.yml` redeploys all three sites, and a change to `infra.yml` or `traefik.yml` redeploys what it deploys. `games.yml` and `temp-sites.yml` deploy only the deployments that a change reaches, so a change to their workflows or to `deploy-project.yml` alone deploys nothing. No deploy workflow lists a `check-*.yml` file, so a change to a check deploys nothing. [image-scan.md](/.github/docs/image-scan.md) says which deploys scan their images and when a scan stops a deploy.
 
 ## infra.yml
 
@@ -27,7 +28,7 @@ What the deploy leaves behind:
 
 ## site.yml
 
-`site.yml` deploys `www/` or `nii-au/` as the image `ghcr.io/whenparty/<folder>:latest`. It copies only the folder's `docker-compose.yml` to the VPS, so another file that the compose file needs never reaches the VPS. It does not create the `wp_www` network that both sites join, as [setup.md](/infra/docs/setup.md#vps) says.
+`site.yml` deploys `www/`, `blog/` or `nii-au/` as the image `ghcr.io/whenparty/<folder>:latest`. It copies only the folder's `docker-compose.yml` to the VPS, so another file that the compose file needs never reaches the VPS. It does not create the `wp_www` network that the three sites join, as [setup.md](/infra/docs/setup.md#vps) says.
 
 ## deploy-project.yml
 
@@ -44,7 +45,3 @@ Deployment names of `games/` and `temp-sites/projects/` share one namespace, and
 ## Which deployments a push reaches
 
 `games.yml` and `temp-sites.yml` compare the pushed commit with the commit before the push. When the event has none, as in a manual run, they compare with the empty tree, because the repository has several root commits and no single first one. So a manual run of `games.yml` deploys every deployment of `games/`. Run it after a push whose deploy failed or was skipped, because the next push deploys only what it changes. [games-changes.md](/.github/docs/games-changes.md) says which changes in `games/` reach which deployments.
-
-## traefik.yml
-
-`traefik.yml` writes the dashboard's basic auth hash to `.env` on the VPS with each `$` written as `$$`, because `docker compose` reads `$` in `.env` as the start of a variable.

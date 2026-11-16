@@ -1,0 +1,32 @@
+---
+layout: base.njk
+title: Blog
+titleSuffix: When Party
+description: Notes on the work before the party, from When Party.
+permalink: /
+---
+<section class="intro">
+  <p class="eyebrow"><span class="eyebrow-stroke" aria-hidden="true"></span> Notes from the road to the party</p>
+  <h1>Success comes before work<br><em>only in the dictionary.</em></h1>
+  <p class="attribution">Mark Twain</p>
+  <p class="intro-text">Food for thought while the chairs are still being carried.</p>
+</section>
+
+{% set posts = collections.posts | newestFirst %}
+{% if posts.length %}
+<ul class="posts" aria-label="Posts">
+{% for post in posts %}
+  <li class="post">
+    <a class="post-link" href="{{ post.url }}">
+      {% if post.data.cover %}<img src="{{ post | postAsset(post.data.cover) }}" alt="" loading="lazy">{% else %}<span class="post-blank" aria-hidden="true"></span>{% endif %}
+      <p class="post-meta">{{ post.date | shortDate }}{% if post.data.audio %} · Audio {{ post.data.audio.minutes }} min{% endif %}</p>
+      <h2>{{ post.data.title }}</h2>
+      <p>{{ post.data.description }}</p>
+      <span class="read">Read</span>
+    </a>
+  </li>
+{% endfor %}
+</ul>
+{% else %}
+<p class="empty">The first post is on its way.</p>
+{% endif %}

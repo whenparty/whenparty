@@ -1,16 +1,17 @@
 # WhenParty
 
-Everything that runs on the WhenParty VPS: the When Party site at `www.when.party`, the site at `www.nii.au`, temporary sites and peer-to-peer browser games on `*.when.party`, and the nginx proxy in front of them all.
+Everything that runs on the WhenParty VPS: the When Party site at `www.when.party` and its blog at `blog.when.party`, the site at `www.nii.au`, temporary sites and peer-to-peer browser games on `*.when.party`, and the nginx proxy in front of them all.
 
 ## How a request reaches a site
 
-Every site sits behind Cloudflare. Cloudflare passes each request to the nginx proxy in [infra/](/infra/README.md), which terminates TLS, adds the security headers and hands the request to the right container. `when.party` and `nii.au` redirect to their `www` hosts. On `games.when.party`, the proxy finds a game title's container by its path, with the page that lists the games at its root, and it passes `signaling.when.party` to the signaling server. Every other `*.when.party` host goes to the Traefik router of [temp-sites/](/temp-sites/README.md), which finds the temporary site's container by its host name.
+Every site sits behind Cloudflare. Cloudflare passes each request to the nginx proxy in [infra/](/infra/README.md), which terminates TLS, adds the security headers and hands the request to the right container. `when.party` and `nii.au` redirect to their `www` hosts. On `games.when.party`, the proxy finds a game title's container by its path, with the page that lists the games at its root, and it passes `signaling.when.party` to the signaling server. `blog.when.party` goes to the blog's container. Every other `*.when.party` host goes to the Traefik router of [temp-sites/](/temp-sites/README.md), which finds the temporary site's container by its host name.
 
 ```mermaid
 flowchart LR
   visitor[Visitor] --> cloudflare[Cloudflare]
   cloudflare --> nginx["nginx proxy: TLS, headers"]
   nginx -->|www.when.party| www[www container]
+  nginx -->|blog.when.party| blog[blog container]
   nginx -->|www.nii.au| niiau[nii-au container]
   nginx -->|"games and signaling hosts"| games["game and signaling containers"]
   nginx -->|"other *.when.party"| traefik[Traefik router]
@@ -22,12 +23,13 @@ The games in [games/](/games/AGENTS.md) send game data directly between players'
 
 ## How changes reach the VPS
 
-A push to `main` deploys only the parts whose files it changes. A change to Markdown files alone deploys nothing.
+A push to `main` deploys only the parts whose files it changes. A change to Markdown files alone deploys nothing, apart from a post of the blog.
 
 | Folder | Workflow | What it deploys |
 | --- | --- | --- |
 | `infra/` | `infra.yml` | the nginx proxy and its configs |
 | `www/` | `www.yml` | the When Party site |
+| `blog/` | `blog.yml` | the blog |
 | `nii-au/` | `nii-au.yml` | the `www.nii.au` site |
 | `temp-sites/projects/` | `temp-sites.yml` | each temporary site that changed |
 | `temp-sites/traefik/` | `traefik.yml` | the Traefik router |

@@ -6,3 +6,4 @@
 - [docs/page.md](docs/page.md): where the entries, pictures and styles live, how the proxy reaches the page, and what adding a game changes here. Read it before changing anything in `index/`.
 - [docs/verification.md](docs/verification.md): the commands that build, test and typecheck the page, the smoke test of the image, and the local preview.
 - [index-page-location.md](../docs/decisions/index-page-location.md): why the page lives in `games/index/`.
+- [/blog/docs/site.md](/blog/docs/site.md): the blog repeats the fonts, corners and colours of `src/styles.css`. Read it before changing them.

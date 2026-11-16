@@ -148,7 +148,7 @@ jobs:
           status=0
           while IFS= read -r file; do
             case "$file" in
-              .claude/agents/* | .claude/skills/*) continue ;;
+              .claude/agents/* | .claude/skills/* | blog/src/posts/*) continue ;;
             esac
             words=$(LC_ALL=C awk '/^ *```mermaid *$/ { m = 1; k = 0; next } m && /^ *```/ { m = 0; next } m { k += NF; next } { n += NF } END { print n + m * (k + 1) }' "$file")
             if [ "$words" -gt "$limit" ]; then

@@ -7,7 +7,7 @@ case "$file" in
 esac
 [ -f "$path" ] || exit 0
 case "$path" in
-  .claude/agents/* | .claude/skills/*) exit 0 ;;
+  .claude/agents/* | .claude/skills/* | blog/src/posts/*) exit 0 ;;
 esac
 limit=$(sed -n 's/.*at most \([0-9][0-9]*\) words.*/\1/p' docs/conventions/writing.md | head -n 1)
 if [ -z "$limit" ]; then

@@ -1,0 +1,38 @@
+---
+layout: base.njk
+---
+<div class="post-page">
+  <header class="post-head">
+    {% if cover %}<figure class="pin"><img src="{{ page | postAsset(cover) }}" alt="{{ coverAlt }}"></figure>{% endif %}
+    <p class="eyebrow"><span class="eyebrow-stroke" aria-hidden="true"></span> {{ page.date | longDate }} · {{ content | readingMinutes }} min read</p>
+    <h1>{{ title }}</h1>
+    <p class="lede">{{ description }}</p>
+  </header>
+
+  {% if audio %}
+  <section class="listen" aria-label="Audio version">
+    <p><strong>Listen</strong>{{ audio.minutes }} min · audio version made with NotebookLM</p>
+    <audio controls preload="none" src="/audio/{{ audio.file }}"></audio>
+  </section>
+  {% endif %}
+
+  {% set sections = content | contents %}
+  {% if sections.length > 3 %}
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ul>{% for section in sections %}<li><a href="#{{ section.id }}">{{ section.title | safe }}</a></li>{% endfor %}</ul>
+  </nav>
+  {% endif %}
+
+  <article class="post-body">
+{{ content | safe }}
+  </article>
+
+  <p class="note">Written with help from AI. My views as of {{ page.date | longDate }}; later posts may see it differently.</p>
+  {% set previous = collections.posts | getPreviousCollectionItem %}
+  {% set next = collections.posts | getNextCollectionItem %}
+  <nav class="pager" aria-label="More posts">
+    <span>{% if previous %}<a href="{{ previous.url }}">Earlier: {{ previous.data.title }}</a>{% endif %}</span>
+    <span>{% if next %}<a href="{{ next.url }}">Later: {{ next.data.title }}</a>{% endif %}</span>
+  </nav>
+</div>

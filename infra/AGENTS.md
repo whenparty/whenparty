@@ -16,4 +16,5 @@
 - [game-hosts.md](/docs/decisions/game-hosts.md): why the games share the host `games.when.party` and have `games.conf` apart from the temporary sites.
 - [games-routing.md](/docs/decisions/games-routing.md): why nginx passes each title to its container by the first segment of the path, without Traefik.
 - [former-game-hosts.md](/docs/decisions/former-game-hosts.md): why `games.conf` names no former host of a title and redirects none.
+- [/blog/docs/decisions/separate-host.md](/blog/docs/decisions/separate-host.md): why the blog has a host of its own and `blog.conf`.
 - [/temp-sites/docs/decisions/routing.md](/temp-sites/docs/decisions/routing.md): why `temp-sites.conf` passes the temporary sites to Traefik, not to their containers.
