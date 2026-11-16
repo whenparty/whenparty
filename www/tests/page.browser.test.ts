@@ -120,11 +120,19 @@ test('under reduced motion a click opens the link at once', async ({page}) => {
   await expect(page).toHaveURL(games)
 })
 
-test('a page restored from the back-forward cache shows its balloons again', async ({page}) => {
-  await page.clock.install()
-  await page.goto('/')
+test('a page restored from the back-forward cache shows its balloons again and refilters the one that flew', async ({page}) => {
+  await openAtRest(page)
   await page.locator('.balloon-games a').click()
-  await page.evaluate(() => dispatchEvent(new PageTransitionEvent('pageshow', {persisted: true})))
+  const {inflate, art} = await page.evaluate(() => {
+    dispatchEvent(new PageTransitionEvent('pageshow', {persisted: true}))
+    const timing = (animation: Animation) => ({name: (animation as CSSAnimation).animationName, ...animation.effect!.getTiming()})
+    const balloon = document.querySelector('.balloon-games')!
+    return {
+      inflate: balloon.querySelector('.balloon-float')!.getAnimations().map(timing).find(({name}) => name === 'inflate')!,
+      art: balloon.querySelector('.balloon-art')!.getAnimations().map(timing)
+    }
+  })
   await expect(page.locator('.is-flying')).toHaveCount(0)
   await expect(page.locator('body')).not.toHaveClass(/is-leaving/)
+  expect(art).toMatchObject([{name: 'refilter', delay: inflate.delay, duration: Number(inflate.duration) + 1000, easing: 'linear'}])
 })
