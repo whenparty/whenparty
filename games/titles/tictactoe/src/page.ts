@@ -86,7 +86,7 @@ export class TicTacToePage {
   #handlers(): GameHandlers {
     return {
       code: code => {
-        this.#update({code, starting: false})
+        this.#update({code})
         this.#deps.replaceAddress(code)
       },
       entering: () => this.#update({entering: true, waiting: null}),
@@ -125,6 +125,7 @@ export class TicTacToePage {
     this.#update({
       played: {snapshot: view.snapshot, seat: view.seat},
       isHost: view.isHost,
+      starting: false,
       entering: false,
       waiting: null
     })
@@ -146,7 +147,7 @@ export class TicTacToePage {
     this.#screen = 'room'
     this.#requests.clear()
     this.#canAct = false
-    this.#shown = {...empty, code}
+    this.#shown = {...empty, code, entering: true}
     this.#deps.replaceAddress(code)
     this.#render()
     this.#netcode.enter(code)

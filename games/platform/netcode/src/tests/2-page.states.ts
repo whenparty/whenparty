@@ -11,18 +11,19 @@ type Event =
   | 'roomCreated'
   | 'roomsFails'
   | 'roomEnds'
+  | 'ownerOutdated'
   | 'serverLost'
   | 'serverBack'
 
 type Told = 'entering' | 'code' | 'failed' | 'ended' | 'server lost' | 'server back'
 
-type Cause = 'open elsewhere' | 'bad rules' | 'the rooms cause' | 'the cause that the table of 2-13 gives'
+type Cause = 'open elsewhere' | 'bad rules' | 'outdated' | 'the rooms cause' | 'the cause that the table of 2-13 gives'
 
 type Outcome = {
   readonly next: State
   readonly told: readonly Told[]
   readonly cause?: Cause
-  readonly olderSide?: true
+  readonly older?: 'page' | 'the side that the rooms module tells'
   readonly leavesLastGameFirst?: true
   readonly leavesRoom?: true
   readonly roomClosesForAll?: true
@@ -33,13 +34,22 @@ type Cell<O> = {readonly ids: readonly string[]; readonly outcome: O} | {readonl
 const noGame = {impossible: 'no game goes on, so the rooms module tells the page nothing'} as const
 const notCreating = {impossible: 'the rooms module tells this only to a page that creates a room'} as const
 const ownerOnly = {impossible: "the rooms module tells this only to an owner's page that has the room"} as const
-const lockHeld = {impossible: 'the rooms module answers open elsewhere only before it creates, joins or returns'} as const
+const lockHeld = {
+  impossible: 'the rooms module answers open elsewhere only before it creates, joins or returns (rooms 9-2, 9-5, 9-8)'
+} as const
 const noFailureAfterJoin = {
   impossible:
     'after the join completes, or on a return, the rooms module repeats, ends the room or enters the page as new, and fails nothing'
 } as const
 const failsInstead = {impossible: 'before the join completes, the rooms module fails the join instead of ending the room'} as const
 const notCreatedYet = {impossible: 'a room ends only after the rooms module created it'} as const
+const ownerSideOnHost = {
+  impossible: "the rooms module tells the owner's page only the side that the transport names, the page or the server (rooms 8-6)"
+} as const
+const ownerOutdatedEnds = {
+  ids: ['2-7', '2-8', '2-1'],
+  outcome: {next: 'none', told: ['ended'], cause: 'outdated', older: 'page'}
+} as const
 
 const asParticipantGameGoesOn = {
   start: {ids: ['2-12', '2-3'], outcome: {next: 'starting', told: [], leavesLastGameFirst: true}},
@@ -83,6 +93,7 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     roomCreated: noGame,
     roomsFails: noGame,
     roomEnds: noGame,
+    ownerOutdated: noGame,
     serverLost: noGame,
     serverBack: noGame
   },
@@ -95,17 +106,25 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     leave: {ids: ['2-11'], outcome: {next: 'none', told: [], leavesRoom: true}},
     openElsewhere: {ids: ['2-2', '2-1'], outcome: {next: 'none', told: ['failed'], cause: 'open elsewhere'}},
     roomCreated: {ids: ['2-3', '2-1'], outcome: {next: 'hosting', told: ['code']}},
-    roomsFails: {ids: ['2-3', '2-8', '2-1'], outcome: {next: 'none', told: ['failed'], cause: 'the rooms cause', olderSide: true}},
+    roomsFails: {
+      ids: ['2-3', '2-8', '2-1'],
+      outcome: {next: 'none', told: ['failed'], cause: 'the rooms cause', older: 'the side that the rooms module tells'}
+    },
     roomEnds: notCreatedYet,
+    ownerOutdated: notCreatedYet,
     serverLost: ownerOnly,
     serverBack: ownerOnly
   },
   recovering: {
     ...asHostGameGoesOn,
-    openElsewhere: {ids: ['2-2', '2-1'], outcome: {next: 'none', told: ['failed'], cause: 'open elsewhere'}},
+    openElsewhere: lockHeld,
     roomCreated: notCreating,
     roomsFails: {impossible: "when an owner's return does not succeed, the rooms module repeats it or ends the room"},
-    roomEnds: {ids: ['2-7', '2-8', '2-1'], outcome: {next: 'none', told: ['ended'], cause: 'the rooms cause', olderSide: true}},
+    roomEnds: {
+      ids: ['2-7', '2-8', '2-1'],
+      outcome: {next: 'none', told: ['ended'], cause: 'the rooms cause', older: 'the side that the rooms module tells'}
+    },
+    ownerOutdated: ownerSideOnHost,
     serverLost: {
       impossible: "the rooms module tells this only to an owner's page that has the room; a returning owner's page repeats its return"
     },
@@ -118,7 +137,11 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     openElsewhere: lockHeld,
     roomCreated: notCreating,
     roomsFails: {impossible: 'the rooms module fails only creating, joining or returning, and the room is created'},
-    roomEnds: {ids: ['2-7', '2-8', '2-1'], outcome: {next: 'none', told: ['ended'], cause: 'the rooms cause', olderSide: true}},
+    roomEnds: {
+      ids: ['2-7', '2-8', '2-1'],
+      outcome: {next: 'none', told: ['ended'], cause: 'the rooms cause', older: 'the side that the rooms module tells'}
+    },
+    ownerOutdated: ownerSideOnHost,
     serverLost: {ids: ['2-9'], outcome: {next: 'hosting', told: ['server lost']}},
     serverBack: {ids: ['2-9'], outcome: {next: 'hosting', told: ['server back']}}
   },
@@ -126,8 +149,15 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     ...asParticipantGameGoesOn,
     openElsewhere: {ids: ['2-2', '2-1'], outcome: {next: 'none', told: ['failed'], cause: 'open elsewhere'}},
     roomCreated: notCreating,
-    roomsFails: {ids: ['2-13', '2-8', '2-1'], outcome: {next: 'none', told: ['failed'], cause: 'the rooms cause', olderSide: true}},
+    roomsFails: {
+      ids: ['2-13', '2-8', '2-1'],
+      outcome: {next: 'none', told: ['failed'], cause: 'the rooms cause', older: 'the side that the rooms module tells'}
+    },
     roomEnds: failsInstead,
+    ownerOutdated: {
+      impossible:
+        "the owner's page sends outdated only over a connection open for rooms (rooms 8-6), and on it the confirmation that completes the join comes first (rooms 1-8, 2-8)"
+    },
     serverLost: ownerOnly,
     serverBack: ownerOnly
   },
@@ -135,8 +165,12 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     ...asParticipantGameGoesOn,
     openElsewhere: lockHeld,
     roomCreated: notCreating,
-    roomsFails: {ids: ['2-13', '2-8', '2-1'], outcome: {next: 'none', told: ['failed'], cause: 'the rooms cause', olderSide: true}},
+    roomsFails: {
+      ids: ['2-13', '2-8', '2-1'],
+      outcome: {next: 'none', told: ['failed'], cause: 'the rooms cause', older: 'the side that the rooms module tells'}
+    },
     roomEnds: failsInstead,
+    ownerOutdated: {impossible: "no peer connection to the owner's page exists before the page is let in (rooms 2-6, 2-7)"},
     serverLost: ownerOnly,
     serverBack: ownerOnly
   },
@@ -147,17 +181,30 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     roomsFails: noFailureAfterJoin,
     roomEnds: {
       ids: ['2-13', '2-8', '2-1'],
-      outcome: {next: 'none', told: ['failed'], cause: 'the cause that the table of 2-13 gives', olderSide: true}
+      outcome: {
+        next: 'none',
+        told: ['failed'],
+        cause: 'the cause that the table of 2-13 gives',
+        older: 'the side that the rooms module tells'
+      }
+    },
+    ownerOutdated: {
+      ids: ['2-13', '2-8', '2-1'],
+      outcome: {next: 'none', told: ['failed'], cause: 'outdated', older: 'page'}
     },
     serverLost: ownerOnly,
     serverBack: ownerOnly
   },
   returning: {
     ...asParticipantGameGoesOn,
-    openElsewhere: {ids: ['2-2', '2-1'], outcome: {next: 'none', told: ['failed'], cause: 'open elsewhere'}},
+    openElsewhere: lockHeld,
     roomCreated: notCreating,
     roomsFails: noFailureAfterJoin,
-    roomEnds: {ids: ['2-7', '2-8', '2-1'], outcome: {next: 'none', told: ['ended'], cause: 'the rooms cause', olderSide: true}},
+    roomEnds: {
+      ids: ['2-7', '2-8', '2-1'],
+      outcome: {next: 'none', told: ['ended'], cause: 'the rooms cause', older: 'the side that the rooms module tells'}
+    },
+    ownerOutdated: ownerOutdatedEnds,
     serverLost: ownerOnly,
     serverBack: ownerOnly
   },
@@ -166,7 +213,11 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     openElsewhere: lockHeld,
     roomCreated: notCreating,
     roomsFails: noFailureAfterJoin,
-    roomEnds: {ids: ['2-7', '2-8', '2-1'], outcome: {next: 'none', told: ['ended'], cause: 'the rooms cause', olderSide: true}},
+    roomEnds: {
+      ids: ['2-7', '2-8', '2-1'],
+      outcome: {next: 'none', told: ['ended'], cause: 'the rooms cause', older: 'the side that the rooms module tells'}
+    },
+    ownerOutdated: ownerOutdatedEnds,
     serverLost: ownerOnly,
     serverBack: ownerOnly
   },
@@ -175,7 +226,11 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     openElsewhere: lockHeld,
     roomCreated: notCreating,
     roomsFails: noFailureAfterJoin,
-    roomEnds: {ids: ['2-7', '2-8', '2-1'], outcome: {next: 'none', told: ['ended'], cause: 'the rooms cause', olderSide: true}},
+    roomEnds: {
+      ids: ['2-7', '2-8', '2-1'],
+      outcome: {next: 'none', told: ['ended'], cause: 'the rooms cause', older: 'the side that the rooms module tells'}
+    },
+    ownerOutdated: ownerOutdatedEnds,
     serverLost: ownerOnly,
     serverBack: ownerOnly
   }

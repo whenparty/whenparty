@@ -32,14 +32,14 @@ const playText = ({snapshot, seat}: Played): string => {
   const game = gameOf({snapshot, seat})
   const result = game?.result ?? null
   if (!snapshot.running) {
-    if (result?.kind === 'hidden') {
-      return `${result.seat} was away too long, so the match is over.`
-    }
     if (result?.kind === 'left' && !seatTaken(snapshot, result.seat)) {
       return `${result.seat} left, so the match is over. Send the code to a new player.`
     }
     if (!marks.every(mark => seatTaken(snapshot, mark))) {
       return 'Waiting for a second player. Send them the code.'
+    }
+    if (result?.kind === 'hidden') {
+      return `${result.seat} was away too long, so the match is over.`
     }
     if (result?.kind === 'win') {
       return `${result.mark} wins.`

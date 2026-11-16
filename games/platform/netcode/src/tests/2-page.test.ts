@@ -41,6 +41,8 @@ const setups: {readonly [S in State]: (h: Harness) => void} = {
   }
 }
 
+const fedSide = 'server'
+
 const events: {readonly [E in Event]: (h: Harness) => void} = {
   start: h => h.netcode.start(),
   enterNew: h => h.netcode.enter(code),
@@ -53,8 +55,14 @@ const events: {readonly [E in Event]: (h: Harness) => void} = {
   leave: h => h.netcode.leave(),
   openElsewhere: h => h.rooms.on.failed({reason: 'open elsewhere'}),
   roomCreated: h => h.rooms.on.created(code, 1),
-  roomsFails: h => h.rooms.on.failed({reason: 'outdated', older: 'server'}),
-  roomEnds: h => h.rooms.on.ended({reason: 'outdated', older: 'server'}),
+  roomsFails: h => h.rooms.on.failed({reason: 'outdated', older: fedSide}),
+  roomEnds: h => h.rooms.on.ended({reason: 'outdated', older: fedSide}),
+  ownerOutdated: h => {
+    if (h.netcode.phase === 'hostAway' || h.netcode.phase === 'returning') {
+      h.rooms.on.ownerBack()
+    }
+    h.rooms.on.ended({reason: 'outdated', older: 'owner'})
+  },
   serverLost: h => h.rooms.on.serverLost(),
   serverBack: h => h.rooms.on.serverBack()
 }
@@ -78,8 +86,9 @@ const run = (state: State, event: Event, outcome: Outcome): void => {
     const expected = outcome.cause === 'open elsewhere' || outcome.cause === 'bad rules' ? outcome.cause : 'outdated'
     assert.equal(ending?.cause, expected)
   }
-  if (outcome.olderSide) {
-    assert.equal(ending !== undefined && 'older' in ending ? ending.older : undefined, 'server')
+  if (outcome.older !== undefined) {
+    const told = ending !== undefined && 'older' in ending ? ending.older : undefined
+    assert.equal(told, outcome.older === 'page' ? 'page' : fedSide)
   }
   const previous = h.rooms.rooms[roomsBefore - 1]
   const leftPrevious = previous?.left ?? false
@@ -97,14 +106,6 @@ const scenarios = Object.fromEntries(
 ) as Scenarios<Table>
 
 cellTests(table, scenarios)
-
-test('2-2 starting fails with open elsewhere when the rooms module gives no room', () => {
-  const h = harness()
-  h.rooms.refuseCalls = true
-  h.netcode.start()
-  assert.deepEqual(since(h, 0), [['failed', {cause: 'open elsewhere'}]])
-  assert.equal(h.netcode.phase, 'none')
-})
 
 test('2-3 starting creates a room with the app ID and waiting time, and completes with the code', () => {
   const h = harness()
@@ -163,17 +164,40 @@ test('2-7 every cause of the end of a room passes through', () => {
   }
 })
 
-test('2-8 outdated tells the older side that the rooms module tells', () => {
-  for (const [older, side] of [
-    ['page', 'page'],
-    ['server', 'server'],
-    ['owner', 'page']
-  ] as const) {
+test("2-8 outdated with the page's side older passes through on failures and ends, on the host's page and on a participant's that returns", () => {
+  const cases = [
+    {setup: (h: Harness) => h.netcode.start(), feed: 'failed', told: 'failed'},
+    {setup: (h: Harness) => h.netcode.enter(code), feed: 'failed', told: 'failed'},
+    {setup: (h: Harness) => joinedPage(h), feed: 'ended', told: 'failed'},
+    {setup: (h: Harness) => hosting(h), feed: 'ended', told: 'ended'},
+    {
+      setup: (h: Harness) => {
+        playingPage(h)
+        h.rooms.on.ownerLost()
+      },
+      feed: 'ended',
+      told: 'ended'
+    }
+  ] as const
+  for (const {setup, feed, told} of cases) {
     const h = harness()
-    playingPage(h)
-    h.rooms.on.ended({reason: 'outdated', older})
-    assert.deepEqual(since(h, 0).at(-1), ['ended', {cause: 'outdated', older: side}])
+    setup(h)
+    if (feed === 'failed') {
+      h.rooms.on.failed({reason: 'outdated', older: 'page'})
+    } else {
+      h.rooms.on.ended({reason: 'outdated', older: 'page'})
+    }
+    assert.deepEqual(since(h, 0).at(-1), [told, {cause: 'outdated', older: 'page'}])
   }
+})
+
+test('2-2 after starting fails with open elsewhere, the netcode does nothing more for that game', () => {
+  const h = harness()
+  h.netcode.start()
+  h.rooms.on.failed({reason: 'open elsewhere'})
+  h.clock.advance(600_000)
+  assert.equal(h.rooms.calls.length, 1)
+  assert.deepEqual(names(h, 0), ['failed'])
 })
 
 test('2-10 with each snapshot the page is told its number, seat and whether it hosts', () => {
