@@ -13,7 +13,7 @@ A post is a Markdown file with front matter and images, and posts can run to sev
 
 ## Decision
 
-Eleventy. Against pages by hand, it keeps posts in Markdown and makes the list and the `?v=` of every image follow from the files. Against Astro and Hugo, it does what the blog needs with one dependency on the Node the repository already uses.
+Eleventy. Against pages by hand, it keeps posts in Markdown and makes the list and the `?v=` of every image follow from the files. Against Astro and Hugo, it builds the pages with one dependency, `@11ty/eleventy`, on the Node the repository already uses.
 
 ## Consequences
 

@@ -1,9 +1,11 @@
 import { createHash } from "node:crypto";
 import { cpSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
+import katex from "katex";
 
 const postsDir = "src/posts";
 const imageFile = /\.(webp|avif|jpe?g|png|svg)$/i;
+const formulaLanguages = new Set(["latex", "math"]);
 
 const contentHash = file => createHash("sha256").update(readFileSync(file)).digest("hex").slice(0, 8);
 const versioned = (url, file) => `${url}?v=${contentHash(file)}`;
@@ -28,6 +30,19 @@ function headingIds(slugify) {
     for (let i = 0; i < state.tokens.length; i++) {
       const token = state.tokens[i];
       if (token.type === "heading_open" && !token.attrGet("id")) token.attrSet("id", slugify(state.tokens[i + 1].content));
+    }
+  };
+}
+
+function formulas(md) {
+  const renderCode = md.renderer.rules.fence;
+  md.renderer.rules.fence = (tokens, i, options, env, self) => {
+    const block = tokens[i];
+    if (!formulaLanguages.has(block.info.trim().split(/\s+/)[0])) return renderCode(tokens, i, options, env, self);
+    try {
+      return `<div class="formula">${katex.renderToString(block.content.trim(), { displayMode: true, output: "mathml" })}</div>\n`;
+    } catch (error) {
+      throw new Error(`${env.page.inputPath} has a formula that KaTeX cannot render: ${error.message}`);
     }
   };
 }
@@ -75,6 +90,7 @@ export default function (eleventyConfig) {
     md.core.ruler.push("figures", markFigures);
     md.core.ruler.push("heading_ids", headingIds(slugify));
     figures(md);
+    formulas(md);
   });
 
   eleventyConfig.addPreprocessor("drafts", "md", data => {
