@@ -28,7 +28,7 @@ When `ci.yml` runs:
 
 ## Decision
 
-The checks of the projects are reusable workflows, the word limit is a job of `ci.yml`, and `ci.yml` runs them without deploy jobs or secrets, so a mistake in it cannot deploy. A few more files cost less than secrets in pull request runs.
+The checks of the projects are reusable workflows, and `ci.yml` runs them without deploy jobs or secrets, so a mistake in it cannot deploy. A few more files cost less than secrets in pull request runs.
 
 `ci.yml` skips checks with `if:`, so a check can become required without blocking the changes that do not need it. One longer file with a final job costs less than checks that cannot be required.
 

@@ -11,7 +11,6 @@
 - [/www/docs/tests.md](/www/docs/tests.md): how `check-www.yml` takes new screenshots of `www/` and how they are approved. Read it before changing what `check-www.yml` uploads.
 - [screenshot-tests.md](/www/docs/decisions/screenshot-tests.md): why `www.yml` does not wait for `check-www.yml`.
 - [screenshot-updates.md](/www/docs/decisions/screenshot-updates.md): why `check-www.yml` makes the new screenshots of `www/` for an agent to commit.
-- [word-limit.md](/.claude/hooks/docs/word-limit.md): how the `words` job reads the limit and counts like `word-limit.sh`. Read it before changing the `words` job.
 - [ci-checks.md](/docs/decisions/ci-checks.md): why the checks are reusable workflows without secrets, why `ci.yml` skips checks with `if:`, and why it runs on pushes to `main` too.
 - [games-check-scope.md](/docs/decisions/games-check-scope.md): which packages of `games/` `ci.yml` tests, why pnpm finds them on the runner, which deployments `games.yml` deploys, and why it tests the whole workspace.
 - [pnpm-in-images.md](/games/docs/decisions/pnpm-in-images.md): why `check-games.yml` and the Dockerfiles in `games/` take pnpm from `ghcr.io/pnpm/pnpm` instead of Corepack or npm. Read it before changing how they get pnpm or Node.
