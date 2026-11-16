@@ -2,7 +2,7 @@
 
 ## Context
 
-The deploy workflows run on a push to `main` and hold the VPS SSH key and other secrets. `games.yml` runs the tests and typechecks of `games/`, the TURN smoke test and the project name check in the same run that deploys, and `infra.yml` runs `nginx -t` and the proxy's smoke tests the same way. `temp-sites.yml`, `traefik.yml`, `www.yml`, `blog.yml` and `nii-au.yml` run none of these checks. No ruleset on `main` requires a pull request or a check, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides, and changes reach it through pull requests or direct pushes, such as a quick temporary site. A workflow that runs on `pull_request` gets the repository secrets when the pull request comes from a branch of this repository.
+The deploy workflows run on a push to `main` and hold the VPS SSH key and other secrets. `games.yml` runs the tests and typechecks of `games/`, the TURN smoke test and the project name check in the same run that deploys, and `infra.yml` runs `nginx -t` and the proxy's smoke tests the same way. `temp-sites.yml`, `traefik.yml`, `www.yml`, `blog.yml` and `nii-au.yml` run none of these checks. A ruleset on `main` requires a pull request and the `result` check of `ci.yml`, but not that the pull request's branch is up to date with `main`, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides. So a merge can combine changes that each passed alone. A workflow that runs on `pull_request` gets the repository secrets when the pull request comes from a branch of this repository.
 
 GitHub keeps a required status check pending when `paths` keeps its workflow from running. A job skipped by `if:` counts as successful, and so does a job skipped because a job it needs failed. Workflows that the same push starts run side by side, and a deploy workflow does not wait for one it does not call.
 
@@ -23,8 +23,8 @@ How a check that a change does not need is skipped:
 
 When `ci.yml` runs:
 
-- On pull requests only. Each change is checked once. A direct push gets only the checks of the deploy it starts, and a push to `temp-sites/` gets none.
-- On pull requests and on pushes to `main`. A direct push also gets the word limit, the project name check for `temp-sites/`, and the checks of a push that changes only a `check-*.yml` file, which starts no deploy. A push that deploys runs that deploy's checks twice, and a merged pull request runs `ci.yml` once more. On a direct push, `ci.yml` reports a problem only after the deploy has started.
+- On pull requests only. Each change is checked once. What a merge puts on `main` is never checked when `main` changed after the pull request's run.
+- On pull requests and on pushes to `main`. What a merge puts on `main` is checked too. Every merge runs `ci.yml` once more, and a merge that deploys runs that deploy's checks twice. The deploy does not wait, so `ci.yml` reports a problem only after it has started.
 
 ## Decision
 
@@ -32,7 +32,7 @@ The checks of the projects are reusable workflows, the word limit is a job of `c
 
 `ci.yml` skips checks with `if:`, so a check can become required without blocking the changes that do not need it. One longer file with a final job costs less than checks that cannot be required.
 
-`ci.yml` runs on pull requests and on pushes to `main`, so a direct push gets every check a pull request gets. On a push, `ci.yml` runs only the checks of what it changes, and the deploy does not wait for them, so a quick experiment such as a temporary site is not slowed down. The repeated runs use runner time, and nobody waits for them. A problem in a direct push shows after its deploy has started, which is still earlier than the next pull request that touches the same files.
+`ci.yml` runs on pull requests and on pushes to `main`, so a problem that a merge combines from changes that each passed alone is reported by the run on `main`. On a push, `ci.yml` runs only the checks of what it changes, and the deploy does not wait for them, so a merged change such as a temporary site is not slowed down. The repeated runs use runner time, and nobody waits for them. Such a problem shows after its deploy has started, which is still earlier than the next pull request that touches the same files.
 
 ## Consequences
 

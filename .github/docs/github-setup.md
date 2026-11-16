@@ -1,6 +1,6 @@
 # GitHub setup
 
-These are the settings of the `whenparty/whenparty` repository and its packages that live in GitHub and not in this repository: what the workflows rely on, and the ruleset on `main`.
+These are the settings of the `whenparty/whenparty` repository and its packages that live in GitHub and not in this repository: what the workflows rely on, and the rulesets on `main`.
 
 ## Secrets
 
@@ -20,10 +20,13 @@ The workflows push images and upload scan results with the `GITHUB_TOKEN` that G
 - The repository needs Write access to each package, under Package settings → Manage Actions access. A package first pushed from this repository gets it automatically.
 - The VPS pulls images without logging in, so every package must be public. A new package first pushed by these workflows is public at once, as `index` was in run 41627417949 of `games.yml`. When a package is private, the deploy fails at the pull on the VPS. The GitHub API cannot change the visibility of a package, so the user makes the package public in its settings and re-runs the failed jobs.
 
-## Labels
-
-[www-snapshots.yml](/.github/workflows/www-snapshots.yml) runs when the `update-snapshots` label is added to a pull request, so the repository needs that label, under Issues → Labels, as [tests.md](/www/docs/tests.md) says.
-
 ## `main` branch
 
-A ruleset on `main`, under Settings → Rules → Rulesets, blocks force pushes and deletion of the branch, with no bypass. It requires no pull request and no status check, so a direct push to `main` works. The user set it by hand, and nothing in the repository creates or checks it. A force push to `main` needs the user to set the ruleset's enforcement status to Disabled, run the force push and set it back to Active. In Claude Code, [ruleset-guard.sh](/.claude/hooks/ruleset-guard.sh) denies an agent's commands that change a ruleset or branch protection, as [ruleset-guard.md](/.claude/hooks/docs/ruleset-guard.md) describes. [main-branch-protection.md](/docs/decisions/main-branch-protection.md) explains why.
+Two rulesets on `main`, under Settings → Rules → Rulesets, have no bypass:
+
+| Ruleset | Rules |
+| --- | --- |
+| `main-branch` | blocks force pushes and deletion of the branch |
+| `main-pull-requests` | requires a pull request with no required approval, and the status check `result` from GitHub Actions, without requiring the branch to be up to date |
+
+So a change reaches `main` only through a pull request whose `result` check passed, unless the user turns `main-pull-requests` off. The user set them by hand, and nothing in the repository creates or checks them. For a direct push to `main`, the user sets the enforcement status of `main-pull-requests` to Disabled, pushes and sets it back to Active. A force push needs both rulesets Disabled. In Claude Code, [ruleset-guard.sh](/.claude/hooks/ruleset-guard.sh) denies an agent's commands that change a ruleset or branch protection, as [ruleset-guard.md](/.claude/hooks/docs/ruleset-guard.md) describes. [main-branch-protection.md](/docs/decisions/main-branch-protection.md) explains why.

@@ -26,3 +26,15 @@ jobs:
           path: |
             www/playwright-report/
             www/test-results/
+
+      - name: Take the new screenshots
+        id: snapshots
+        if: failure()
+        run: www/tests/run.sh --update-snapshots=all
+
+      - name: Upload the new screenshots
+        if: failure() && steps.snapshots.outcome == 'success'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: www-snapshots
+          path: www/tests/*-snapshots/

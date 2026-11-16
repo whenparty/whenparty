@@ -4,7 +4,7 @@
 
 [games-routing.md](/docs/decisions/games-routing.md) has nginx pass `/<name>/` on `games.when.party` to the container `games-<name>` on the network `wp_games`, and the root and `signaling.when.party` to the containers of the index page and the signaling server, which `games.conf` names. nginx finds these containers in Docker's DNS, which answers for every network nginx is on, the networks of the temporary sites and of the other sites included. It finds a container by its name, its Compose service name and its network aliases, which a compose file sets freely. A container that takes one of these names can take the requests of a title, the index page or the signaling server, share them with the real one, or make one of the two deploys fail. A container in `games/` named `games-signaling` would make the signaling server reachable at `games.when.party/signaling/`, past its own limits. A title whose container has another name, or is on no network that nginx is on, answers 404.
 
-Naming a container changes the compose file of a deployment, and an agent that does it reads the documents of its own project, not those of `games/` or `infra/`. `ci.yml` runs on every pull request and every push to `main`, and a deploy does not wait for it, as [ci-checks.md](/docs/decisions/ci-checks.md) decides, which keeps the deploys of the temporary sites free of checks. A problem that `ci.yml` finds reaches `main` only on a direct push, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) accepts.
+Naming a container changes the compose file of a deployment, and an agent that does it reads the documents of its own project, not those of `games/` or `infra/`. `ci.yml` runs on every pull request and every push to `main`, and a deploy does not wait for it, as [ci-checks.md](/docs/decisions/ci-checks.md) decides, which keeps the deploys of the temporary sites free of checks. A pull request with a problem that `ci.yml` finds cannot merge, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides, so a problem reaches `main` only when a merge combines changes that each passed alone, or the user allows a direct push. `games.yml` and `traefik.yml` can also run by hand on a branch, which deploys that branch, as [workflows.md](/.github/docs/workflows.md) says, and neither calls `check-game-names.yml`. A hand run of `games.yml` deploys every deployment of `games/`, and a push deploys only what it changes, as [deploys.md](/.github/docs/deploys.md) says.
 
 ## Options
 
@@ -17,12 +17,12 @@ How the names stay apart:
 
 Whether the deploys call it:
 
-- Every deploy of a compose file that nginx can reach calls it: `games.yml`, `temp-sites.yml`, `traefik.yml`, `www.yml`, `blog.yml`, `nii-au.yml` and `infra.yml`. A direct push with a clash deploys nothing. Every temporary site then waits for a check, and a clash also stops deploys that do not touch it.
-- No deploy calls it. A deploy does not depend on it. A direct push with a clash deploys, until the next push fixes it, and `ci.yml` reports it on that push.
+- Every deploy of a compose file that nginx can reach calls it: `games.yml`, `temp-sites.yml`, `traefik.yml`, `www.yml`, `blog.yml`, `nii-au.yml` and `infra.yml`. A clash that reaches `main` deploys nothing. Every temporary site then waits for a check, and a clash also stops deploys that do not touch it.
+- No deploy calls it. A deploy does not depend on it. A clash that reaches `main` deploys until the next change fixes it, and `ci.yml` reports it on the push to `main`.
 
 ## Decision
 
-A workflow of its own that only `ci.yml` calls. It fails a change that gives a title's container another name or network, takes away a name that `games.conf` uses, or gives another container one of these names, as [checks.md](/.github/docs/checks.md#the-checks) says. A clash reaches the VPS only on a direct push, which the next push fixes, as for the other problems that main-branch-protection.md accepts. A check before every deploy would slow every temporary site, which ci-checks.md keeps free of checks.
+A workflow of its own that only `ci.yml` calls. It fails a change that gives a title's container another name or network, takes away a name that `games.conf` uses, or gives another container one of these names, as [checks.md](/.github/docs/checks.md#the-checks) says. A clash reaches the VPS only through a merge that combines changes that each passed alone, a direct push or a hand run of `games.yml` or `traefik.yml` on a branch, and stays until a deploy from `main` replaces it. A check before every deploy would slow every temporary site, which ci-checks.md keeps free of checks.
 
 ## Consequences
 

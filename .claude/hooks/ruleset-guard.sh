@@ -25,7 +25,7 @@ changes_rules() {
 
 printf '%s\n' "$command" | sed -e :a -e '/\\$/N; s/\\\n//; ta' | tr ';|&' '\n\n\n' | while IFS= read -r part; do
   if changes_rules "$part"; then
-    jq -n --arg reason "This command would change a ruleset or branch protection on GitHub, which agents do not do. Stop and ask the user. .github/docs/github-setup.md describes the ruleset on main." '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: $reason}}'
+    jq -n --arg reason "This command would change a ruleset or branch protection on GitHub, which agents do not do. Stop and ask the user. .github/docs/github-setup.md describes the rulesets on main." '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: $reason}}'
     break
   fi
 done

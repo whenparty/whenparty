@@ -11,4 +11,4 @@ flowchart LR
   proxy --> site["www container: nginx with the page"]
 ```
 
-Browser tests check the balloon takeoff and compare a storyboard of it with approved screenshots. A change to the page goes live when it reaches `main`, without waiting for the tests.
+Browser tests check the balloon takeoff and compare a storyboard of it with approved screenshots. A change to the page reaches `main` after the tests pass on its pull request, and it goes live without waiting for their run on `main`.

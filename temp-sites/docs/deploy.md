@@ -5,7 +5,7 @@
 ## What a push deploys
 
 - A push to `main` deploys each site whose folder has a changed file other than Markdown. A change to Markdown only, or to files in `temp-sites/` outside `projects/`, deploys no site. So a site that serves Markdown files redeploys only when another of its files changes.
-- To redeploy a site without a failed run to re-run, push a change to a file in its folder other than Markdown. The workflow cannot be run by hand.
+- To redeploy a site without a failed run to re-run, merge a change to a file in its folder other than Markdown. The workflow cannot be run by hand.
 - Each site deploys in its own job, so one failed site does not stop the others.
 - The deploy copies the site's folder to `/opt/services/whenparty/temp-sites/projects/<name>`. A file removed from the folder stays there until someone deletes it on the VPS. Files put there by hand, such as `.env`, stay too.
 
