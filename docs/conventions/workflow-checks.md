@@ -1,6 +1,6 @@
 # Workflow: checks
 
-These rules say what to check while working on a change that the workflow files, [workflow.md](/docs/conventions/workflow.md) and [workflow-specs.md](/docs/conventions/workflow-specs.md), describe. Repeat successful checks only after relevant changes or new evidence of a problem. Report what was actually verified.
+These rules say what to check while working on a change that the workflow files, [workflow.md](/docs/conventions/workflow.md) and [workflow-specs.md](/docs/conventions/workflow-specs.md), describe. They also say how the review subagents class and order their findings. Repeat successful checks only after relevant changes or new evidence of a problem. Report what was actually verified.
 
 ## Documents
 
@@ -10,6 +10,20 @@ These rules say what to check while working on a change that the workflow files,
 - After adding a document or changing a rule, such as a requirement, or the definition of a term, have the `docs-reviewer` subagent read the documents that the change can affect, and fix the places it reports. Find these documents without asking the user, even when they are every document of the repository:
   - for each document that the change adds, edits or deletes, the documents directly in its folder and directly in each folder above it up to the root, and those that link to it or give its path, found as the first bullet of this section says;
   - for a rule that the change adds, or changes so that a document that followed it may now break it, every document whose text the rule constrains, or, when a `git grep -i --untracked` search matches every text that can break the rule, such as a search for a word that the rule forbids, only the lines it matches, with their files and line numbers.
+
+### Review findings
+
+A finding must name the source of the change, rule, fact or required review check behind it and show the concrete error or unanswered case in the text. A suggestion without that evidence is not a finding; the reviewers list such suggestions after all findings, without a class. `docs-reviewer` and `behaviour-reviewer` give every finding one class and report findings in the class order below. Within each class, they report the most serious first.
+
+- Breaks behaviour or a rule: the text gives behaviour that breaks a requirement, a scenario, a rule of its model or a source of the change under review, leaves out behaviour that they need, or adds behaviour that its model lacks; it states a wrong fact or contradicts another document; or it breaks a rule of the [conventions files](/AGENTS.md#conventions-files) in what it says or where it says it, such as a rule stated in two places or a link that the writing rules require and the text lacks.
+- Two readings: a reader can take the text in more than one way, or cannot tell what it means, such as when a word can refer to two things or the text says two things that cannot both hold. Text that clearly allows more than one behaviour has one reading.
+- Wording only: the text has one reading, that reading is right, and the text stands in the right place; it breaks a rule of the conventions files only in how it says it, such as a sentence longer than the minimum text needs, a list where a table would be shorter, or a link that leads to the right target in a path form that [link-paths.md](/docs/conventions/link-paths.md) does not allow.
+- Outside the change: all of these hold:
+  - the sentence, heading, table row or diagram line with the problem, or the place where missing text belongs, is as it was where the branch left `main` and has not moved;
+  - the change neither causes nor worsens the problem, and nothing it adds or edits uses a rule, fact or term that the text with the problem states or defines;
+  - neither a source of the change nor a rule or scenario of its model needs the fix, and no repository rule requires it in this change.
+
+A finding that fits the class "Outside the change" takes it in place of the others. Of the rest, a finding about text whose meaning a reader cannot tell takes "Two readings", and one about text that a reader can take in more than one way takes "Breaks behaviour or a rule" when every plausible reading has a problem of that class, and "Two readings" otherwise. Any other finding that fits more than one class takes the first of them, and one that fits none takes "Breaks behaviour or a rule". A finding that asks whether a behaviour is intended takes the class it would have if the behaviour is not intended.
 
 ## Code
 
