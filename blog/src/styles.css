@@ -104,7 +104,7 @@ figcaption { margin-top: 8px; color: var(--ink-muted); font-size: 14px; line-hei
 .post-body { font-size: 18px; line-height: 1.75; }
 .post-body p, .post-body ul, .post-body ol { margin: 0 0 18px; }
 .post-body li + li { margin-top: 6px; }
-.post-body h2 { clear: both; margin: 56px 0 14px; font-size: clamp(30px, 3.4vw, 40px); line-height: 1.08; letter-spacing: -0.045em; }
+.post-body h2 { margin: 56px 0 14px; font-size: clamp(30px, 3.4vw, 40px); line-height: 1.08; letter-spacing: -0.045em; }
 .post-body h3 { margin: 32px 0 10px; font-size: 25px; line-height: 1.2; letter-spacing: -0.03em; }
 .post-body blockquote { margin: 0 0 18px; padding-left: 16px; border-left: 2px solid var(--sage); color: var(--ink-muted); }
 
@@ -117,15 +117,18 @@ thead th { border-bottom: 2px solid var(--graphite); }
 .align-center { text-align: center; }
 .align-right { text-align: right; }
 
-.fig { margin: 40px 12px; }
+.fig { margin: 40px 12px; rotate: -1deg; }
 .fig img { aspect-ratio: 3 / 2; object-fit: cover; }
-.fig-card { rotate: -1deg; }
-.fig-card:nth-of-type(even) { rotate: 1.2deg; }
-.fig-side { float: right; clear: right; width: 260px; margin: 8px 0 16px 28px; rotate: 2deg; }
-.fig-side:nth-of-type(even) { rotate: -1.5deg; }
-@media (max-width: 599px) { .fig, .fig-side { float: none; width: auto; margin: 36px 8px; } }
+.fig:nth-of-type(even), .fig-pair:nth-child(even of .fig-pair) .fig { rotate: 1.2deg; }
+@media (max-width: 599px) { .fig { margin: 36px 8px; } }
+@media (min-width: 1280px) {
+  .fig-pair { display: grid; grid-template-columns: 100% 380px; column-gap: 48px; align-items: start; margin-bottom: 18px; }
+  .fig-pair > :last-child { grid-area: 1 / 1; }
+  .fig-pair > :last-child, .fig-pair > :last-child > :last-child { margin-bottom: 0; }
+  .fig-pair > .fig-side { grid-area: 1 / 2; position: sticky; top: 32px; margin: 0; }
+}
 
-.note { clear: both; margin: 56px 0 0; padding-top: 18px; border-top: 1px solid var(--graphite-faint); color: var(--ink-muted); font-size: 14px; }
+.note { margin: 56px 0 0; padding-top: 18px; border-top: 1px solid var(--graphite-faint); color: var(--ink-muted); font-size: 14px; }
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 18px; font-size: 15px; }
 .pager span:last-child { text-align: right; }
 
