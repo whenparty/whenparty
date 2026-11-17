@@ -84,7 +84,7 @@ p { margin-top: 0; }
 .post-head::after { content: ""; display: block; clear: both; }
 
 .pin, .fig-card, .fig-side { position: relative; padding: 8px 8px 10px; background: var(--card); border: 1.2px solid var(--graphite-faint); border-radius: var(--hand-small); box-shadow: 0 1px 4px rgb(0 0 0 / .1); }
-.pin::before, .fig-card::before, .fig-side::before { content: ""; position: absolute; top: -11px; left: 50%; width: 84px; height: 22px; translate: -50% 0; rotate: -5deg; background: color-mix(in srgb, var(--sage) 55%, transparent); }
+.pin::before, .fig-card::before, .fig-side::before { content: ""; position: absolute; top: -11px; left: 50%; width: 84px; height: 22px; translate: -50% 0; rotate: -5deg; z-index: 1; background: color-mix(in srgb, color-mix(in srgb, var(--sage) 55%, var(--card)) 85%, transparent); }
 figure { margin: 0; }
 figure img { display: block; width: 100%; border-radius: 6px 5px 7px 4px; }
 figcaption { margin-top: 8px; color: var(--ink-muted); font-size: 14px; line-height: 21px; text-align: center; }
