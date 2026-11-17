@@ -9,16 +9,27 @@ A post keeps the views of its date. When the views change, a new post says so an
 | Field | Required | Holds |
 | --- | --- | --- |
 | `title` | yes | the title |
-| `description` | yes | one or two sentences, shown under the title, in the post's entry in the list and in search results |
+| `description` | yes | one or two sentences, shown under the title, in the post's entry in the list, in search results and in link previews |
 | `date` | yes | the day of the post, such as `2026-11-15`, which orders the list, newest first |
 | `cover` | no | the file name of the picture beside the title and in the post's entry in the list. Without it, the entry shows an empty frame. |
 | `coverAlt` | with `cover` | what the picture shows, for readers who cannot see it |
+| `shareImage` | no, only with `cover` | the file name of the picture of the link preview, cut from the cover as below and described by `coverAlt`. Without it, the page names no picture for link previews. |
 | `audio` | no | `file`, the name of the MP3 file in the audio folder, and `minutes`, its length. Without it, the post has no player. |
 | `credits` | no | who did what, shown as the line under the text of the post page, such as `Conceived and edited by Nikolai Krivous. Drafted by Claude Opus 5.5.` Without it, the line says `Written with help from AI.` |
 | `draft` | no | `true` keeps the post off the site; the local preview shows it |
 
 - An image alone in its paragraph, with blank lines around it, becomes a taped card across the text: `![what it shows](name.webp "caption")`. With `#side` after the file name, the card stands at the side and the text flows around it: `![what it shows](name.webp#side "caption")`. Put a side card before the paragraph it belongs to. The caption is optional, the description in square brackets is not. On screens narrower than 600 px every card in the text spans it.
 - The cover is cropped to a square beside the title and to 16:10 in the list, and the cards in the text to 3:2. Use WebP pictures about 1600 px wide with the subject in the middle, so the crops keep it. Only `.webp`, `.avif`, `.jpg`, `.jpeg`, `.png` and `.svg` files reach the site.
+- Cut the picture of the link preview from the middle of the cover at its full width and a height of width × 630 ÷ 1200, rounded, and save it as a JPEG of exactly 1200×630 px, the size that `src/_includes/base.njk` declares, under 200 KB, as [share-image.md](decisions/share-image.md#decision) decides. When the middle cuts off the subject, cut it in an image editor instead. `sips` comes with macOS and prints the width with `sips -g pixelWidth <cover>`; `brew install jpeg-turbo` installs `cjpeg`. For the cover of `influence-without-authority`, 1586 px wide, in the post's folder:
+
+  ```bash
+  sips -s format png -c 833 1586 influence-cover.webp --out "$TMPDIR/crop.png"
+  sips -z 630 1200 "$TMPDIR/crop.png" --out "$TMPDIR/share.png"
+  cjpeg -quality 80 -optimize -progressive -outfile influence-share.jpg "$TMPDIR/share.png"
+  ```
+
+  When the JPEG is 200 KB or larger, run `cjpeg` again with a lower `-quality`.
+- LinkedIn, Facebook and Telegram keep the link preview of a page once they have fetched it. After a deploy that changes the `title`, the `description` or the picture of the link preview of a published post, ask the user to refresh the preview with their accounts: in LinkedIn's [Post Inspector](https://www.linkedin.com/post-inspector/), which changes only the previews of links shared on LinkedIn after the inspection, in Facebook's [Sharing Debugger](https://developers.facebook.com/tools/debug/) and by sending the link to `@WebpageBot` in Telegram. X, Slack, WhatsApp and iMessage have no such tool.
 - Each heading of level 2, `##`, starts a section. A post with more than three gets contents under the description and the audio player.
 - A table scrolls sideways when the screen is narrower than it. The alignment of a column, such as `---:`, becomes a class.
 - A code block marked `latex` or `math` is a formula, written in the LaTeX that [KaTeX](https://katex.org/docs/supported) reads, and the page shows it on its own line, scrolling sideways when it is wider than the screen. Text between `$` or `$$` signs stays plain text, so write a formula only as a `latex` or `math` block. A block marked `tex` shows LaTeX as code. The build fails when KaTeX cannot read a formula, and on `\pmb` and `\fcolorbox`, whose MathML has a `style` attribute.
