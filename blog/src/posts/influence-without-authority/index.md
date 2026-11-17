@@ -4,6 +4,7 @@ description: "The more senior an engineer gets, the more decisions depend on the
 date: 2026-11-16
 cover: influence-cover.webp
 coverAlt: Amy, a squirrel, and Ian, a badger, sketch a plan together at a table
+shareImage: influence-share.jpg
 audio:
   file: influence-without-authority.45d97fc5.mp3
   minutes: 24

@@ -104,6 +104,7 @@ export default function (eleventyConfig) {
     return content;
   });
 
+  eleventyConfig.addGlobalData("siteUrl", "https://blog.when.party");
   eleventyConfig.addPassthroughCopy("src/styles.css");
   eleventyConfig.addWatchTarget(postsDir);
   eleventyConfig.on("eleventy.after", ({ results }) => copyPostImages(results));
