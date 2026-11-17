@@ -1,11 +1,11 @@
 # GitHub Actions
 
-`.github/` holds the GitHub Actions workflows of this repository in `workflows/`: `ci.yml`, which checks every pull request and every push to `main`, the checks it calls, the deploy workflows and the weekly image scan. It is not a [project](/docs/glossary.md#project) and has no specification.
+`.github/` holds the GitHub Actions workflows of this repository in `workflows/`: `ci.yml`, which checks every pull request and every push to `main`, the checks it calls, the deploy workflows and the weekly image scan. It is not a [project](/docs/glossary.md#project) and has no [specification](/docs/conventions/specs.md).
 
 - [workflows.md](/.github/docs/workflows.md): rules for every workflow file: action pinning, the permissions and secrets of reusable workflows, job time limits, and how a change to a workflow can be tried. Read it before changing any workflow.
 - [checks.md](/.github/docs/checks.md): `ci.yml` and the `check-*.yml` workflows, and how to add a check. Read it before changing them.
 - [deploys.md](/.github/docs/deploys.md): which workflow deploys what, which changes start it, how `infra.yml`, `site.yml`, `deploy-project.yml`, `games.yml` and `temp-sites.yml` work, and what a deploy leaves on the VPS. Read it before changing a deploy workflow or a Compose file that one deploys.
-- [games-changes.md](/.github/docs/games-changes.md): how `games-changes.yml` finds the packages and deployments of `games/` that a change reaches. Read it before changing `games-changes.yml` or what `ci.yml` and `games.yml` take from it.
+- [games-changes.md](/.github/docs/games-changes.md): how `games-changes.yml` finds the packages and [deployments](/docs/glossary.md#deployment) of `games/` that a change reaches. Read it before changing `games-changes.yml` or what `ci.yml` and `games.yml` take from it.
 - [image-scan.md](/.github/docs/image-scan.md): `image-scan.yml`, the only vulnerability scan of the images. Read it before changing `image-scan.yml`, adding a Compose file at a new path, or adding a scan to a deploy.
 - [github-setup.md](/.github/docs/github-setup.md): the repository secrets and the GitHub Container Registry access that the workflows rely on, and the rulesets on `main`. Read it before adding a secret or a deployment that pushes a new image, or proposing a change to the rulesets or a direct push or force push to `main`.
 - [/www/docs/tests.md](/www/docs/tests.md): how `check-www.yml` takes new screenshots of `www/` and how they are approved. Read it before changing what `check-www.yml` uploads.

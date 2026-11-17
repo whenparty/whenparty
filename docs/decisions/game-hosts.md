@@ -2,11 +2,11 @@
 
 ## Context
 
-The games need a Content-Security-Policy that lets them reach the signaling server, and the signaling server needs limits of its own. The temporary sites need neither. nginx picks a server with an exact `server_name` before one with a wildcard, and among wildcards the longest, and `temp-sites.conf` has a `*.when.party` wildcard server for the temporary sites.
+The games need a Content-Security-Policy that lets them reach the signaling server, and the signaling server needs limits of its own, as `2-2` and `2-4` of [2-headers.md](/infra/docs/specs/2-headers.md) say. The temporary sites need neither. [nginx picks a server](/infra/docs/nginx-configs.md) with an exact `server_name` before one with a wildcard, and among wildcards the longest, and `temp-sites.conf` has a `*.when.party` wildcard server for the temporary sites.
 
 Cloudflare's free edge certificate covers `when.party` and the hosts one level below it. A host two levels below, such as `tictactoe.games.when.party`, needs Cloudflare's paid Advanced Certificate Manager and an origin certificate that names the deeper wildcard. The other way to serve such a host is a DNS record that Cloudflare does not proxy. Such a host loses Cloudflare's proxy and Authenticated Origin Pulls, which [setup.md](/infra/docs/setup.md#cloudflare) describes, needs a certificate that browsers trust, and needs a server that turns off the `ssl_verify_client` of `default.conf`. A host that no wildcard DNS record covers needs a record of its own in Cloudflare, which nothing in the repository creates.
 
-Pages on one host share an origin, and with it `localStorage` and `sessionStorage`. Pages under a path need that path in the URLs of their files, which Vite's `base` sets, and a link that starts at the root of the host leaves the game. The signaling server allows pages on `when.party` and every host below it. TURN traffic does not pass through nginx, so `turn.when.party` keeps a host of its own in every layout.
+Pages on one host share an origin, and with it `localStorage` and `sessionStorage`. Pages under a path need that path in the URLs of their files, which Vite's [`base`](/games/titles/docs/hosting.md) sets, and a link that starts at the root of the host leaves the game. The transport server that the signaling server runs allows pages on `when.party` and every host below it, as `7-6` of the transport's [7-server.md](/games/platform/transport/docs/specs/7-server.md) says. [TURN traffic](/games/platform/turn/docs/deployment.md) does not pass through nginx, so `turn.when.party` keeps a host of its own in every layout.
 
 ## Options
 

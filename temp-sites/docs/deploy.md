@@ -4,10 +4,10 @@
 
 ## What a push deploys
 
-- A push to `main` deploys each site whose folder has a changed file other than Markdown. A change to Markdown only, or to files in `temp-sites/` outside `projects/`, deploys no site. So a site that serves Markdown files redeploys only when another of its files changes.
-- To redeploy a site without a failed run to re-run, merge a change to a file in its folder other than Markdown. The workflow cannot be run by hand.
+- A push to `main` deploys each site whose folder has a changed file other than Markdown. A change to Markdown only, or to files in `temp-sites/` outside `projects/`, deploys no site, as [deploys.md](/.github/docs/deploys.md) says. So a site that serves Markdown files redeploys only when another of its files changes.
+- To redeploy a site without a failed run to re-run, merge a change to a file in its folder other than Markdown. The workflow cannot be run by hand, as [deploys.md](/.github/docs/deploys.md) says.
 - Each site deploys in its own job, so one failed site does not stop the others.
-- The deploy copies the site's folder to `/opt/services/whenparty/temp-sites/projects/<name>`. A file removed from the folder stays there until someone deletes it on the VPS. Files put there by hand, such as `.env`, stay too.
+- The deploy copies the site's folder to `/opt/services/whenparty/temp-sites/projects/<name>`, as [deploys.md](/.github/docs/deploys.md#deploy-projectyml) says. A file removed from the folder stays there until someone deletes it on the VPS. Files put there by hand, such as `.env`, stay too.
 
 ## The first deploy
 
@@ -19,4 +19,4 @@ Open the failed run in GitHub Actions and re-run its failed jobs. They deploy th
 
 ## Removing a site
 
-When a push deletes a site's folder, the deploy takes the site down and deletes its folder on the VPS, with any secrets and data in it. A renamed folder counts as a removed site and a new one, with a new package and, by convention, a new host. The GHCR package stays. The user deletes it by hand if the name will not be used again.
+When a push deletes a site's folder, the deploy takes the site down and deletes its folder on the VPS, with any secrets and data in it, as [deploys.md](/.github/docs/deploys.md#deploy-projectyml) says. A renamed folder counts as a removed site and a new one, with a new package and, [by convention](names.md#names), a new host. The GHCR package stays. The user deletes it by hand if the name will not be used again.

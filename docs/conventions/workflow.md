@@ -6,11 +6,11 @@ These rules say how to work on any change. [workflow-specs.md](/docs/conventions
 
 Before starting work, read the [writing rules](/docs/conventions/writing.md) and the conventions files that cover what the task changes, as the [map](/AGENTS.md) lists them, and follow them.
 
-Read every `AGENTS.md` on the path of the files the task changes, and, following their maps and the maps they link to, the documents the task needs. Keep changes within the requested scope.
+Read every `AGENTS.md` on the path of the files the task changes, and, following their maps and the maps they link to, the [documents](/docs/glossary.md#document) the task needs. Keep changes within the requested scope.
 
 Files that git ignores, such as `node_modules` and build output, are not part of the repository. Do not edit them or take them as rules.
 
-Before starting, check [open questions](/docs/open-questions.md) about the projects, modules or topics the task touches and raise them with the user. Add a question only with the user's agreement. When a question is decided, move the decision into the document it concerns, such as a conventions file, a document that an `AGENTS.md` links to, or a specification, and delete the question. The Decisions section below says when the decision also needs a decision record.
+Before starting, check [open questions](/docs/open-questions.md) about the [projects](/docs/glossary.md#project), [modules](/docs/glossary.md#module) or topics the task touches and raise them with the user. Add a question only with the user's agreement. When a question is decided, move the decision into the document it concerns, such as a conventions file, a document that an `AGENTS.md` links to, or a specification, and delete the question. The Decisions section below says when the decision also needs a [decision record](/docs/conventions/decisions.md).
 
 ## Cutting a task into pieces
 
@@ -20,7 +20,7 @@ Then cut the task into the smallest pieces that each have one purpose, such as o
 
 When there are several pieces, propose an outline and ask the user to approve it as a whole: the pieces in order, one line each on what it adds and what is still missing after it, then what more than one piece relies on, such as a type, a term or a rule. Save the approved outline in `whenparty-notes/outlines/` as a file named after the task, creating the folder when it is missing, and delete it when all its pieces are done or the user cancels the task.
 
-The session that proposed the outline, or one that the user asks to continue it, leads the task; this section calls it the lead. For each piece, the lead starts a new Claude Code session or, when it cannot, gives the user a prompt for one; either gets the path to the outline and the piece's line. A piece does not run in a subagent, which can neither ask the user nor start the reviewers. A piece's session takes its piece as the task and as the change that [workflow-specs.md](/docs/conventions/workflow-specs.md) speaks of, and proposes no outline: when the piece needs splitting or a rule change first, it stops and tells the lead. When the piece's pull request is merged, the lead checks the piece against the outline, tells the user of any difference, marks the piece done and, after reading the rules that the piece changed, starts the next piece from that `main`. The lead changes the outline only with the user's approval, apart from marking a piece done and splitting a piece.
+The session that proposed the outline, or one that the user asks to continue it, leads the task; this section calls it the lead. For each piece, the lead starts a new Claude Code session or, when it cannot, gives the user a prompt for one; either gets the path to the outline and the piece's line. A piece does not run in a subagent, which can neither ask the user nor start the [reviewers](/docs/conventions/workflow-checks.md#documents). A piece's session takes its piece as the task and as the change that [workflow-specs.md](/docs/conventions/workflow-specs.md) speaks of, and proposes no outline: when the piece needs splitting or a rule change first, it stops and tells the lead. When the piece's pull request is merged, the lead checks the piece against the outline, tells the user of any difference, marks the piece done and, after reading the rules that the piece changed, starts the next piece from that `main`. The lead changes the outline only with the user's approval, apart from marking a piece done and splitting a piece.
 
 ## Decisions
 

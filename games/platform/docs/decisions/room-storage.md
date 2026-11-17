@@ -2,12 +2,12 @@
 
 ## Context
 
-The rooms server, the server part of the [rooms module](../../rooms/AGENTS.md), runs in the transport server in the [signaling deployment](../../signaling/AGENTS.md), as [layers.md](layers.md) decides. That deployment restarts on every deploy, which follows every change that reaches it, as [games-changes.md](/.github/docs/games-changes.md) says, changes to the rooms and transport packages included. Creating a room, joining it and returning to it after a break need the rooms server. The relay of the p2p module keeps no rooms, so a game played through p2p outlives a restart.
+The rooms server, the server part of the [rooms module](../../rooms/AGENTS.md), runs in the transport server in the [signaling deployment](../../signaling/AGENTS.md), as [layers.md](layers.md) decides. That deployment restarts on every deploy, which follows every change that reaches it, as [games-changes.md](/.github/docs/games-changes.md) says, changes to the rooms and transport packages included. Creating a room, joining it and returning to it after a break need the rooms server (`4-2` of [4-owner.md](../../rooms/docs/specs/4-owner.md), `2-3` of [2-join.md](../../rooms/docs/specs/2-join.md), `3-4` of [3-participant.md](../../rooms/docs/specs/3-participant.md) and `5-1` of [5-owner-return.md](../../rooms/docs/specs/5-owner-return.md)). The [relay](../../signaling/docs/relay.md) of the [p2p module](../../p2p/AGENTS.md) keeps no rooms, so a game played through p2p outlives a restart.
 
 ## Options
 
-- Rooms only in the memory of the rooms server. A restart ends every room, and with it every game played through netcode. Nothing to store, sign or restore.
-- After a restart, the owner's page restores its room with the same code, tokens, term and roster. The server signs tokens with a secret of its own, so that after a restart it restores a room only for the page that holds the owner's token. Games outlive a restart, at the cost of one more secret in the environment of the signaling deployment, signing and checking tokens, and a restore to specify and test.
+- Rooms only in the memory of the rooms server. A restart ends every room, and with it every game played through [netcode](../../netcode/AGENTS.md). Nothing to store, sign or restore.
+- After a restart, the owner's page (`1-4` of [1-room.md](../../rooms/docs/specs/1-room.md)) restores its room with the same code, tokens, term and roster (`1-2` and `1-5` of [1-room.md](../../rooms/docs/specs/1-room.md), `4-3` of [4-owner.md](../../rooms/docs/specs/4-owner.md) and `10-6` of [10-server-room.md](../../rooms/docs/specs/10-server-room.md)). The server signs tokens with a secret of its own, so that after a restart it restores a room only for the page that holds the owner's token. Games outlive a restart, at the cost of one more secret in the environment of the signaling deployment, signing and checking tokens, and a restore to specify and test.
 - Rooms on disk or in a database such as Redis. Games outlive a restart, at the cost of storage or another service to run beside the signaling deployment.
 
 ## Decision
@@ -16,5 +16,5 @@ Rooms only in memory. A restart costs the games that run at that moment, whose p
 
 ## Consequences
 
-- The rooms specification: [10-1](../../rooms/docs/specs/10-server-room.md).
+- The rooms specification: `10-1` of [10-server-room.md](../../rooms/docs/specs/10-server-room.md).
 - [server.md](../../signaling/docs/server.md#image-and-deploys) of the signaling deployment says that a deploy ends every room.

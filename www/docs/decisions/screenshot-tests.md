@@ -2,7 +2,7 @@
 
 ## Context
 
-`www/` is one static page without components or a specification, and most of what it does is animation: balloons inflate, bob and take off, their strings meet ropes, and the page fades. A mistake, such as a string that points at the rope while its balloon flies away, shows at once to a person who watches.
+`www/` is one static page without components or a [specification](/docs/conventions/specs.md), and most of what it does is animation: balloons inflate, bob and take off, their strings meet ropes, and the page fades. A mistake, such as a string that points at the rope while its balloon flies away, shows at once to a person who watches.
 
 A browser test can measure each part at a set time of an animation, or take a screenshot. Playwright compares a screenshot with an approved one within a tolerance and, when they differ, leaves both and their difference. Browsers draw some pixels differently on another system or processor. A pull request shows old and new images side by side. Git LFS keeps files outside the repository, and every checkout of them counts towards a transfer quota.
 

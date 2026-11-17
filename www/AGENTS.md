@@ -1,6 +1,6 @@
 # www
 
-`www/` is the [project](/docs/glossary.md#project) of the When Party site at `www.when.party`: a static page that an nginx container serves behind the nginx proxy in `infra/`. It is one [deployment](/docs/glossary.md#deployment).
+`www/` is the [project](/docs/glossary.md#project) of the When Party site at `www.when.party`: a static page that an nginx container serves behind the nginx proxy in [`infra/`](/infra/AGENTS.md). It is one [deployment](/docs/glossary.md#deployment).
 
 - [docs/site.md](docs/site.md): the Content-Security-Policy that limits the page, how `index.html` versions the URLs of its styles and scripts, how the balloon takeoff and the balloons' strings, anchors and ropes fit together, how to add a balloon, how to run it locally and how it deploys. Read it before changing `html/`, the `Dockerfile` or `docker-compose.yml`.
 - [docs/tests.md](docs/tests.md): what the browser tests check, how to run them, and how the approved screenshots of the takeoff are updated. Read it before changing `html/`, `tests/`, `package.json`, `playwright.config.ts` or [check-www.yml](/.github/workflows/check-www.yml).

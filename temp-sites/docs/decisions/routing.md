@@ -2,11 +2,11 @@
 
 ## Context
 
-The temporary sites are small sites that live for a while, each at the root of a host of its own, `<name>.when.party`. The Traefik router of `temp-sites/` passes each host to its site's container by the labels in the site's compose file, as [traefik.md](../traefik.md) says. Traefik mounts the Docker socket, so whoever controls it controls Docker on the VPS, and every deploy of it interrupts the sites for a few seconds. Any container on the VPS with Traefik labels can claim any host, another site's included.
+The temporary sites are small sites that live for a while, each at the root of a host of its own, `<name>.when.party`, as [names.md](../names.md#names) says. The Traefik router of `temp-sites/` passes each host to its site's container by the labels in the site's compose file, as [traefik.md](../traefik.md) says. Traefik mounts the Docker socket, so whoever controls it controls Docker on the VPS, and every deploy of it interrupts the sites for a few seconds. Any container on the VPS with Traefik labels can claim any host, another site's included.
 
 [games-routing.md](/docs/decisions/games-routing.md) takes the games off this router: nginx finds their containers in Docker's DNS by a name that it builds from the request, a check in CI keeps other containers off those names, and a redeployed container can fail for the resolver's `valid` time. nginx could find the container of a temporary site the same way, from its host.
 
-Sites on one host share an origin, and with it cookies, `localStorage` and service workers, and each of them has to work under its path. [game-hosts.md](/docs/decisions/game-hosts.md) accepts this for the games, so that a new title needs no DNS record. The wildcard DNS record covers the host of every new temporary site, as [names.md](../names.md#hosts) says.
+Sites on one host share an origin, and with it cookies, `localStorage` and service workers, and each of them has to work under its path. [game-hosts.md](/docs/decisions/game-hosts.md) accepts this for the games, so that a new title needs no DNS record. The wildcard DNS record covers the host of every new temporary site, as [setup.md](/infra/docs/setup.md#cloudflare) says.
 
 ## Options
 

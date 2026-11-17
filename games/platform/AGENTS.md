@@ -1,10 +1,10 @@
 # Platform
 
-`platform/` is the [subproject](/docs/glossary.md#subproject) of `games/` that the games play through. Three of its [modules](/docs/glossary.md#module) form layers, each relying only on the layer below: transport connects pages, rooms gathers them into rooms, and netcode runs a game in a room. Calisthenics plays through the p2p module instead. The platform's servers run in two [deployments](/docs/glossary.md#deployment), signaling and turn, which are not modules of their own; `turn/` belongs to transport.
+`platform/` is the [subproject](/docs/glossary.md#subproject) of `games/` that the games play through. Three of its [modules](/docs/glossary.md#module) form layers, each relying only on the layer below: transport connects pages, rooms gathers them into rooms, and netcode runs a game in a room. [Calisthenics](../titles/calisthenics/AGENTS.md) plays through the p2p module instead. The platform's servers run in two [deployments](/docs/glossary.md#deployment), signaling and turn, which are not modules of their own; `turn/` belongs to transport.
 
 - [transport/AGENTS.md](transport/AGENTS.md): the transport module, which also spans `turn/`.
 - [rooms/AGENTS.md](rooms/AGENTS.md): the rooms module, on transport.
-- [netcode/AGENTS.md](netcode/AGENTS.md): the netcode module, on rooms, which tictactoe plays through.
+- [netcode/AGENTS.md](netcode/AGENTS.md): the netcode module, on rooms, which [tictactoe](../titles/tictactoe/AGENTS.md) plays through.
 - [p2p/AGENTS.md](p2p/AGENTS.md): the p2p module and its session rules.
 - [signaling/AGENTS.md](signaling/AGENTS.md): the deployment at `signaling.when.party`, which runs the transport server, with the rooms server in it, and the relay of p2p.
 - [turn/AGENTS.md](turn/AGENTS.md): the deployment of coturn at `turn.when.party`, part of the transport module.

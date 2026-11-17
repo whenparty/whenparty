@@ -2,7 +2,7 @@
 
 ## Context
 
-The audio files lie in a folder on the VPS outside git and the image, as [audio-storage.md](audio-storage.md) decides, so someone uploads them by hand from a device. The deploy user, whose key is in the secret `VPS_DEPLOY_KEY`, runs `docker` over SSH, as [github-setup.md](/.github/docs/github-setup.md) says, and Docker's documentation states that this grants root-level privileges. OpenSSH can tie a user to SFTP with `ForceCommand internal-sftp`, and `ChrootDirectory` can also lock it into a folder, which must then be owned by root, as must every folder above it. The deploy copies `docker-compose.yml` into `/opt/services/whenparty/blog/` as the deploy user, so that folder is the deploy user's.
+The audio files lie in a folder on the VPS outside git and the image, as [audio-storage.md](audio-storage.md) decides, so someone uploads them by hand from a device. The deploy user, whose key is in the secret `VPS_DEPLOY_KEY`, runs `docker` over SSH, as [github-setup.md](/.github/docs/github-setup.md#secrets) says, and Docker's documentation states that this grants root-level privileges. OpenSSH can tie a user to SFTP with `ForceCommand internal-sftp`, and `ChrootDirectory` can also lock it into a folder, which must then be owned by root, as must every folder above it. The [deploy](/.github/docs/deploys.md#siteyml) copies `docker-compose.yml` into `/opt/services/whenparty/blog/` as the deploy user, so that folder is the deploy user's.
 
 ## Options
 

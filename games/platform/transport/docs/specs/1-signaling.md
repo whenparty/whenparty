@@ -1,6 +1,6 @@
 # Signaling connections
 
-- `1-1` The transport has a part on each page and a part in the transport server, which runs in the signaling [deployment](/docs/glossary.md#deployment) in [`games/platform/signaling/`](../../../signaling/AGENTS.md). A page opens a signaling connection to the transport server for one or more modules that use the transport, which it names. Each of them gets a channel on the connection, between its part on the page and its part in the transport server, called its server part. A signaling connection goes through the states of this diagram:
+- `1-1` The transport has a part on each page and a part in the transport server, which runs in the signaling deployment in [`games/platform/signaling/`](../../../signaling/AGENTS.md). A page opens a signaling connection to the transport server for one or more [modules](/docs/glossary.md#module) that use the transport, which it names. Each of them gets a channel on the connection, between its part on the page and its part in the transport server, called its server part. A signaling connection goes through the states of this diagram:
   ```mermaid
   stateDiagram-v2
     [*] --> opening

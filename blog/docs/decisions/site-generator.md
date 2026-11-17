@@ -2,7 +2,7 @@
 
 ## Context
 
-A post is a Markdown file with front matter and images, and posts can run to several thousand words with tables and pictures. The pages share one layout, the list of posts changes with every post, and each image needs a URL that changes with its content, as [serving.md](/docs/conventions/serving.md) requires. The pictures go in two ways, across the text or at its side, chosen per picture. The site is static and served by nginx like `www/` and `nii-au/`. The other code of the repository runs on Node, and the Dockerfiles in `games/` build in a Node Alpine image.
+A post is a Markdown file with front matter and images, as [posts.md](../posts.md) says, and posts can run to several thousand words with tables and pictures. The pages share one layout, the list of posts changes with every post, and each image needs a URL that changes with its content, as [serving.md](/docs/conventions/serving.md) requires. The pictures go in two ways, across the text or at its side, chosen per picture. The site is static and served by nginx like [`www/`](/www/AGENTS.md) and [`nii-au/`](/nii-au/AGENTS.md). The other code of the repository runs on Node, and the Dockerfiles in `games/` build in an Alpine variant of the Node image that [checks.md](/.github/docs/checks.md#the-checks) names.
 
 ## Options
 

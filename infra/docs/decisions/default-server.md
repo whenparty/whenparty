@@ -2,9 +2,9 @@
 
 ## Context
 
-nginx gives a TLS connection whose SNI names no server, or that has no SNI, to the default server of the port. That is the server whose `listen` has `default_server`, or else the first server with that `listen` in the order nginx loads the configs. The image loads `conf.d/*.conf` in alphabetical order. The server sends its certificate during the handshake, before `ssl_verify_client` checks Cloudflare's client certificate, so a client without that certificate still sees it.
+nginx gives a TLS connection whose SNI names no server, or that has no SNI, to the default server of the port. That is the server whose `listen` has `default_server`, or else the first server with that `listen` in the order nginx loads the configs. The image loads `conf.d/*.conf` in alphabetical order. The server sends its certificate during the handshake, before `ssl_verify_client` checks [Cloudflare's client certificate](../setup.md#cloudflare), so a client without that certificate still sees it.
 
-Through Cloudflare, such a connection comes only for a proxied host in `nii.au` other than `nii.au` and `www.nii.au`, because the wildcard in `temp-sites.conf` gives every `*.when.party` host a server. Without Cloudflare, it comes from anyone who connects to the server's address, such as a scanner. The deploy never deletes a file on the VPS, so a config that a revert removes from the repository stays there, as [deploys.md](/.github/docs/deploys.md#infrayml) says.
+Through Cloudflare, such a connection comes only for a proxied host in `nii.au` other than `nii.au` and `www.nii.au`, because the wildcard in `temp-sites.conf` gives every `*.when.party` host a server, as [nginx-configs.md](../nginx-configs.md#shared-settings-and-a-sites-own) says. Without Cloudflare, it comes from anyone who connects to the server's address, such as a scanner. The deploy never deletes a file on the VPS, so a config that a revert removes from the repository stays there, as [deploys.md](/.github/docs/deploys.md#infrayml) says.
 
 ## Options
 

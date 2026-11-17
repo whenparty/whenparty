@@ -1,6 +1,6 @@
 # Hooks
 
-`.claude/hooks/` holds the Claude Code hooks of this repository, which [settings.json](/.claude/settings.json) registers, and an evaluation of whether agents read the documents a task needs before they edit, and whether they change the files it needs. [.claude/AGENTS.md](/.claude/AGENTS.md) maps the rest of `.claude/`.
+`.claude/hooks/` holds the Claude Code hooks of this repository, which [settings.json](/.claude/settings.json) registers, and an evaluation of whether agents read the [documents](/docs/glossary.md#document) a task needs before they edit, and whether they change the files it needs. [.claude/AGENTS.md](/.claude/AGENTS.md) maps the rest of `.claude/`.
 
 - [docs/common.md](/.claude/hooks/docs/common.md): what the hooks rely on, including [repo-path.sh](/.claude/hooks/repo-path.sh), which the hooks that act on files source, which files they act on and how much text a hook can add. Read it before changing any hook.
 - [docs/doc-context.md](/.claude/hooks/docs/doc-context.md): how [doc-context.sh](/.claude/hooks/doc-context.sh) makes the agent read the root documents and the `AGENTS.md` files a file needs before it edits the file. Read it before changing `doc-context.sh`.

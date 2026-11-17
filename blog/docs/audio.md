@@ -8,7 +8,7 @@ Files reach the folder through the user `blogaudio`, which logs in only with a k
 
 Each device that uploads gets a key of its own. On a device that already has keys, give it a name of its own, `ssh-keygen -t ed25519 -f ~/.ssh/blogaudio -C "<device>"`, and add `-i ~/.ssh/blogaudio` to `scp` and `sftp`. Its `.pub` file goes into `authorized_keys`.
 
-Run these as root, before or after the first deploy of the blog: `chown blogaudio:` also fixes an `audio/` folder that Docker created for root at its first start. `<deploy user>` is the user in the secret `VPS_USER` of [github-setup.md](/.github/docs/github-setup.md), the owner of the other sites' folders, because the deploy copies `docker-compose.yml` into `blog/`.
+Run these as root, before or after the first deploy of the blog: `chown blogaudio:` also fixes an `audio/` folder that Docker created for root at its first start. `<deploy user>` is the user in the secret `VPS_USER` of [github-setup.md](/.github/docs/github-setup.md#secrets), the owner of the other sites' folders, because the [deploy](/.github/docs/deploys.md#siteyml) copies `docker-compose.yml` into `blog/`.
 
 ```bash
 useradd -m -s /usr/sbin/nologin blogaudio
