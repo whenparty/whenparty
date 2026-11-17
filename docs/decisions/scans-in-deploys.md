@@ -2,7 +2,7 @@
 
 ## Context
 
-The VPS runs images that the deploys build: the sites through `site.yml`, and the games and temporary sites through `deploy-project.yml`. It also runs images that no workflow builds: nginx, Traefik and coturn. The weekly [image-scan.yml](/.github/workflows/image-scan.yml) scans all of them with Trivy, fails on a critical finding and uploads findings to GitHub Security, so it helps only when someone acts on them.
+The VPS runs images that the [deploys](/.github/docs/deploys.md) build: the sites through `site.yml`, and the games and temporary sites through `deploy-project.yml`. It also runs images that no workflow builds: nginx, Traefik and coturn. The weekly [image-scan.yml](/.github/workflows/image-scan.yml) scans all of them with Trivy, fails on a critical finding and uploads findings to GitHub Security, as [image-scan.md](/.github/docs/image-scan.md) says. So it helps only when someone acts on them.
 
 New vulnerabilities are published for images that already run. The weekly scans of 2026-11-02 and 2026-11-09 failed both times on a critical one in the `brotli-libs` package of Alpine, in images built before it was published, and coturn still runs the tag they flagged. Every critical finding so far came from a package of a base image, which a newer tag of that image fixes, as `nginx:1.31.8-alpine` did. A finding that no version fixes yet is also in the image that runs, so stopping a deploy does not remove it.
 

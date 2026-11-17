@@ -12,8 +12,8 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 ## Documents
 
 - This file maps the repository and its documents.
-- Every project and [module](/docs/glossary.md#module) that has or needs a specification has an `AGENTS.md`, and other folders may have one. The [folder document rules](/docs/conventions/folder-docs.md) say what every `AGENTS.md`, this file included, holds and when another folder gets one.
-- A `README.md` is for people. The root and every project on the map above have one; a subproject or another folder may have one. It follows the folder document rules.
+- Every project and [module](/docs/glossary.md#module) that has or needs a [specification](/docs/conventions/specs.md) has an `AGENTS.md`, and other folders may have one. The [folder document rules](/docs/conventions/folder-docs.md) say what every `AGENTS.md`, this file included, holds and when another folder gets one.
+- A `README.md` is for people. The root and every project on the map above have one; a [subproject](/docs/glossary.md#subproject) or another folder may have one. It follows the folder document rules.
 - A project's or module's specification lives in its `docs/specs/`. Its `docs/PLANNED.md` lists accepted changes that are not in the specification yet. Both follow the [specification rules](/docs/conventions/specs.md).
 - A decision record explains why a choice was made. The [decision record rules](/docs/conventions/decisions.md) say when one is written and where it lives.
 - Other documents of a folder with an `AGENTS.md` live in or below its `docs/` folder, apart from skills and subagents, which live where the next bullet says. They hold how to work there, and anything else that its specification and the decision records about it do not hold.

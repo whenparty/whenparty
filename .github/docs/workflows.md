@@ -8,7 +8,7 @@ Every action from another repository, GitHub's own included, is pinned to a full
 uses: owner/action@<sha> # v1.2.3
 ```
 
-A tag can be moved to other code, but a SHA cannot, and the deploy jobs hold the VPS SSH key. To update an action, look up the commit of the new release tag and replace both the SHA and the comment.
+A tag can be moved to other code, but a SHA cannot, and the deploy jobs hold the [VPS SSH key](/.github/docs/github-setup.md#secrets). To update an action, look up the commit of the new release tag and replace both the SHA and the comment.
 
 ## Permissions of reusable workflows
 
@@ -23,5 +23,5 @@ Every job that runs steps sets `timeout-minutes: 15`. The jobs take under three 
 The repository has no local check of workflow files.
 
 - A pull request runs `ci.yml` and the checks it calls from the pull request's own branch.
-- A deploy workflow runs only from `main`. The exceptions are `games.yml` and `traefik.yml`: running one by hand on a branch deploys that branch.
+- A [deploy workflow](/.github/docs/deploys.md) runs only from `main`. The exceptions are `games.yml` and `traefik.yml`: running one by hand on a branch deploys that branch.
 - Merging a change to a deploy workflow, or to `deploy-project.yml` or `site.yml`, runs the workflows that list it in `paths`. [deploys.md](/.github/docs/deploys.md) says which of them then deploy.
