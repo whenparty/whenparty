@@ -2,9 +2,9 @@
 
 ## Context
 
-The games in `games/titles/` play through the platform in `games/platform/`. A page of a game needs a connection to a server and connections to other pages, a room that lets participants in and tells who is present, and a game state that the participants share. Voice and video calls between pages, which the platform is expected to carry later, need the same connections and rooms but no game state.
+The [games](../../../AGENTS.md) in `games/titles/` play through the platform in `games/platform/`. A page of a game needs a connection to a server and connections to other pages, a room that lets participants in and tells who is present, and a game state that the participants share. Voice and video calls between pages, which the platform is expected to carry later, need the same connections and rooms but no game state.
 
-Pages reach two servers. The signaling server at `signaling.when.party` passes messages between pages that are not connected yet. The TURN server, coturn at `turn.when.party`, relays the traffic of pages that cannot connect directly; it needs a container of its own on the host network, with its own UDP ports, as [deployment.md](../../turn/docs/deployment.md) of the turn deployment says. Each runs as a [deployment](/docs/glossary.md#deployment) of its own.
+Pages reach two servers. The [signaling server](../../signaling/AGENTS.md) at `signaling.when.party` passes messages between pages that are not connected yet. The [TURN server](../../turn/AGENTS.md), coturn at `turn.when.party`, relays the traffic of pages that cannot connect directly; it needs a container of its own on the host network, with its own UDP ports, as [deployment.md](../../turn/docs/deployment.md) of the turn deployment says. Each runs as a [deployment](/docs/glossary.md#deployment) of its own.
 
 How pages connect changes with browsers, WebRTC and coturn. Who may join a room, and how long a room waits for someone, change with the needs of each game and of calls. Libraries that give rooms over connections keep rooms as a layer above them, such as Socket.IO, Phoenix, Jitsi and Colyseus, or make the room the interface of one package that hides the connections, such as Trystero and LiveKit.
 
@@ -12,7 +12,7 @@ How pages connect changes with browsers, WebRTC and coturn. Who may join a room,
 
 ## Options
 
-- One module for connections, rooms and game state, as the p2p module is. The fewest documents and boundaries. A change to how pages connect touches the code, specification and tests of the game state, and calls would carry that code.
+- One module for connections, rooms and game state, as the [p2p module](../../p2p/AGENTS.md) is. The fewest documents and boundaries. A change to how pages connect touches the code, specification and tests of the game state, and calls would carry that code.
 - The previous decision: the modules p2p, signaling and turn, each with a specification of what the others rely on, such as the signaling protocol and the format of TURN credentials. Each deployment is a module of its own. The rules of one connection are split between the module on the page and the modules of the servers, and calls would rely on p2p, a module of the games, for their connections.
 - One module for connections and rooms, with rooms as its interface, and netcode over it, as in Trystero and LiveKit. One specification less and no boundary between connections and rooms. A change for browsers and a change to who may join a room meet in one module, and the rules of rooms can be tested only together with the connections.
 - Rooms as an option of a module of connections. Calls without rooms could use the connections alone. Every rule of the module holds a condition on whether rooms are on, while every known use, games and calls, turns them on.

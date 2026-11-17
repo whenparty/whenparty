@@ -2,7 +2,7 @@
 
 ## Code and origins
 
-[src/main.mjs](../src/main.mjs) starts the server on the port in `PORT`, 8080 by default, with the rooms server and the TURN settings of the environment. [src/server.mjs](../src/server.mjs) owns HTTP, the relay's WebSockets with their heartbeat and resource limits, and the `ws` server that completes the upgrades the transport server accepts, as [websocket-library.md](../../docs/decisions/websocket-library.md) explains. [src/origin.mjs](../src/origin.mjs) defines the origins that the relay and `GET /turn-credentials` allow. The transport server keeps its own list, and the two stay apart while p2p is in use. Origin filtering restricts browser use; it does not authenticate clients.
+[src/main.mjs](../src/main.mjs) starts the server on the port in `PORT`, 8080 by default, with the [rooms server](../../rooms/AGENTS.md) and the TURN settings of the environment. [src/server.mjs](../src/server.mjs) owns HTTP, the [relay's](relay.md) WebSockets with their heartbeat and resource limits, and the `ws` server that completes the upgrades the [transport server](../../transport/AGENTS.md) accepts, as [websocket-library.md](../../docs/decisions/websocket-library.md) explains. [src/origin.mjs](../src/origin.mjs) defines the origins that the relay and `GET /turn-credentials` allow. The transport server keeps its own list ([7-6](../../transport/docs/specs/7-server.md)), and the two stay apart while [p2p](../../p2p/AGENTS.md) is in use. Origin filtering restricts browser use; it does not authenticate clients.
 
 ## HTTP
 
@@ -14,7 +14,7 @@ The relay pings its clients every 30 seconds ([relay.md](relay.md)), and the tra
 
 ## Tests
 
-`pnpm --filter @whenparty/signaling test` from `games/` runs the [tests](../src/tests/). They cover allowed origins, HTTP responses, the relay's WebSocket limits, heartbeat and credentials, and the hand-over of upgrades at `/platform` to the transport server and its rooms server. After a change to the dependencies of signaling, also run `pnpm test` and `pnpm typecheck` from `games/`.
+`pnpm --filter @whenparty/signaling test` from `games/` runs the [tests](../src/tests/). They cover allowed origins, HTTP responses, the relay's WebSocket limits, heartbeat and credentials, and the hand-over of upgrades at `/platform` ([1-13](../../transport/docs/specs/1-signaling.md)) to the transport server and its rooms server. After a change to the dependencies of signaling, also run `pnpm test` and `pnpm typecheck` from `games/` ([workspace.md](../../../docs/workspace.md#checks)).
 
 ## Image and deploys
 

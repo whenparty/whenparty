@@ -2,14 +2,14 @@
 
 ## Context
 
-The TURN server, coturn, relays the traffic of pages that cannot connect directly. It accepts any credentials made with its secret until they expire ([8-2](../../transport/docs/specs/8-turn.md)), so whoever gets credentials can use it as a relay. Its quotas in [turnserver.conf](../../turn/turnserver.conf) bound that use: 64,000 bytes a second for each allocation and 8,000,000 in all, so at most 125 allocations at once, and at most 32 for one username.
+The [TURN server](../../turn/AGENTS.md), coturn, relays the traffic of pages that cannot connect directly. It accepts any credentials made with its secret until they expire ([8-2](../../transport/docs/specs/8-turn.md)), so whoever gets credentials can use it as a relay. Its quotas in [turnserver.conf](../../turn/turnserver.conf) bound that use ([deployment.md](../../turn/docs/deployment.md#constraints)): 64,000 bytes a second for each allocation and 8,000,000 in all, so at most 125 allocations at once, and at most 32 for one username.
 
 Two addresses give credentials, and neither knows who the client is:
 
-- the transport server, over a page's signaling connection, gives new ones before each connection attempt ([3-4](../../transport/docs/specs/3-connection.md), [8-1](../../transport/docs/specs/8-turn.md)), so each side of each connection has a username of its own;
-- `GET /turn-credentials` of the [signaling deployment](../../signaling/AGENTS.md), which the p2p module uses, gives them to every request from an allowed origin, and a client outside a browser can name any origin.
+- the [transport server](../../transport/AGENTS.md), over a page's signaling connection, gives new ones before each connection attempt ([3-4](../../transport/docs/specs/3-connection.md), [8-1](../../transport/docs/specs/8-turn.md)), so each side of each connection has a username of its own;
+- [`GET /turn-credentials`](../../signaling/docs/server.md#http) of the [signaling deployment](../../signaling/AGENTS.md), which the [p2p module](../../p2p/AGENTS.md) uses, gives them to every request from an allowed origin, and a client outside a browser can name any origin.
 
-nginx limits the connections and requests of each client address to the signaling deployment, as [games-conf.md](/infra/docs/games-conf.md) says. The players of one party often share an address, such as one Wi-Fi or a mobile carrier's NAT, and one client with IPv6 can use many addresses.
+nginx limits the connections and requests of each client address to the signaling deployment ([2-4](/infra/docs/specs/2-headers.md)). The players of one party often share an address, such as one Wi-Fi or a mobile carrier's NAT, as [games-conf.md](/infra/docs/games-conf.md) says, and one client with IPv6 can use many addresses.
 
 ## Options
 

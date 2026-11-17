@@ -1,6 +1,6 @@
 # Session rules
 
-[src/session-machine.ts](../src/session-machine.ts) decides transitions with `step(model, event, env)`, and [src/session.ts](../src/session.ts) runs their effects and timers. [src/room-state.ts](../src/room-state.ts) holds the seats and the game as the host keeps them. Keep `step`, `decideSnapshot` and the functions of `room-state.ts` pure. [src/protocol.ts](../src/protocol.ts) validates the messages between pages. Games own match rules and results.
+[src/session-machine.ts](../src/session-machine.ts) decides transitions with `step(model, event, env)`, and [src/session.ts](../src/session.ts) runs their effects and timers. [src/room-state.ts](../src/room-state.ts) holds the seats and the game as the host keeps them. Keep `step`, `decideSnapshot` and the functions of `room-state.ts` pure. [src/protocol.ts](../src/protocol.ts) validates the messages between pages. [Games](../../../AGENTS.md) own match rules and results.
 
 ## Phases
 
@@ -29,7 +29,7 @@ A player keeps its identity across reloads, and a connection identifies one tab.
 | creator, any | newer term naming this connection as host, from anyone | host |
 | creator, hosting | same term from a rival tab of the creator | the lower connection ID keeps the room: outrank (newer term) or follow |
 
-A reloaded creator obtains a retained snapshot from a connected member waiting for them. A restored page can reuse its own room. Restoration keeps the game and remaining reservations. A reloaded creator linked to nobody after `restoreGraceMs` (3 seconds by default) hosts a fresh room under its code; one that is linked but gets no snapshot closes after `seatHoldMs`. The signaling server stores no game state. Another tab of the creator restores the room from the host's snapshot and takes it over; the older tab follows, and hosts again if the controlling tab's connection drops while it is visible. A hidden tab waits until it is shown. Two creator tabs hosting the same term resolve to the lower connection ID, which starts a newer term so the other tab and its guests follow. Creating a room generates a new code. Joining an unanswered code never starts a room.
+A reloaded creator obtains a retained snapshot from a connected member waiting for them. A restored page can reuse its own room. Restoration keeps the game and remaining reservations. A reloaded creator linked to nobody after `restoreGraceMs` (3 seconds by default) hosts a fresh room under its code; one that is linked but gets no snapshot closes after `seatHoldMs`. The [signaling server](../../signaling/AGENTS.md) stores no game state. Another tab of the creator restores the room from the host's snapshot and takes it over; the older tab follows, and hosts again if the controlling tab's connection drops while it is visible. A hidden tab waits until it is shown. Two creator tabs hosting the same term resolve to the lower connection ID, which starts a newer term so the other tab and its guests follow. Creating a room generates a new code. Joining an unanswered code never starts a room.
 
 ## Absence
 
