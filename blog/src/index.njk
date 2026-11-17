@@ -20,7 +20,7 @@ permalink: /
   <li class="post">
     <a class="post-link" href="{{ post.url }}">
       {% if post.data.cover %}<img src="{{ post | postAsset(post.data.cover) }}" alt="" loading="lazy">{% else %}<span class="post-blank" aria-hidden="true"></span>{% endif %}
-      <p class="post-meta">{{ post.date | shortDate }}{% if post.data.audio %} · Audio {{ post.data.audio.minutes }} min{% endif %}</p>
+      <p class="post-meta">{{ post.date | shortDate }}{% if post.data.audio %} · Audio {{ post.data.audio.seconds | audioMinutes }} min{% endif %}</p>
       <h2>{{ post.data.title }}</h2>
       <p>{{ post.data.description }}</p>
       <span class="read">Read</span>

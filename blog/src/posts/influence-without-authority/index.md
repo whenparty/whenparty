@@ -7,7 +7,8 @@ coverAlt: Amy, a squirrel, and Ian, a badger, sketch a plan together at a table
 shareImage: influence-share.jpg
 audio:
   file: influence-without-authority.45d97fc5.mp3
-  minutes: 24
+  bytes: 16953408
+  seconds: 1413
 credits: Conceived and edited by Nikolai Krivous. Drafted by Claude Opus 5.5.
 ---
 

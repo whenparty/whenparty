@@ -6,6 +6,7 @@ import katex from "katex";
 const postsDir = "src/posts";
 const imageFile = /\.(webp|avif|jpe?g|png|svg)$/i;
 const formulaLanguages = new Set(["latex", "math"]);
+const audioFile = /^([a-z0-9-]+)\.[0-9a-f]{8}\.mp3$/;
 
 const contentHash = file => createHash("sha256").update(readFileSync(file)).digest("hex").slice(0, 8);
 const versioned = (url, file) => `${url}?v=${contentHash(file)}`;
@@ -95,6 +96,19 @@ function figures(md) {
   };
 }
 
+const wholePositive = value => Number.isInteger(value) && value > 0;
+
+function podcastEpisodes(posts = []) {
+  const episodes = posts.filter(post => post.data.audio);
+  for (const post of episodes) {
+    const { file, bytes, seconds } = post.data.audio;
+    if (file?.match(audioFile)?.[1] !== post.page.fileSlug || !wholePositive(bytes) || !wholePositive(seconds)) {
+      throw new Error(`${post.inputPath} needs audio.file named ${post.page.fileSlug}.<8 hex digits>.mp3 and whole numbers above 0 in audio.bytes and audio.seconds`);
+    }
+  }
+  return episodes.reverse();
+}
+
 function copyPostImages(results) {
   for (const { inputPath, outputPath } of results) {
     if (!path.normalize(inputPath).startsWith(postsDir + path.sep)) continue;
@@ -127,14 +141,18 @@ export default function (eleventyConfig) {
 
   eleventyConfig.addGlobalData("siteUrl", "https://blog.when.party");
   eleventyConfig.addPassthroughCopy("src/styles.css");
+  eleventyConfig.addPassthroughCopy("src/podcast-cover.jpg");
   eleventyConfig.addWatchTarget(postsDir);
   eleventyConfig.on("eleventy.after", ({ results }) => copyPostImages(results));
 
   eleventyConfig.addFilter("newestFirst", (posts = []) => [...posts].reverse());
-  eleventyConfig.addFilter("stylesUrl", () => versioned("/styles.css", "src/styles.css"));
+  eleventyConfig.addFilter("podcastEpisodes", podcastEpisodes);
+  eleventyConfig.addFilter("assetUrl", file => versioned(`/${file}`, `src/${file}`));
   eleventyConfig.addFilter("postAsset", (post, file) => versioned(`${post.url}${file}`, path.join(path.dirname(post.inputPath), file)));
   eleventyConfig.addFilter("longDate", date =>
     new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(date));
+  eleventyConfig.addFilter("audioMinutes", seconds => Math.max(1, Math.round(seconds / 60)));
+  eleventyConfig.addFilter("rfc2822Date", date => date.toUTCString());
   eleventyConfig.addFilter("shortDate", date =>
     new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(date));
   eleventyConfig.addFilter("readingMinutes", html => Math.max(1, Math.round(html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length / 220)));
