@@ -11,7 +11,7 @@ layout: base.njk
 
   {% if audio %}
   <section class="listen" aria-label="Audio version">
-    <p><strong>Listen</strong>{{ audio.minutes }} min · audio version made with NotebookLM</p>
+    <p><strong>Listen</strong>{{ audio.seconds | audioMinutes }} min · audio version made with NotebookLM</p>
     <audio controls preload="none" src="/audio/{{ audio.file }}"></audio>
   </section>
   {% endif %}

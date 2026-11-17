@@ -2,7 +2,7 @@
 
 ## Context
 
-Most posts have an audio version of about 20 to 30 minutes. As MP3 at 64 kbit/s in mono, 25 minutes take about 12 MB, and a post links only to the newest version of its audio. Everything the sites serve runs on the WhenParty VPS.
+Most posts have an audio version of about 20 to 30 minutes. The first, an MP3 at 96 kbit/s in mono, takes 17 MB for 24 minutes, and a post links only to the newest version of its audio. The [podcast feed](../podcast.md) lets podcast apps download each episode. Everything the sites serve runs on the WhenParty VPS.
 
 [site.yml](/.github/workflows/site.yml) builds the image from the folder and copies only its `docker-compose.yml` to the VPS, as [deploys.md](/.github/docs/deploys.md#siteyml) says. Git LFS keeps files outside the repository, and every checkout of them counts towards a transfer quota of GitHub, as [screenshot-tests.md](/www/docs/decisions/screenshot-tests.md#context) notes. `nii-au/` keeps the master of its video in Git LFS and leaves it out of its image, as [media.md](/nii-au/docs/media.md) says.
 

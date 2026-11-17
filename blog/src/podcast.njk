@@ -1,0 +1,38 @@
+---
+permalink: /podcast.xml
+title: When Party blog
+description: "Audio versions of the posts of the When Party blog. AI generates each episode from its post with NotebookLM: the hosts and their voices are synthetic. The posts are notes on what their author learns, starting with a course on communication and working with AI agents."
+---
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>{{ title }}</title>
+    <link>{{ siteUrl }}/</link>
+    <atom:link href="{{ siteUrl }}{{ page.url }}" rel="self" type="application/rss+xml"/>
+    <description>{{ description }}</description>
+    <language>en</language>
+    <itunes:author>Nikolai Krivous</itunes:author>
+    <itunes:owner>
+      <itunes:name>Nikolai Krivous</itunes:name>
+      <itunes:email>whenparty@nii.au</itunes:email>
+    </itunes:owner>
+    <itunes:image href="{{ siteUrl }}{{ 'podcast-cover.jpg' | assetUrl }}"/>
+    <itunes:category text="Education">
+      <itunes:category text="Self-Improvement"/>
+    </itunes:category>
+    <itunes:category text="Technology"/>
+    <itunes:explicit>false</itunes:explicit>
+    {%- for post in collections.posts | podcastEpisodes %}
+    <item>
+      <title>{{ post.data.title }}</title>
+      <link>{{ siteUrl }}{{ post.url }}</link>
+      <guid isPermaLink="true">{{ siteUrl }}{{ post.url }}</guid>
+      <pubDate>{{ post.date | rfc2822Date }}</pubDate>
+      <description>AI-generated audio version of the post, made with NotebookLM. {{ post.data.description }}</description>
+      <enclosure url="{{ siteUrl }}/audio/{{ post.data.audio.file }}" length="{{ post.data.audio.bytes }}" type="audio/mpeg"/>
+      <itunes:duration>{{ post.data.audio.seconds }}</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    {%- endfor %}
+  </channel>
+</rss>
