@@ -1,6 +1,6 @@
 # Games
 
-`games/` is a [project](/docs/glossary.md#project) of [subprojects](/docs/glossary.md#subproject): the platform in `platform/`, each game in `titles/` and the page that lists the games in `index/`. The platform owns connections, rooms, seats and matches, and each game owns its rules and results.
+`games/` is a [project](/docs/glossary.md#project) of [subprojects](/docs/glossary.md#subproject): the platform in [`platform/`](platform/AGENTS.md), each game in [`titles/`](titles/AGENTS.md) and the page that lists the games in [`index/`](index/AGENTS.md). The platform owns connections, rooms, seats and matches, and each game owns its rules and results.
 
 - [platform/AGENTS.md](platform/AGENTS.md): the platform that the games play through: the [modules](/docs/glossary.md#module) transport, rooms and netcode, each with its `AGENTS.md`, `docs/` and package in `platform/<name>/`, the p2p module, the platform's servers, and its decision records in `platform/docs/decisions/`.
 - [titles/AGENTS.md](titles/AGENTS.md): the games, and the list of them.
