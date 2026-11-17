@@ -1,6 +1,6 @@
 # blog
 
-`blog/` is the [project](/docs/glossary.md#project) of the When Party blog at `blog.when.party`: Markdown posts that Eleventy builds into static pages, which an nginx container serves behind the nginx proxy in `infra/`. It is one [deployment](/docs/glossary.md#deployment).
+`blog/` is the [project](/docs/glossary.md#project) of the When Party blog at `blog.when.party`: Markdown posts that Eleventy builds into static pages, which an nginx container serves behind the nginx proxy in [`infra/`](/infra/AGENTS.md). It is one [deployment](/docs/glossary.md#deployment).
 
 - [docs/posts.md](docs/posts.md): how to write a post: its folder and address, its front matter, images and the `#side` mark, formulas, drafts and audio. Read it before adding or changing a post or `src/posts/posts.11tydata.js`.
 - [docs/site.md](docs/site.md): what `eleventy.config.js` adds to Markdown, how styles, images and audio get URLs that change with their content, the cache headers of `nginx.conf`, how the container mounts the audio folder and the limits it runs with, which page the look follows, the Content-Security-Policy, how to run the site locally and how it deploys. Read it before changing `eleventy.config.js`, `package.json`, `package-lock.json`, `.dockerignore`, `src/_includes/`, `src/index.njk`, `src/styles.css`, `nginx.conf`, the `Dockerfile` or `docker-compose.yml`.

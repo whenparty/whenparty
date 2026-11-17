@@ -2,14 +2,14 @@
 
 ## Context
 
-Some requirements of `games/` hold only in a real browser with real servers: that the browser's data channel takes the largest text of the transport ([3-6](../../platform/transport/docs/specs/3-connection.md)), that pages connect through coturn when they reach each other only through it, and stay connected after their credentials expire ([8-5 and 8-6](../../platform/transport/docs/specs/8-turn.md)), the tab lock of rooms ([9-2](../../platform/rooms/docs/specs/9-tab.md)), and the address, the copy button and the colours of a title's page ([2-3, 2-7 and 2-14](../../titles/tictactoe/docs/specs/2-page.md)). The [testing rules](/docs/conventions/tests.md) run such tests in Playwright, in files that end in `.browser.test.ts`.
+Some requirements of `games/` hold only in a real browser with real servers: that the browser's data channel takes the largest text of the transport (`3-6` of [3-connection.md](../../platform/transport/docs/specs/3-connection.md)), that pages connect through coturn when they reach each other only through it, and stay connected after their credentials expire (`8-5` and `8-6` of [8-turn.md](../../platform/transport/docs/specs/8-turn.md)), the tab lock of rooms (`9-2` of [9-tab.md](../../platform/rooms/docs/specs/9-tab.md)), and the address, the copy button and the colours of a title's page (`2-3`, `2-7` and `2-14` of tictactoe's [2-page.md](../../titles/tictactoe/docs/specs/2-page.md)). The [testing rules](/docs/conventions/tests.md) run such tests in Playwright, in files that end in `.browser.test.ts`.
 
 - `www/` runs its browser tests in the Playwright image, locally and in CI, as [tests.md](/www/docs/tests.md) says. The image pins the browser, and a CI runner pulls about 2 GB of it on every run. Playwright can instead install its pinned Chromium and the libraries it needs on the runner, also on every run.
 - A browser on a Mac does not reach the addresses of a Docker network, and a container on Docker's host network does.
 - GitHub's `ubuntu-latest` runner comes with Google Chrome and Docker. Its Chrome is the browser that most players use, and its version changes with the runner image.
 - `games/` is one [pnpm workspace](../workspace.md), and its root package holds the tools that every package shares.
 - The [signaling deployment](../../platform/signaling/AGENTS.md) starts its servers in Node with `startSignalingServer` of [server.mjs](../../platform/signaling/src/server.mjs), which takes a TURN secret and the server parts, such as the [rooms server](../../platform/rooms/docs/specs/1-room.md). coturn runs in Docker from the [turn deployment](../../platform/turn/AGENTS.md)'s config and start script, as its [smoke test](../../platform/turn/docs/smoke-test.md) does.
-- The production servers run what `main` last [deployed](/.github/docs/deploys.md). Their rooms server keeps at most 10 open rooms across all app IDs ([12-1](../../platform/rooms/docs/specs/12-server-answers.md)). Their coturn has [quotas](../../platform/turn/docs/deployment.md) that players share, and a browser refreshes its allocations there about every 9 minutes. A page on `localhost` connects to signaling at `localhost` ([1-13](../../platform/transport/docs/specs/1-signaling.md)).
+- The production servers run what `main` last [deployed](/.github/docs/deploys.md). Their rooms server keeps at most 10 open rooms across all app IDs (`12-1` of [12-server-answers.md](../../platform/rooms/docs/specs/12-server-answers.md)). Their coturn has [quotas](../../platform/turn/docs/deployment.md) that players share, and a browser refreshes its allocations there about every 9 minutes. A page on `localhost` connects to signaling at `localhost` (`1-13` of [1-signaling.md](../../platform/transport/docs/specs/1-signaling.md)).
 
 ## Options
 
@@ -33,7 +33,7 @@ Where Playwright is set up:
 
 Which servers the tests use:
 
-- Local servers that the tests start: signaling in Node with a test secret and the rooms server, and coturn in Docker with the deployed config. A test needs no secret of the repository and changes nothing that players use, it tests the code of its own branch, and it can give coturn a short allocation lifetime, so that a test of 8-6 takes seconds. coturn runs on a Docker network instead of the internet.
+- Local servers that the tests start: signaling in Node with a test secret and the rooms server, and coturn in Docker with the deployed config. A test needs no secret of the repository and changes nothing that players use, it tests the code of its own branch, and it can give coturn a short allocation lifetime, so that a test of `8-6` in [8-turn.md](../../platform/transport/docs/specs/8-turn.md) takes seconds. coturn runs on a Docker network instead of the internet.
 - The production servers. A test goes the real way, through DNS, nginx and the deployed coturn. It tests what `main` deployed instead of the branch, takes rooms from the 10 that players share, can neither use up coturn's quotas nor shorten its allocation lifetime, and needs pages that are not on `localhost`.
 
 ## Decision

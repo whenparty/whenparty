@@ -2,11 +2,11 @@
 
 ## Context
 
-The blog is a section of When Party, and the [page of `www.when.party`](/www/README.md) links to it with a balloon of its own, as it links to the games. Its posts are Markdown, so its pages need a build step, and a new post comes every week or two.
+The blog is a section of When Party, and the [page of `www.when.party`](/www/html/index.html) links to it with a balloon of its own, as it links to the games. Its posts are Markdown, so its pages need a build step, and a new post comes every week or two.
 
 `www/` is one page written by hand, without a build step or package dependencies for the page. Its browser tests compare storyboards of the balloon takeoff with approved screenshots, as [screenshot-tests.md](/www/docs/decisions/screenshot-tests.md) decides, and `www.yml` deploys it on every change in `www/` other than Markdown, as [deploys.md](/.github/docs/deploys.md) says.
 
-The proxy sets a Content-Security-Policy per host, as [2-2](/infra/docs/specs/2-headers.md) says. The policy of `www.when.party` already lets the blog's pages load what they need, their audio included, through `default-src 'self'`. The certificate `when.party.crt` covers `*.when.party`, as [setup.md](/infra/docs/setup.md#certificates) says, and a proxied wildcard DNS record sends every host one level below `when.party` to the VPS, as the [Cloudflare section](/infra/docs/setup.md#cloudflare) of setup.md says. nginx picks a server with an exact `server_name` before the wildcard server of `temp-sites.conf`, as [nginx-configs.md](/infra/docs/nginx-configs.md#shared-settings-and-a-sites-own) says. [site.yml](/.github/workflows/site.yml) builds and deploys a folder that has a `Dockerfile` and a `docker-compose.yml`.
+The proxy sets a Content-Security-Policy per host, as `2-2` of [2-headers.md](/infra/docs/specs/2-headers.md) says. The policy of `www.when.party` already lets the blog's pages load what they need, their audio included, through `default-src 'self'`. The certificate `when.party.crt` covers `*.when.party`, as [setup.md](/infra/docs/setup.md#certificates) says, and a proxied wildcard DNS record sends every host one level below `when.party` to the VPS, as the [Cloudflare section](/infra/docs/setup.md#cloudflare) of setup.md says. nginx picks a server with an exact `server_name` before the wildcard server of `temp-sites.conf`, as [nginx-configs.md](/infra/docs/nginx-configs.md#shared-settings-and-a-sites-own) says. [site.yml](/.github/workflows/site.yml) builds and deploys a folder that has a `Dockerfile` and a `docker-compose.yml`.
 
 ## Options
 
@@ -21,5 +21,5 @@ A project of its own on `blog.when.party`. The main page stays one page written 
 ## Consequences
 
 - [AGENTS.md](../../AGENTS.md) and [site.md](../site.md).
-- [blog.conf](/infra/nginx/conf.d/blog.conf), [2-2](/infra/docs/specs/2-headers.md), [3-1](/infra/docs/specs/3-sites.md) and [3-2](/infra/docs/specs/3-sites.md).
+- [blog.conf](/infra/nginx/conf.d/blog.conf), `2-2` of [2-headers.md](/infra/docs/specs/2-headers.md), `3-1` and `3-2` of [3-sites.md](/infra/docs/specs/3-sites.md).
 - [blog.yml](/.github/workflows/blog.yml).

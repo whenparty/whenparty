@@ -10,7 +10,7 @@ A project inside another project, such as [each game in `games/titles/`](/games/
 
 ## Module
 
-A part of a project, or of another module, that the documentation of the project names as a module, such as the [transport module](/games/platform/AGENTS.md) of the games platform.
+A part of a project, or of another module, that the documentation of the project names as a module, such as the [transport module](/games/platform/transport/AGENTS.md) of the games platform.
 
 ## Deployment
 

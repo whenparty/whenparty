@@ -11,4 +11,6 @@ flowchart LR
   proxy --> site["www container: nginx with the page"]
 ```
 
+The nginx proxy terminates TLS (`1-1` of its [1-connections.md](/infra/docs/specs/1-connections.md)), sets the headers of its [2-headers.md](/infra/docs/specs/2-headers.md) and passes `www.when.party` to the container, as `3-1` of [3-sites.md](/infra/docs/specs/3-sites.md) says.
+
 [Browser tests](docs/tests.md) check the balloon takeoff and compare a storyboard of it with approved screenshots. A change to the page reaches `main` after the tests pass on its [pull request](/.github/docs/github-setup.md#main-branch), and it [goes live](/.github/docs/deploys.md) without waiting for their run on `main`, as [checks.md](/.github/docs/checks.md) says.

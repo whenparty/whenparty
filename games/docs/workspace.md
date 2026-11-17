@@ -11,7 +11,7 @@ The packages of `games/` form one pnpm workspace, whose folders [pnpm-workspace.
 
 ## Running a title locally
 
-Start signaling with `pnpm --filter @whenparty/signaling start`, then the title's dev script. Pages on `localhost` connect to that signaling at `localhost:8080` ([1-13](../platform/transport/docs/specs/1-signaling.md), [signaling-url.ts](../platform/p2p/src/signaling-url.ts)).
+Start signaling with `pnpm --filter @whenparty/signaling start`, then the title's dev script. Pages on `localhost` connect to that signaling at `localhost:8080` (`1-13` of [1-signaling.md](../platform/transport/docs/specs/1-signaling.md), [signaling-url.ts](../platform/p2p/src/signaling-url.ts)).
 
 The dev and preview servers of every title send the headers in `src/dev-headers.ts` of the [p2p module](../platform/p2p/AGENTS.md). Keep them the same as the headers of the proxy that [games-conf.md](/infra/docs/games-conf.md) says they copy, apart from the local signaling server that they add to `connect-src`.
 

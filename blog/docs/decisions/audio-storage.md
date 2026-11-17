@@ -22,4 +22,4 @@ A folder on the VPS, mounted read-only, with the hash in each file name. It keep
 
 - [docker-compose.yml](../../docker-compose.yml) and [nginx.conf](../../nginx.conf).
 - [posts.md](../posts.md), [site.md](../site.md) and [audio.md](../audio.md).
-- [2-8](/infra/docs/specs/2-headers.md) and [2-9](/infra/docs/specs/2-headers.md).
+- `2-8` and `2-9` of [2-headers.md](/infra/docs/specs/2-headers.md).

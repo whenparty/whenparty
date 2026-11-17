@@ -4,5 +4,5 @@
 
 - [docs/specs/](docs/specs/): its specification. Files 1 to 9 hold what the app on a page gets: rooms, joining, a participant's and the owner's pages, presence, texts, leaving, and the tab lock and record. Files 10 to 12 hold the rooms server: rooms, participants and its answers.
 - [room-storage.md](../docs/decisions/room-storage.md): why the rooms server keeps rooms only in memory, and so why a restart of the signaling deployment ends every room.
-- [layers.md](../docs/decisions/layers.md): why transport, rooms and netcode are modules of their own and why the deployments that run the servers are not modules. Read it before moving code or rules between the modules.
+- [layers.md](../docs/decisions/layers.md): why transport, rooms and netcode are modules of their own and why the [deployments](/docs/glossary.md#deployment) that run the servers are not modules. Read it before moving code or rules between the modules.
 - [hosting.md](../../titles/docs/hosting.md): the prefix of the keys that the module stores in the browser.

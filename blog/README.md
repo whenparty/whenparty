@@ -15,4 +15,6 @@ flowchart LR
   proxy --> container
 ```
 
+The nginx proxy passes `blog.when.party` to the container, as `3-1` of the proxy's [3-sites.md](/infra/docs/specs/3-sites.md) says.
+
 The list of posts shows the newest first, as cards, with its picture when it has one. A post page shows its picture as a taped card beside the title, an audio player when the post has audio, and contents when it has more than three sections. Pictures inside a post are taped cards across the text or at its side.

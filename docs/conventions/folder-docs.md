@@ -1,6 +1,6 @@
 # Folder documents
 
-These rules apply to every `AGENTS.md` and `README.md` and to the documents on how to work in a folder, in addition to the [writing rules](/docs/conventions/writing.md). The [map](/AGENTS.md) says which folders must have an `AGENTS.md` or a `README.md`; [Where knowledge goes](#where-knowledge-goes) says when another folder gets an `AGENTS.md`.
+These rules apply to every `AGENTS.md` and `README.md` and to the [documents](/docs/glossary.md#document) on how to work in a folder, in addition to the [writing rules](/docs/conventions/writing.md). The [map](/AGENTS.md) says which folders must have an `AGENTS.md` or a `README.md`; [Where knowledge goes](#where-knowledge-goes) says when another folder gets an `AGENTS.md`.
 
 ## AGENTS.md
 

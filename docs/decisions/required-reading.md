@@ -2,7 +2,7 @@
 
 ## Context
 
-The [workflow](/docs/conventions/workflow.md) and the [checks](/docs/conventions/workflow-checks.md) require reading documents before a change, and nothing confirms that an agent has read them. Claude Code hooks can add text to the agent's context when a session starts and next to the result of a tool call, and a hook that runs before a tool call can deny it. Claude Code [cuts each text a hook adds](/.claude/hooks/docs/common.md) at 10,000 characters: it saves the text to a file and gives the agent the path and the first 2,000 characters, without asking it to read the file.
+The [workflow](/docs/conventions/workflow.md) and the [checks](/docs/conventions/workflow-checks.md) require reading [documents](/docs/glossary.md#document) before a change, and nothing confirms that an agent has read them. Claude Code hooks can add text to the agent's context when a session starts and next to the result of a tool call, and a hook that runs before a tool call can deny it. Claude Code [cuts each text a hook adds](/.claude/hooks/docs/common.md) at 10,000 characters: it saves the text to a file and gives the agent the path and the first 2,000 characters, without asking it to read the file.
 
 The [root `AGENTS.md`](/AGENTS.md#conventions-files) says to read the three workflow files and the writing rules, four rule files, before any change. Every `AGENTS.md` is a map: a paragraph about its folder and a list of its documents, each with what it holds and which files or tasks it covers, as the [folder document rules](/docs/conventions/folder-docs.md) say. A game in `games/titles/` lists the platform packages it uses as `@whenparty/*` dependencies in its `package.json`.
 

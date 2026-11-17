@@ -6,4 +6,4 @@ To test a hook, pipe a made-up input into it from the repository root and check 
 echo '{"session_id":"test-1","hook_event_name":"PreToolUse","tool_name":"Edit","tool_input":{"file_path":"'"$PWD"'/AGENTS.md"}}' | TMPDIR=/path/to/scratch CLAUDE_PROJECT_DIR=$PWD .claude/hooks/doc-context.sh
 ```
 
-To test the hook settings, start a new session with `claude -p`, ask it to edit a file without reading anything first, and check that the first edit is denied with a list of documents.
+To test the hook settings, start a new session with `claude -p`, ask it to edit a file without reading anything first, and check that the first edit is denied with a list of [documents](/docs/glossary.md#document).

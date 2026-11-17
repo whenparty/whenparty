@@ -6,7 +6,7 @@ These rules say how to work on any change. [workflow-specs.md](/docs/conventions
 
 Before starting work, read the [writing rules](/docs/conventions/writing.md) and the conventions files that cover what the task changes, as the [map](/AGENTS.md) lists them, and follow them.
 
-Read every `AGENTS.md` on the path of the files the task changes, and, following their maps and the maps they link to, the documents the task needs. Keep changes within the requested scope.
+Read every `AGENTS.md` on the path of the files the task changes, and, following their maps and the maps they link to, the [documents](/docs/glossary.md#document) the task needs. Keep changes within the requested scope.
 
 Files that git ignores, such as `node_modules` and build output, are not part of the repository. Do not edit them or take them as rules.
 

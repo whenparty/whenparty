@@ -1,6 +1,6 @@
 # Peer connections
 
-- `3-1` A module connects to another page over a signaling connection of its own page, called the peer connection's own signaling connection, by the peer ID of the other page's signaling connection. Each time a module connects, the transport starts a peer connection of its own, with a random identifier: two pages may have several, and the signals and closing of one touch no other. The calling page sends the transport server a call, its request to connect the two pages. The attempt of a peer connection lasts from its start until it opens or closes. Each side of a peer connection goes through the states of this diagram:
+- `3-1` A [module](/docs/glossary.md#module) connects to another page over a signaling connection of its own page, called the peer connection's own signaling connection, by the peer ID of the other page's signaling connection. Each time a module connects, the transport starts a peer connection of its own, with a random identifier: two pages may have several, and the signals and closing of one touch no other. The calling page sends the transport server a call, its request to connect the two pages. The attempt of a peer connection lasts from its start until it opens or closes. Each side of a peer connection goes through the states of this diagram:
   ```mermaid
   stateDiagram-v2
     [*] --> connecting: connects (3-1), call arrives (3-3)

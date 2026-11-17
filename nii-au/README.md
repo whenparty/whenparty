@@ -22,4 +22,4 @@ flowchart TD
 
 The site can be installed as an app and works [offline](docs/caching.md#offline-use) after a visit that loaded the video. Every deploy gives the changed media, styles and scripts [new names](docs/caching.md#content-hashed-names), so browsers keep those files for a year and still get each change on the next visit.
 
-An nginx container serves the site behind the nginx proxy in [`infra/`](/infra/README.md), which adds TLS and the [security headers](/infra/docs/specs/2-headers.md). A change [goes live](/.github/docs/deploys.md) when it reaches `main`.
+An nginx container serves the site behind the nginx proxy in [`infra/`](/infra/README.md), which adds TLS (`1-1` of its [1-connections.md](/infra/docs/specs/1-connections.md)) and the [security headers](/infra/docs/specs/2-headers.md). A change [goes live](/.github/docs/deploys.md) when it reaches `main`.

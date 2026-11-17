@@ -1,6 +1,6 @@
 # Evaluation of reading
 
-[evals/run.sh](/.claude/hooks/evals/run.sh) checks whether agents reach, through the [maps](/docs/conventions/folder-docs.md#agentsmd), the documents a task needs before they edit, and whether they change the files it needs. [required-reading.md](/docs/decisions/required-reading.md) relies on its results.
+[evals/run.sh](/.claude/hooks/evals/run.sh) checks whether agents reach, through the [maps](/docs/conventions/folder-docs.md#agentsmd), the [documents](/docs/glossary.md#document) a task needs before they edit, and whether they change the files it needs. [required-reading.md](/docs/decisions/required-reading.md) relies on its results.
 
 Run it after changing `doc-context.sh` or the [list of documents it requires](/.claude/hooks/docs/doc-context.md), and report the results.
 

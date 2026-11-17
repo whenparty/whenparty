@@ -12,7 +12,7 @@ How pages connect changes with browsers, WebRTC and coturn. Who may join a room,
 
 ## Options
 
-- One module for connections, rooms and game state, as the [p2p module](../../p2p/AGENTS.md) is. The fewest documents and boundaries. A change to how pages connect touches the code, specification and tests of the game state, and calls would carry that code.
+- One [module](/docs/glossary.md#module) for connections, rooms and game state, as the [p2p module](../../p2p/AGENTS.md) is. The fewest [documents](/docs/glossary.md#document) and boundaries. A change to how pages connect touches the code, specification and tests of the game state, and calls would carry that code.
 - The previous decision: the modules p2p, signaling and turn, each with a specification of what the others rely on, such as the signaling protocol and the format of TURN credentials. Each deployment is a module of its own. The rules of one connection are split between the module on the page and the modules of the servers, and calls would rely on p2p, a module of the games, for their connections.
 - One module for connections and rooms, with rooms as its interface, and netcode over it, as in Trystero and LiveKit. One specification less and no boundary between connections and rooms. A change for browsers and a change to who may join a room meet in one module, and the rules of rooms can be tested only together with the connections.
 - Rooms as an option of a module of connections. Calls without rooms could use the connections alone. Every rule of the module holds a condition on whether rooms are on, while every known use, games and calls, turns them on.

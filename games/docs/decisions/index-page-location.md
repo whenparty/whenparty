@@ -13,7 +13,7 @@ The page at the root of `games.when.party` lists the games and links to them. It
 - `games/titles/index`. The fewest changes, next to the games it lists. The rules of `titles/` would no longer hold for every folder there.
 - `games/platform/index`. Two levels down, like the titles and the platform's deployments. The page is not a module that games rely on.
 - A folder of its own that holds the page one level down, such as `games/site/index`. Two levels down, so no workflow changes. Every path and link to the page carries a level that holds one [subproject](/docs/glossary.md#subproject).
-- `games/index`. One level, next to `platform/` and `titles/`. The three workflows and two documents change to find deployments one level below `games/` too. Every `compose.yml` one level below `games/` then becomes a deployment. `pnpm-workspace.yaml` gets a line for it, as with any new folder of packages.
+- `games/index`. One level, next to `platform/` and `titles/`. The three workflows and two [documents](/docs/glossary.md#document) change to find deployments one level below `games/` too. Every `compose.yml` one level below `games/` then becomes a deployment. `pnpm-workspace.yaml` gets a line for it, as with any new folder of packages.
 
 ## Decision
 

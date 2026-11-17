@@ -11,7 +11,7 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 
 ## Documents
 
-- This file maps the repository and its documents.
+- This file maps the repository and its [documents](/docs/glossary.md#document).
 - Every project and [module](/docs/glossary.md#module) that has or needs a [specification](/docs/conventions/specs.md) has an `AGENTS.md`, and other folders may have one. The [folder document rules](/docs/conventions/folder-docs.md) say what every `AGENTS.md`, this file included, holds and when another folder gets one.
 - A `README.md` is for people. The root and every project on the map above have one; a [subproject](/docs/glossary.md#subproject) or another folder may have one. It follows the folder document rules.
 - A project's or module's specification lives in its `docs/specs/`. Its `docs/PLANNED.md` lists accepted changes that are not in the specification yet. Both follow the [specification rules](/docs/conventions/specs.md).
@@ -24,7 +24,7 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 
 ## Conventions files
 
-- [writing.md](/docs/conventions/writing.md): every document, and responses where its rules say so. The other conventions files add rules for the kinds of files they cover.
+- [writing.md](/docs/conventions/writing.md): every document, including when and where it links, and responses where its rules say so. The other conventions files add rules for the kinds of files they cover.
 - [link-paths.md](/docs/conventions/link-paths.md): how the links in every document write their paths.
 - [folder-docs.md](/docs/conventions/folder-docs.md): every `AGENTS.md` and `README.md`, the documents on how to work in a folder, and where what code cannot express goes.
 - [specs.md](/docs/conventions/specs.md): specifications, `docs/PLANNED.md` and the part of a project's `AGENTS.md` that says which parts of the project need a specification.

@@ -11,7 +11,7 @@ Naming a container changes the compose file of a [deployment](/docs/glossary.md#
 How the names stay apart:
 
 - The previous decision: `check-game-hosts.yml` compared the hosts in `games.conf` with the `Host` labels of `games/`. Already written. Once the games had no labels, it had nothing to compare, and it never read names.
-- A rule in the documents of `games/` and of every project with a compose file. Nothing new in `.github/`. A clash shows only when a game breaks, and the rule lives in several places.
+- A rule in the [documents](/docs/glossary.md#document) of `games/` and of every project with a compose file. Nothing new in `.github/`. A clash shows only when a game breaks, and the rule lives in several places.
 - A step in `check-project-names.yml`, which already compares the deployment names of `games/` and `temp-sites/`. No new workflow. That check then checks two things under the name of one, and has to start on changes to every compose file and to `games.conf`.
 - A workflow of its own, `check-game-names.yml`, that `ci.yml` calls for changes to a compose file or to `games.conf`. One purpose under its own name. One more workflow and job.
 

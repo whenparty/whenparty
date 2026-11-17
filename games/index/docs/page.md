@@ -9,7 +9,7 @@
 
 ## Routing
 
-The proxy passes every path of `games.when.party` that does not start with a segment of lowercase letters, digits and hyphens followed by `/` to the container `index` on the network `wp_games` ([4-3](/infra/docs/specs/4-games.md)). [compose.yml](../compose.yml) gives the container that name, and `games.conf` uses it in its upstream `games_index`, as [games-conf.md](/infra/docs/games-conf.md) says. The page's nginx answers 404 for the paths it has no file for, and the proxy replaces the body of that 404 with its own page ([4-4](/infra/docs/specs/4-games.md)). A path `/<name>/` that names no title gets that page from the proxy without reaching the page.
+The proxy passes every path of `games.when.party` that does not start with a segment of lowercase letters, digits and hyphens followed by `/` to the container `index` on the network `wp_games` (`4-3` of [4-games.md](/infra/docs/specs/4-games.md)). [compose.yml](../compose.yml) gives the container that name, and `games.conf` uses it in its upstream `games_index`, as [games-conf.md](/infra/docs/games-conf.md) says. The page's nginx answers 404 for the paths it has no file for, and the proxy replaces the body of that 404 with its own page (`4-4` of [4-games.md](/infra/docs/specs/4-games.md)). A path `/<name>/` that names no title gets that page from the proxy without reaching the page.
 
 ## Adding a game
 
