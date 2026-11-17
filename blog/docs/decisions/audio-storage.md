@@ -21,5 +21,5 @@ A folder on the VPS, mounted read-only, with the hash in each file name. It keep
 ## Consequences
 
 - [docker-compose.yml](../../docker-compose.yml) and [nginx.conf](../../nginx.conf).
-- [posts.md](../posts.md), [site.md](../site.md) and [audio.md](../audio.md).
+- [posts.md](../posts.md), [site.md](../site.md), [audio.md](../audio.md) and [audio.sh](../../scripts/audio.sh).
 - `2-8` and `2-9` of [2-headers.md](/infra/docs/specs/2-headers.md).

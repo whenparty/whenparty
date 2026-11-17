@@ -24,3 +24,4 @@ A JPEG of 1200×630 px under 200 KB that the author cuts from the cover and name
 
 - [posts.md](../posts.md).
 - [base.njk](../../src/_includes/base.njk).
+- [picture.sh](../../scripts/picture.sh).

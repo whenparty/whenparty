@@ -16,4 +16,4 @@ The SFTP-only user without a chroot. Against the deploy user or root, a device t
 
 ## Consequences
 
-- [audio.md](../audio.md).
+- [audio.md](../audio.md) and [audio.sh](../../scripts/audio.sh).
