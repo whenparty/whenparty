@@ -6,7 +6,7 @@
 
 ## Shared settings and a site's own
 
-- A site config adds only what differs: its certificates, its Content-Security-Policy, its upstream, the include of `errors/pages.inc` unless it has a 404 page of its own, and, when it needs other limits, its rate limits.
+- A site config adds only what differs: its certificates, its Content-Security-Policy, its upstream, the include of `errors/pages.inc` unless it has a 404 page of its own, and, when it needs other limits, its [rate limits](specs/2-headers.md).
 - `add_header_inherit merge` adds the `add_header` lines of a server, such as its Content-Security-Policy, to the shared headers instead of replacing them. It needs nginx 1.29.3 or later, so the image in `docker-compose.yml` stays at that version or above.
 - `limit_conn` and `limit_req` in a server replace the shared limits instead of adding to them, as the `signaling.when.party` server does.
 - An empty `Connection` header, which `$connection_upgrade` sends for every request that is not a WebSocket upgrade, keeps the keepalive connections to the upstreams usable.
@@ -25,7 +25,7 @@ The `healthcheck` in `docker-compose.yml` calls `/health` of the port 80 server 
 
 ## Checking a change
 
-[check-nginx.yml](/.github/workflows/check-nginx.yml) runs `nginx -t` on `nginx/conf.d/` with the image from `docker-compose.yml`, and then the smoke tests that [verification.md](verification.md) describes. `ci.yml` runs it for every change to `infra/`, and `infra.yml` runs it before every deploy. [checks.md](/.github/docs/checks.md#the-checks) says what it needs when a config names another certificate.
+[check-nginx.yml](/.github/workflows/check-nginx.yml) runs `nginx -t` on `nginx/conf.d/` with the image from `docker-compose.yml`, and then the smoke tests that [verification.md](verification.md) describes. `ci.yml` runs it for every change to `infra/`, and `infra.yml` runs it before every deploy, as [checks.md](/.github/docs/checks.md#the-checks) says, along with what it needs when a config names another certificate.
 
 To run the same check locally from the repository root, put self-signed `nii.au.crt`, `nii.au.key`, `when.party.crt` and `when.party.key` in a folder and run:
 
