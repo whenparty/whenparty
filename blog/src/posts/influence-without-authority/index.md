@@ -41,7 +41,7 @@ When someone hears a proposal, they judge more than the idea. Almost without not
 
 Being right answers only the first question. Trust answers the second. The listener has to be sure the author is working toward a shared outcome. The answer to the third depends on how the proposal is structured and how much work and risk it shifts onto whoever agrees. Until those two questions get good answers, even the most accurate technical argument falls flat.
 
-![At the retro, Amy, a squirrel, holds up a drawing of a switch to Ian, a badger, who has his notebook open](influence-amy-at-retro.webp)
+![At the retro, Amy, a squirrel, holds up a drawing of a switch to Ian, a badger, who has his notebook open](influence-amy-at-retro.webp#side)
 
 > Amy joined a new team as a senior engineer, and in her third week she was caught up in a bad release. A new feature broke payments, and the team spent the whole day rolling everything back. At the retro, Amy said what seemed obvious to her: new features should ship behind feature flags, switches that let the team turn off any feature in a minute without a rollback. At her last job, everyone did it that way.
 >
@@ -79,7 +79,7 @@ A track record grows when someone writes a forecast down in advance and it comes
 
 A track record lives in people’s memories, and memories are short. A forecast that nobody wrote down is forgotten within six months.
 
-![Oliver, an otter, holds up a card with a moon on it, and Ian, a badger, opens his hand to agree](influence-overnight-tests.webp)
+![Oliver, an otter, holds up a card with a moon on it, and Ian, a badger, opens his hand to agree](influence-overnight-tests.webp#side)
 
 > A week after that retro, Oliver, who was in his fourth year on the team, suggested moving the slow tests to an overnight run. He had one argument: daytime builds would be faster. Ian agreed without asking a single question.
 >
@@ -112,7 +112,7 @@ Others spot self-orientation at once, while the person themselves usually doesn�
 
 Personal interests are best raised separately. A conversation about a decision should stay about the decision, and personal goals and workload get a conversation of their own. A stated interest shrinks the denominator, and a hidden one makes it bigger.
 
-![Oliver, an otter, talks to Amy, a squirrel, on a bench by the window while she listens with a notebook in her lap](influence-oliver-feedback.webp)
+![Oliver, an otter, talks to Amy, a squirrel, on a bench by the window while she listens with a notebook in her lap](influence-oliver-feedback.webp#side)
 
 > After the episode with the tests, Amy asked Oliver how her retro pitch had come across. He was honest: “Like you’d come to teach us how it’s done.” And it wasn’t only that one retro. Amy had raised flags at two more meetings with the same arguments. When Ian said no a second time, she announced in front of everyone that she’d run it past his boss.
 >
@@ -163,7 +163,7 @@ The balance can’t be measured directly, but a few signs give it away:
 - whether they’re invited to discuss a decision before it’s made, or told about it afterwards;
 - whether people readily agree to try their ideas.
 
-![Amy, a squirrel, presses the keys of a card terminal while Laura, a mouse, ticks off a checklist](influence-payment-check.webp)
+![Amy, a squirrel, presses the keys of a card terminal while Laura, a mouse, ticks off a checklist](influence-payment-check.webp#side)
 
 > For the next two months, Amy didn’t bring up flags. She finished reviews on the day she’d promised, and when she couldn’t, she warned people in advance. She helped Laura, the QA engineer, automate the payment check that Laura had been running by hand before every release. When her own migration took down the test environment, she was the first to post about it in the team chat and explained what had gone wrong. And instead of leaving ten style comments in every review, she suggested the team agree on the rules once and let a linter enforce them.
 >
@@ -188,7 +188,7 @@ A lost argument can also build trust, if three conditions are met.
 
 Then the lost argument adds to the person’s track record, because they turned out to be right, and to their relationships, because they didn’t get in the way or gloat. But pushing after the decision has been made spends capital, even when the person is right.
 
-![During a sale, Amy, a squirrel, Oliver, an otter, and Laura, a mouse, put the wheels back on a shopping cart](influence-shopping-cart-rollback.webp)
+![During a sale, Amy, a squirrel, Oliver, an otter, and Laura, a mouse, put the wheels back on a shopping cart](influence-shopping-cart-rollback.webp#side)
 
 > In spring, the team started work on a new shopping cart. Marketing had already been promised a release date in time for a big sale, and Ian decided to ship the whole cart in a single release. Amy thought it should go out in parts. But this time she didn’t say the plan was wrong. She asked what would happen if a rollback took a day right in the middle of the sale. They talked it through but kept the date.
 >
@@ -208,7 +208,7 @@ Pushing a specific decision through comes down to seven steps. Only the first tw
 6. Propose a time-boxed trial and agree in advance on when to stop. Uncertainty scares decision-makers, and when the worst case is named up front, saying yes is easier. And when the stop condition comes from the author, it shows they care about the result rather than their own idea.
 7. Accept the outcome and write it down. If the answer is yes, do the work and report honestly on the result, good or bad. If it’s no, record the position and the reason for the refusal. The question can be reopened once that reason loses its force.
 
-![Amy, a squirrel, points at a whiteboard that reads “Let’s try two features with flags until month-end. I’ll set them up.” Arrows lead to “No rollback avoided by month-end” and “You ask to stop sooner”, and both lead to “I’ll remove the flags”. Ian, a badger, sits on a stool and gestures at the board](influence-pilot-conversation.webp)
+![Amy, a squirrel, points at a whiteboard that reads “Let’s try two features with flags until month-end. I’ll set them up.” Arrows lead to “No rollback avoided by month-end” and “You ask to stop sooner”, and both lead to “I’ll remove the flags”. Ian, a badger, sits on a stool and gestures at the board](influence-pilot-conversation.webp#side)
 
 > After the cart incident, Amy came back to flags, but she didn’t start with a retro. First she talked to Ian one-on-one and asked what mattered to him this quarter. It turned out he was expected to ship twice as often, and every long rollback threw his whole schedule off.
 >
@@ -246,7 +246,7 @@ The first step is to find out what’s keeping the other team from agreeing. The
 
 Two rules follow from this. The first is that code gets written only after the direction is agreed. Otherwise it’s work on someone else’s system behind its owners’ backs, and the owners will most likely refuse to accept that code. The second is that escalation settles a clash of priorities but doesn’t make up for missing knowledge. When knowledge is missing, the answer is to ask.
 
-![Amy, a squirrel, points at a whiteboard headed “Shared configuration service”. Among the boxes of other teams’ configuration, one is circled: “My team only. Separate namespace.” Under it is written “I’ll build it and bring a rollback plan. Can you review it?” The platform lead, an owl, listens at the table](influence-platform-conversation.webp)
+![Amy, a squirrel, points at a whiteboard headed “Shared configuration service”. Among the boxes of other teams’ configuration, one is circled: “My team only. Separate namespace.” Under it is written “I’ll build it and bring a rollback plan. Can you review it?” The platform lead, an owl, listens at the table](influence-platform-conversation.webp#side)
 
 > The flags caught on, and Amy wanted to store them in the configuration service owned by the platform team. The platform lead replied that their roadmap was full and they wouldn’t get to it before next quarter. Amy had access to their repository and could have written what she needed herself.
 >
@@ -262,7 +262,7 @@ Influence can change what people want, but not what they’re able to do. If the
 
 Pushing in this situation is pointless. It drains capital and achieves nothing. It makes more sense to find a sponsor, someone who wants the same outcome and has the power to make it happen, or to move to a different team or company. Spotting a dead end in time is also part of the skill of influence.
 
-![The head of a neighbouring division, a hedgehog, pulls out a chair for Amy, a squirrel, who has brought a folder](influence-new-sponsor.webp)
+![The head of a neighbouring division, a hedgehog, pulls out a chair for Amy, a squirrel, who has brought a folder](influence-new-sponsor.webp#side)
 
 > Six months later, Amy proposed moving the whole department onto flags. The department head called it a good idea and asked for a cost estimate. By the time the estimate was ready, the department head had been replaced. The new one asked for a pilot in two more teams. The pilot went well, but by then the department’s budget had been frozen until next year, and a new condition appeared: get sign-off from the architecture review board.
 >

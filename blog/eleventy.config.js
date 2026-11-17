@@ -25,6 +25,26 @@ function markFigures(state) {
   }
 }
 
+const sideFigurePartners = new Set(["paragraph_open", "blockquote_open", "bullet_list_open", "ordered_list_open"]);
+
+function pairSideFigures(state) {
+  const tokens = state.tokens;
+  for (let i = 0; i + 3 < tokens.length; i++) {
+    const block = tokens[i + 3];
+    if (tokens[i].meta?.figure !== "fig-side" || tokens[i].level !== 0 || !sideFigurePartners.has(block.type) || block.meta?.figure) continue;
+    let end = i + 3;
+    while (tokens[end].nesting !== -1 || tokens[end].level !== block.level) end++;
+    const open = new state.Token("fig_pair_open", "div", 1);
+    open.attrSet("class", "fig-pair");
+    open.block = true;
+    const close = new state.Token("fig_pair_close", "div", -1);
+    close.block = true;
+    tokens.splice(end + 1, 0, close);
+    tokens.splice(i, 0, open);
+    i = end + 2;
+  }
+}
+
 function headingIds(slugify) {
   return state => {
     for (let i = 0; i < state.tokens.length; i++) {
@@ -88,6 +108,7 @@ export default function (eleventyConfig) {
 
   eleventyConfig.amendLibrary("md", md => {
     md.core.ruler.push("figures", markFigures);
+    md.core.ruler.push("side_figure_pairs", pairSideFigures);
     md.core.ruler.push("heading_ids", headingIds(slugify));
     figures(md);
     formulas(md);
