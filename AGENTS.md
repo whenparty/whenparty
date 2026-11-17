@@ -34,7 +34,7 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 - [serving.md](/docs/conventions/serving.md): how the files that the repository serves reach browsers, for those files and the builds and configs that produce and serve them.
 - [workflow.md](/docs/conventions/workflow.md): how to start a task, cut it into pieces and lead them, when to stop and ask, and when to write a decision record.
 - [workflow-specs.md](/docs/conventions/workflow-specs.md): how specifications and code change, and when to stop and ask about them.
-- [workflow-checks.md](/docs/conventions/workflow-checks.md): what to check in documents and code while working on a change, and how the review subagents class and order their findings.
+- [workflow-checks.md](/docs/conventions/workflow-checks.md): what to check in documents and code while working on a change, how the review subagents class and order their findings, and how a review ends.
 
 A rule lives in the file that covers what the rule constrains. Rules about how to work anywhere in the repository, such as the order of steps or when to stop and ask, live in the workflow files, or in a skill or subagent that a workflow file names for that task.
 

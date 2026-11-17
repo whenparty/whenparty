@@ -1,6 +1,6 @@
 ---
 name: behaviour-reviewer
-description: Reviews how a system of this repository behaves, as an engineer who will build and run it and has not seen the discussion behind it, and suggests changes without making them. Use it for the reviews that docs/conventions/workflow-checks.md and docs/conventions/workflow-specs.md require of a behaviour model before its specification edit, of a specification edit that changes behaviour and its state tables, against its model when it has one, again by a new run after each fix until a review changes nothing, and of a state table that gained a state during implementation. Not for the wording or placement of rules, which docs-reviewer checks, and not for code review.
+description: Reviews how a system of this repository behaves, as an engineer who will build and run it and has not seen the discussion behind it, and suggests changes without making them. Use it for the reviews that docs/conventions/workflow-checks.md and docs/conventions/workflow-specs.md require of a behaviour model before its specification edit, of a specification edit that changes behaviour and its state tables, against its model when it has one, and of a state table that gained a state during implementation. Not for the wording or placement of rules, which docs-reviewer checks, and not for code review.
 tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
 ---
 
