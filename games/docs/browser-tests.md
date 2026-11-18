@@ -23,6 +23,6 @@
 - The test page of rooms, in `platform/rooms/src/tests/`, uses the browser environment of rooms, so it connects to `localhost:8080`.
 - The tests of tictactoe open its page. Like them, give each player of a test a browser context of its own, because the pages of one context share the tab lock (`9-1` of [9-tab.md](../platform/rooms/docs/specs/9-tab.md)).
 - Like the fixtures of rooms and tictactoe, make a test that opens rooms of the rooms module leave them when it ends, also when it fails, and wait until its pages have closed their signaling connections: the rooms server of a run keeps at most 10 open rooms (`12-1` of [12-server-answers.md](../platform/rooms/docs/specs/12-server-answers.md)), and a room that its owner's page did not leave stays open for minutes (`10-3` of [10-server-room.md](../platform/rooms/docs/specs/10-server-room.md)). Rooms of the p2p module, which calisthenics plays through, live only in the players' pages: the relay stores no game state ([session.md](../platform/p2p/docs/session.md#snapshot-acceptance)) and frees a page's subscriptions when its WebSocket closes.
-- The tests of calisthenics open its 3D page.
+- The tests of calisthenics open its 3D page and its text page.
 
 A failed run leaves its results in `test-results/`, and in CI also the HTML report in `playwright-report/`; CI uploads both, as [checks.md](/.github/docs/checks.md) says.

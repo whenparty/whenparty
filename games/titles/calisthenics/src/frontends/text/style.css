@@ -197,9 +197,9 @@ ol.list {
 
 .performance-card {
   padding: 18px;
-  border: 1px solid #b9c9dc;
+  border: 1px solid var(--track);
   border-radius: 10px;
-  background: #e9eef4;
+  background: var(--card);
   margin: 18px 0;
 }
 .performance-card h3 {
