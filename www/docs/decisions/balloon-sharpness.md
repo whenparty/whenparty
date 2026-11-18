@@ -2,7 +2,7 @@
 
 ## Context
 
-The fill and the pencil lines of a balloon go through the SVG filters `#wash` and `#pencil` in `index.html`. A balloon inflates from `scale: .2` and then bobs without end by animating `rotate`. When Back restores the page from the back-forward cache, `takeoff.js` removes `is-flying`, so the balloon that flew inflates again.
+The fill and the pencil lines of a balloon go through the SVG filters `#wash` and `#pencil` in `index.html`. A balloon inflates from `scale: .2` and then bobs without end by animating `rotate`. When Back restores the page from the back-forward cache, `takeoff.js` removes `is-flying`, as [site.md](../site.md) says, so the balloon that flew inflates again.
 
 Safari reuses the result of an SVG filter from the balloon's first paint when the balloon grows, so after the inflate the balloon stays blurred until a style change of the filtered elements, such as the fill that changes on hover, makes Safari apply the filters again. After Back from `blog.when.party` or `games.when.party` to a local copy of the page, a style change at the end of the new inflate comes too early: the checks suggest that Safari draws the balloon at full size some time after the `inflate` animation ends. Back from `www.when.party`, which is the same site, was not checked.
 

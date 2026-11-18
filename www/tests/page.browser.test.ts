@@ -95,6 +95,24 @@ test('a click releases the balloon and opens its link by the end of the takeoff'
   await expect(page).toHaveURL(games)
 })
 
+test('during the takeoff Tab reaches no other link and a click on another balloon releases nothing', async ({page}) => {
+  await page.clock.install()
+  await page.goto('/')
+  const blogFill = await page.locator('.balloon-blog .balloon-fill').boundingBox()
+  await page.locator('.balloon-games a').focus()
+  await page.keyboard.press('Enter')
+  for (let step = 0; step < 3; step++) {
+    await page.keyboard.press('Tab')
+    await expect(page.locator('.balloon-blog a:focus, .email:focus')).toHaveCount(0)
+    await page.keyboard.press('Enter')
+  }
+  await page.mouse.click(blogFill!.x + blogFill!.width / 2, blogFill!.y + blogFill!.height / 2)
+  await expect(page.locator('.is-flying')).toHaveCount(1)
+  await expect(page.locator('.balloon-games')).toHaveClass(/is-flying/)
+  await page.clock.runFor(1000)
+  await expect(page).toHaveURL(games)
+})
+
 test('a click with a modifier key is left to the browser without the takeoff', async ({page}) => {
   await page.goto('/')
   const prevented = page.evaluate(
@@ -120,7 +138,7 @@ test('under reduced motion a click opens the link at once', async ({page}) => {
   await expect(page).toHaveURL(games)
 })
 
-test('a page restored from the back-forward cache shows its balloons again and refilters the one that flew', async ({page}) => {
+test('a page restored from the back-forward cache shows its balloons again, leaves nothing inert and refilters the one that flew', async ({page}) => {
   await openAtRest(page)
   await page.locator('.balloon-games a').click()
   const {inflate, art} = await page.evaluate(() => {
@@ -134,5 +152,6 @@ test('a page restored from the back-forward cache shows its balloons again and r
   })
   await expect(page.locator('.is-flying')).toHaveCount(0)
   await expect(page.locator('body')).not.toHaveClass(/is-leaving/)
+  await expect(page.locator('[inert]')).toHaveCount(0)
   expect(art).toMatchObject([{name: 'refilter', delay: inflate.delay, duration: Number(inflate.duration) + 1000, easing: 'linear'}])
 })
