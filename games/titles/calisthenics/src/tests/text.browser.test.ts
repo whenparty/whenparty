@@ -88,10 +88,14 @@ test('the Now performing card keeps its text readable in the light and the dark 
 
   for (const colorScheme of ['light', 'dark'] as const) {
     await host.emulateMedia({colorScheme})
-    const [text = '', background = ''] = await card.evaluate(element => [
-      getComputedStyle(element.querySelector('h3') ?? element).color,
-      getComputedStyle(element).backgroundColor
-    ])
-    expect(contrastOf(text, background), colorScheme).toBeGreaterThanOrEqual(minContrast)
+    const {background, texts} = await card.evaluate(element => ({
+      background: getComputedStyle(element).backgroundColor,
+      texts: [...element.querySelectorAll(':scope > :not(button)')].map(line => getComputedStyle(line).color)
+    }))
+    expect(texts).toHaveLength(3)
+
+    for (const text of texts) {
+      expect(contrastOf(text, background), colorScheme).toBeGreaterThanOrEqual(minContrast)
+    }
   }
 })
