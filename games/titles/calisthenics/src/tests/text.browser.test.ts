@@ -59,7 +59,9 @@ const contrastOf = (first: string, second: string) => {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
-test('while the announcement covers the page, Tab reaches only the controls of the announcement', async ({players: {host}}) => {
+test('Tab reaches only the controls of the announcement while it covers the page, and the page again after it', async ({
+  players: {host}
+}) => {
   const reached = new Set<string>()
 
   for (let press = 0; press < 3; press++) {
@@ -68,6 +70,11 @@ test('while the announcement covers the page, Tab reaches only the controls of t
   }
 
   expect([...reached].filter(each => each !== 'body')).toEqual(['Start training'])
+  await host.getByRole('button', {name: 'Start training'}).click()
+  await expect(host.locator('#announcement')).toBeHidden({timeout: networkWaitMs})
+  const interfaceLink = host.locator('#interface-link')
+  await interfaceLink.focus()
+  await expect(interfaceLink).toBeFocused()
 })
 
 test('the Now performing card keeps its text readable in the light and the dark color scheme', async ({players: {host, guest}}) => {
