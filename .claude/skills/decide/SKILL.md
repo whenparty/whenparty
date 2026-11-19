@@ -1,6 +1,6 @@
 ---
 name: decide
-description: Prepares a decision for the user when the Decisions section of docs/conventions/workflow.md says to stop. Use it when a task needs a decision the conventions do not cover, such as a new project, module, kind of document, conventions file or package dependency, or when rules contradict each other or make the task impossible.
+description: Prepares a decision for the user when the Decisions section of docs/conventions/workflow.md says to stop.
 ---
 
 # Decide
