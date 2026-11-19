@@ -19,7 +19,7 @@ Where the checks of a pull request run:
 How a check that a change does not need is skipped:
 
 - A workflow per project with `paths`. Each file is simple to read. A skipped workflow leaves a required status check pending.
-- One `ci.yml` whose first jobs find what changed, with an `if:` on every check and one job that fails when any check failed or was cancelled. A skipped check counts as passed, so any check can become required. The file is longer and needs that last job.
+- One `ci.yml` whose first jobs find what changed, with an `if:` on each check that only some changes need and one job that fails when any check failed or was cancelled. A skipped check counts as passed, so any check can become required. The file is longer and needs that last job.
 
 When `ci.yml` runs:
 
@@ -30,7 +30,7 @@ When `ci.yml` runs:
 
 The checks of the projects are reusable workflows, and `ci.yml` runs them without deploy jobs or secrets, so a mistake in it cannot deploy. A few more files cost less than secrets in pull request runs.
 
-`ci.yml` skips checks with `if:`, so a check can become required without blocking the changes that do not need it. One longer file with a final job costs less than checks that cannot be required.
+`ci.yml` skips the checks that only some changes need with `if:`, so a check can become required without blocking the changes that do not need it. One longer file with a final job costs less than checks that cannot be required.
 
 `ci.yml` runs on pull requests and on pushes to `main`, so a problem that a merge combines from changes that each passed alone is reported by the run on `main`. On a push, `ci.yml` runs only the checks of what it changes, and the deploy does not wait for them, so a merged change such as a temporary site is not slowed down. The repeated runs use runner time, and nobody waits for them. Such a problem shows after its deploy has started, which is still earlier than the next pull request that touches the same files.
 

@@ -134,8 +134,11 @@ jobs:
     if: needs.changes.outputs.blog == 'true'
     uses: ./.github/workflows/check-blog.yml
 
+  docs:
+    uses: ./.github/workflows/check-docs.yml
+
   result:
-    needs: [changes, games-changes, games, turn, nginx, project-names, game-names, www, blog]
+    needs: [changes, games-changes, games, turn, nginx, project-names, game-names, www, blog, docs]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15

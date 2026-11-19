@@ -1,9 +1,9 @@
 # GitHub Actions
 
-`.github/` holds the GitHub Actions workflows of this repository in `workflows/`: `ci.yml`, which checks every pull request and every push to `main`, the checks it calls, the deploy workflows and the weekly image scan. It is not a [project](/docs/glossary.md#project) and has no [specification](/docs/conventions/specs.md).
+`.github/` holds the GitHub Actions workflows of this repository in `workflows/`: `ci.yml`, which checks every pull request and every push to `main`, the checks it calls, the deploy workflows and the weekly image scan. `scripts/` holds the scripts that the checks run. It is not a [project](/docs/glossary.md#project) and has no [specification](/docs/conventions/specs.md).
 
 - [workflows.md](/.github/docs/workflows.md): rules for every workflow file: action pinning, the permissions and secrets of reusable workflows, job time limits, and how a change to a workflow can be tried. Read it before changing any workflow.
-- [checks.md](/.github/docs/checks.md): `ci.yml` and the `check-*.yml` workflows, and how to add a check. Read it before changing them.
+- [checks.md](/.github/docs/checks.md): `ci.yml`, the `check-*.yml` workflows and the scripts in `scripts/` that they run, and how to add a check. Read it before changing them.
 - [deploys.md](/.github/docs/deploys.md): which workflow deploys what, which changes start it, how `infra.yml`, `site.yml`, `deploy-project.yml`, `games.yml` and `temp-sites.yml` work, and what a deploy leaves on the VPS. Read it before changing a deploy workflow or a Compose file that one deploys.
 - [games-changes.md](/.github/docs/games-changes.md): how `games-changes.yml` finds the packages and [deployments](/docs/glossary.md#deployment) of `games/` that a change reaches. Read it before changing `games-changes.yml` or what `ci.yml` and `games.yml` take from it.
 - [image-scan.md](/.github/docs/image-scan.md): `image-scan.yml`, the only vulnerability scan of the images. Read it before changing `image-scan.yml`, adding a Compose file at a new path, or adding a scan to a deploy.
@@ -12,6 +12,7 @@
 - [screenshot-tests.md](/www/docs/decisions/screenshot-tests.md): why `www.yml` does not wait for `check-www.yml`.
 - [screenshot-updates.md](/www/docs/decisions/screenshot-updates.md): why `check-www.yml` makes the new screenshots of `www/` for an agent to commit.
 - [ci-checks.md](/docs/decisions/ci-checks.md): why the checks are reusable workflows without secrets, why `ci.yml` skips checks with `if:`, and why it runs on pushes to `main` too.
+- [docs-check.md](/docs/decisions/docs-check.md): why `ci.yml` checks the links of the [documents](/docs/glossary.md#document) and the tests of the requirements in every change.
 - [games-check-scope.md](/docs/decisions/games-check-scope.md): which packages of `games/` `ci.yml` tests, why pnpm finds them on the runner, which deployments `games.yml` deploys, and why it tests the whole workspace.
 - [pnpm-in-images.md](/games/docs/decisions/pnpm-in-images.md): why `check-games.yml` and the Dockerfiles in `games/` take pnpm from `ghcr.io/pnpm/pnpm` instead of Corepack or npm. Read it before changing how they get pnpm or Node.
 - [games-routing.md](/docs/decisions/games-routing.md): why nginx reaches the containers of the games itself, which is why the games deploy onto their own network `wp_games`.
