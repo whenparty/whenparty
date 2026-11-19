@@ -17,6 +17,7 @@ document.addEventListener("click", (event) => {
   const link = event.target.closest("a.balloon-float");
   if (!link || event.defaultPrevented || opensElsewhere(event) || reducedMotion.matches) return;
   event.preventDefault();
+  if (document.body.classList.contains("is-leaving")) return;
   const balloon = link.closest(".balloon");
   balloon.classList.add("is-flying");
   makeInertAllBut(balloon);

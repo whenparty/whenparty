@@ -95,11 +95,20 @@ test('a click releases the balloon and opens its link by the end of the takeoff'
   await expect(page).toHaveURL(games)
 })
 
-test('during the takeoff Tab reaches no other link and a click on another balloon releases nothing', async ({page}) => {
+test('during the takeoff Tab reaches no other link and no further click releases a balloon or opens a link', async ({page}) => {
   await page.clock.install()
   await page.goto('/')
+  await page.evaluate(() => {
+    const opened: string[] = []
+    Object.assign(window, {opened})
+    navigation.addEventListener('navigate', (event) => {
+      opened.push(event.destination.url)
+      event.preventDefault()
+    })
+  })
   const blogFill = await page.locator('.balloon-blog .balloon-fill').boundingBox()
-  await page.locator('.balloon-games a').focus()
+  const gamesLink = page.locator('.balloon-games a')
+  await gamesLink.focus()
   await page.keyboard.press('Enter')
   for (let step = 0; step < 3; step++) {
     await page.keyboard.press('Tab')
@@ -107,14 +116,16 @@ test('during the takeoff Tab reaches no other link and a click on another balloo
     await page.keyboard.press('Enter')
   }
   await page.mouse.click(blogFill!.x + blogFill!.width / 2, blogFill!.y + blogFill!.height / 2)
+  await gamesLink.focus()
+  await page.keyboard.press('Enter')
   await expect(page.locator('.is-flying')).toHaveCount(1)
   await expect(page.locator('.balloon-games')).toHaveClass(/is-flying/)
   await page.clock.runFor(1000)
-  await expect(page).toHaveURL(games)
+  expect(await page.evaluate(() => (window as unknown as {opened: string[]}).opened)).toEqual([games])
 })
 
 test('a click with a modifier key is left to the browser without the takeoff', async ({page}) => {
-  await page.goto('/')
+  await openAtRest(page)
   const prevented = page.evaluate(
     () =>
       new Promise<boolean>((resolve) =>
