@@ -17,8 +17,9 @@ const test = base.extend({
 })
 
 async function openAtRest(page: Page) {
-  await page.clock.install()
+  await page.clock.install({time: 0})
   await page.goto('/')
+  await page.clock.pauseAt(60_000)
   await page.evaluate(async () => {
     await document.fonts.ready
     for (const animation of document.getAnimations()) {
