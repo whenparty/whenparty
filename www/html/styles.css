@@ -1,3 +1,10 @@
+@font-face {
+  font-family: "Golos Text";
+  src: url("golos-text.woff2?v=6e2de38e") format("woff2");
+  font-weight: 400 600;
+  font-display: swap;
+}
+
 :root {
   --paper: #f7f7f4;
   --ink: #23262a;

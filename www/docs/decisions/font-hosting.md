@@ -1,0 +1,30 @@
+# Font hosting
+
+## Context
+
+The page sets its text in Golos Text. Its licence, the SIL Open Font License 1.1, allows a site to serve copies of the font when the licence goes with them.
+
+Google Fonts serves the font through a stylesheet on `fonts.googleapis.com`, which the browser loads before it draws the page, and font files on `fonts.gstatic.com`, one for each subset of characters, such as `latin`, `latin-ext` and `cyrillic`. The page's text is English, and the `latin` subset, 38 KB, holds every weight the page uses. Browsers keep a separate HTTP cache for each site, so a font that another site loaded from Google is not reused. Google receives the IP address of each visitor who loads the font from it.
+
+Google picks the `latin` file by the User-Agent. Safari and Chrome on macOS, Safari on iOS and Chrome on Android get a file without TrueType instructions; Chrome and Firefox on Windows and Linux get the same file with a 7-byte `prep` program that turns on dropout control. macOS and iOS do not run TrueType instructions. Chromium on Linux draws the two files differently.
+
+The site's look is checked by eye in Safari on macOS. The [browser tests](../tests.md) run in Chromium in a Linux Docker image, serve the page's own files and leave other requests to the network. The approved storyboards are taken in CI, as [screenshot-updates.md](screenshot-updates.md#decision) decides.
+
+## Options
+
+| Option | Advantages | Drawbacks |
+| --- | --- | --- |
+| Google Fonts, the previous decision | No font file in the repository. Google updates the font and serves another subset when text needs it | The page waits for a stylesheet from another host before it draws. Google gets a request from every visitor. The browser tests depend on the network and on the file Google serves at the time |
+| The Windows and Linux `latin` file in `html/`, with the preload | The page waits for no other host. The page sends Google no font request. The tests use the file in git, and the approved storyboards stay as they are. Windows and Linux get the file they got from Google, and macOS and iOS draw it as they drew theirs | The file and its licence, 42 KB, are in git, and an update of the font is a manual change. Characters outside the `latin` subset fall back to the next fonts. Chrome on Android gets a file it did not get from Google; how Chrome on Android draws it has not been checked |
+| The Windows and Linux `latin` file in `html/`, without the preload | One line less | The browser finds the font only after it parses `styles.css`, so the text shows in a fallback font for longer |
+| The macOS `latin` file in `html/`, with the preload | macOS, iOS and Android get the file they got from Google | Windows and Linux get a file they did not get from Google, and the storyboards change |
+| The Windows and Linux `latin` file with the `latin-ext` and `cyrillic` subsets, in `html/`, with the preload | Characters such as `ł` and Cyrillic letters show in Golos Text, as with Google | More files in git, each with its own `@font-face`, `unicode-range` and `?v=`. The page has no such text |
+
+## Decision
+
+The Windows and Linux `latin` file in `html/`, with the preload. Against Google Fonts, the page draws without waiting for another host and sends Google no font request, and the tests no longer depend on the network, which outweighs a font file to update by hand. The page's English text needs only the `latin` subset. The preload costs one line and shortens the time the text shows in a fallback font. Against the macOS file, the two differ only in a program that macOS and iOS do not run, so they look the same in Safari, where the site is checked, while the file keeps Windows, Linux and the approved storyboards as they were. Either file gives some browsers another file than Google gave them; with this one, the only browser of those above whose drawing may change is Chrome on Android, and that has not been checked.
+
+## Consequences
+
+- [index.html](../../html/index.html), [styles.css](../../html/styles.css), [golos-text.woff2](../../html/golos-text.woff2) and [golos-text-license.txt](../../html/golos-text-license.txt).
+- [site.md](../site.md): the bullets about `?v=` and the font file.
