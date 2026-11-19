@@ -6,7 +6,7 @@ The [workflow](/docs/conventions/workflow.md) and the [checks](/docs/conventions
 
 The [root `AGENTS.md`](/AGENTS.md#conventions-files) says to read the three workflow files and the writing rules, four rule files, before any change. Every `AGENTS.md` is a map: a paragraph about its folder and a list of its documents, each with what it holds and which files or tasks it covers, as the [folder document rules](/docs/conventions/folder-docs.md) say. A game in `games/titles/` lists the platform packages it uses as `@whenparty/*` dependencies in its `package.json`.
 
-For an edit of `check-games.yml`, the documents the previous decision requires are about 9,500 words; those the hook now requires, about 2,900. For a file in `games/titles/calisthenics/`, they are about 11,000 and 3,300 with the current `games/` files.
+When the hook changed to require maps and the four rule files, an edit of `check-games.yml` required about 9,500 words under the previous decision and about 2,900 under the new one. For a file in `games/titles/calisthenics/`, the totals were about 11,000 and 3,300.
 
 The [evaluation](/.claude/hooks/docs/evaluation.md) checks which documents an agent running a realistic task reads in full before its first edit. With the hook requiring only the maps and the four rule files, and `.github/AGENTS.md` as a map, Opus 5.5 ran each of two tasks five times, at $0.56 and $0.79 a run:
 
