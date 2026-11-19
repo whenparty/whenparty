@@ -1,8 +1,6 @@
 {
   "permissions": {
     "ask": [
-      "Edit(**/docs/specs/**)",
-      "Edit(**/docs/PLANNED.md)",
       "Edit(**/package.json)",
       "Bash(pnpm add *)",
       "Bash(pnpm * add *)",
