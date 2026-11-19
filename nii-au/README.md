@@ -9,7 +9,7 @@ flowchart TD
   open[Visitor opens the page] --> poster[Poster: the first frame]
   poster --> reduced{Reduced motion?}
   reduced -->|yes| still[Poster stays]
-  reduced -->|no| slow{"Slow connection or Save-Data?"}
+  reduced -->|no| slow{"Browser reports slow connection or Save-Data?"}
   slow -->|no| fetch[Video downloads after the page loads]
   slow -->|yes| onscroll[Video downloads on the first scroll]
   fetch --> swap[Video replaces the poster]

@@ -3,7 +3,7 @@ import {defineConfig} from 'vite'
 
 export default defineConfig({
   base: '/calisthenics/',
-  build: {rollupOptions: {input: {main: 'index.html', text: 'text.html'}}},
+  build: {modulePreload: {polyfill: false}, rollupOptions: {input: {main: 'index.html', text: 'text.html'}}},
   server: {headers: devHeaders},
   preview: {headers: devHeaders}
 })
