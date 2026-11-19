@@ -1,5 +1,21 @@
 {
+  "extraKnownMarketplaces": {
+    "googlechrome": {
+      "source": {
+        "source": "github",
+        "repo": "GoogleChrome/modern-web-guidance"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "modern-web-guidance@googlechrome": true
+  },
   "permissions": {
+    "allow": [
+      "Bash(pnpx modern-web-guidance@latest search *)",
+      "Bash(pnpx modern-web-guidance@latest retrieve *)"
+    ],
     "ask": [
       "Edit(**/package.json)",
       "Bash(pnpm add *)",
@@ -17,6 +33,11 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/doc-context.sh",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "if [ -n \"$CLAUDE_ENV_FILE\" ]; then echo 'export DISABLE_TELEMETRY=1' >> \"$CLAUDE_ENV_FILE\"; fi",
             "timeout": 10
           }
         ]

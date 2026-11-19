@@ -1,0 +1,59 @@
+# How agents read Modern Web Guidance
+
+## Context
+
+Agents often write JavaScript, legacy patterns or libraries where an HTML, CSS or JavaScript feature of the web platform does the job. Chrome's [Modern Web Guidance](https://developer.chrome.com/docs/modern-web-guidance), which the Chrome, Edge, Firefox and MDN teams maintain, is a set of about 210 guides on these features, of 2 to 52 KB, half of them under 7.5 KB. Its CLI, the npm package `modern-web-guidance`, which carries the guides, finds guides with `search`, prints them with `retrieve` and checks code against about a fifth of them with `legacy-scan`. It sends Google each search query, the IDs of the guides it finds and prints, the name of the calling agent and the operating system, unless the environment sets `DISABLE_TELEMETRY` to `1` or `true`.
+
+Google ships the guides as the plugin `modern-web-guidance` of its marketplace `googlechrome`, whose skill `modern-web-guidance` runs the CLI; the plugin also brings a skill for Chrome extensions. The skill's description says "MANDATORY: Execute FIRST for all HTML/CSS and clientside JS tasks", so it asks the agent to run it at the start of every such task, before the agent reads the rules that the [workflow](/docs/conventions/workflow.md#starting) requires. Its steps put the guides that match, and any broader guides that apply, into the context of the agent that does the task, have it check its code against them before it concludes, and end its answer to the user with a `### Modern Web Guidance` section. The skill takes features that are Baseline Widely available as safe unless the user states another browser policy; this repository states its policy in the [serving rules](/docs/conventions/serving.md). The skill passes its version to the CLI, which tells the agent to have the user update the skill when Google has published a newer one. A plugin updates itself only when its marketplace has auto-update on, which is off by default for a marketplace outside Anthropic's. The repository's settings can enable a plugin of a marketplace that they name, but each person downloads the plugin once, as [modern-web-guidance-setup.md](/.claude/docs/modern-web-guidance-setup.md) says. A plugin installed for a person's user runs in every repository they work in, while one installed at project scope from a main checkout loads in that checkout and its worktrees alone.
+
+The CLI at `@latest` runs whatever version npm gives as the latest, with the rights of the agent, which can reach the user's `gh` token; no confirmation or hook sees what a program that an agent runs does, as [agent-ruleset-changes.md](/docs/decisions/agent-ruleset-changes.md#context) says. A published npm version never changes, so a pinned version is as fixed as the commit SHAs to which [workflows.md](/.github/docs/workflows.md#pinning-actions) pins the actions of CI. In Claude Code's auto mode, a classifier may refuse the CLI's commands unless a person adds an exception to their own settings, as [configuration.md](/.claude/docs/configuration.md) says. Claude Code itself reads `DISABLE_TELEMETRY` too, and turns off its own telemetry and the fetching of feature flags, which features such as plugins and skills synced from claude.ai and MCP tasks need. A `SessionStart` hook can give a variable to the Bash commands of a session alone, through the file that `CLAUDE_ENV_FILE` names.
+
+In a trial on 2026-11-18, a subagent that searched and retrieved guides for the front ends of `www/` and of [Calisthenics](/games/titles/calisthenics/AGENTS.md) found real bugs in both, such as a card that the dark theme of Calisthenics made unreadable. It read 33 guides for `www/` and 37 for Calisthenics and spent about 300,000 tokens and 10 minutes on each of them. `legacy-scan` found one minor issue in the same code.
+
+On 2026-11-19, a read-only subagent was written that searched and read at most four guides and checked a task or a diff against them, within the serving rules and the documents and decision records of the code's folder. A general-purpose agent that followed its instructions checked the diff of commit 1d93dda in `www/`, 10 files with 140 lines added and 76 removed, and spent about 156,000 tokens, of which about 57,000 was its own system text and tool descriptions; the subagent itself would spend about 100,000. Most of it went to reading the rules, the documents of the folder and the diff again, which the agent that calls it has read already. Google's skill puts its own text, about 10 KB, the guides that match and the broad guides of their areas, such as `css` at 13 KB, `html` at 21 KB and `accessibility` at 52 KB, into the context of the agent that does the task: by estimate, 15,000 to 40,000 tokens a task.
+
+## Options
+
+How agents get the guides:
+
+- Google's plugin, enabled for the whole repository. Google publishes the skill and the CLI together. It runs on its own at the start of every web task and checks the code before the agent concludes, at an estimated 15,000 to 40,000 tokens a task. But the guides stay in the context of the agent that does the task, every answer on a web task ends with Google's `### Modern Web Guidance` section in English, whatever language the person works in, the agent checks its own work, and the serving rules apply only once the agent has read them.
+- A copy of Google's skill with `disable-model-invocation: true` in its front matter. Only a person can start it, by typing its slash command; no agent can call it. But the agent that does the task still gets the guides in its context, and when the CLI asks to update the skill, the CLI's `update` brings Google's text back.
+- A read-only subagent of the repository, as tried on 2026-11-19. The guides stay out of the context of the agent that calls it, it reads the serving rules and the documents of the folder, it looks at the work from outside, and its findings reach the user in the report of the agent that called it. But a call costs about 100,000 tokens, a task would call it at its design and at its end, and the repository maintains its instructions.
+- The same subagent reading the guides from Google's repository on GitHub with WebFetch, in place of the CLI. It runs no CLI and needs no exception in auto mode. But WebFetch cannot rank the guides as the CLI's search does, so the subagent reads a long list of guides to choose from and spends more tokens.
+- `legacy-scan` alone, run by an agent or in CI. It is cheap and gives the same result each time, but it covers a fifth of the guides and in the trial found one minor issue.
+
+Which version of the CLI runs:
+
+- `@latest`, as the skill runs it. The guides follow npm's latest version, apart from what pnpm has cached, and the CLI needs no updating, but each run may run code that nobody here has read, and a change of the CLI can change what the skill does without warning.
+- A pinned version that someone raises by hand. The code and the guides stay as they were checked, but the skill's commands name `@latest`, so pinning needs a copy of the skill, the guides grow old between updates and someone must watch Google's releases.
+
+Whether the plugin updates itself:
+
+- Auto-update on for Google's marketplace. The skill stays in step with the CLI, but whatever the next version of Google's repository holds, a changed skill or a new hook, loads at the next session start without anyone reading it.
+- Auto-update off. Nothing changes the skill until a person updates it, but it falls behind the CLI, which then asks the agent to have the user update the skill.
+
+Where each person installs the plugin:
+
+- For their user. One install covers every clone, but the plugin then runs in their other repositories too, where no hook turns its telemetry off, unless their own settings turn it off there.
+- At project scope from the main checkout. The plugin loads there and in its worktrees and nowhere else, but each further clone needs an install of its own.
+
+Whether the CLI sends usage data:
+
+- Telemetry on. Nothing to set, but Google gets the queries and the IDs of the guides.
+- Telemetry off through a `SessionStart` hook that gives `DISABLE_TELEMETRY=1` to the Bash commands of each session. It reaches every person who works here and leaves Claude Code's own telemetry alone, but a `claude` that a Bash command starts inherits the variable.
+- Telemetry off through `DISABLE_TELEMETRY` in the `env` of settings.json. One line, but it also turns off Claude Code's own telemetry and feature flags, which features such as plugins and skills synced from claude.ai and MCP tasks need.
+- Telemetry off through an export in each person's shell profile. Google's README suggests it, but each person sets it on each machine, and a `claude` started from that shell turns off its own telemetry too.
+
+How its commands run in auto mode:
+
+- An `autoMode.allow` entry in the settings of each person who works in auto mode. It adds an exception to the classifier's soft blocks, so the classifier lets the commands run unless a hard block applies, but each person sets it up on each machine.
+- No entry. Nothing to set up, but in auto mode the classifier can refuse the commands, and the check then fails.
+
+## Decision
+
+Google's plugin, enabled for the whole repository, with its CLI at `@latest`, its telemetry off through a `SessionStart` hook, and an `autoMode.allow` entry in the settings of each person who works in auto mode. By estimate, the plugin costs 15,000 to 40,000 tokens a task, against about 200,000 for the subagent's two calls, because it reads only its own text and the guides and not the rules, documents and diff that the agent has read already, and the repository maintains no text of its own for it. It runs at the start of every web task and checks the code before the agent concludes. The repository accepts that the guides stay in the agent's context, that answers on web tasks end with Google's section in English, and that the agent checks its own work. `@latest`, because the repository trusts the package that Google maintains with the other browser makers, and current guides matter more for advice than code that stays as it was checked. The repository's settings turn on the auto-update of Google's marketplace, so the skill stays in step with the CLI, for the same trust in Google as `@latest`. The hook keeps the queries from Google for everyone who works here without touching Claude Code's own telemetry, and each person installs the plugin at project scope from the main checkout, so it runs only in this repository, where the settings that enable it also hold the hook. Without the auto-mode entry, checks in auto mode can fail.
+
+## Consequences
+
+- The plugin, its marketplace with auto-update, the rules for its commands and the hook in [settings.json](/.claude/settings.json), which [configuration.md](/.claude/docs/configuration.md) describes.
+- [modern-web-guidance-setup.md](/.claude/docs/modern-web-guidance-setup.md): what each person installs and sets in their own settings.
