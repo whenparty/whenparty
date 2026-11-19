@@ -59,7 +59,7 @@ const contrastOf = (first: string, second: string) => {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
-test('Tab reaches only the controls of the announcement while it covers the page, and the page again after it', async ({
+test('Tab reaches only the controls of the announcement while it covers the page, and the link to the 3D interface can take focus after it', async ({
   players: {host}
 }) => {
   const reached = new Set<string>()
