@@ -29,6 +29,7 @@ A file is busy when:
 
 - an open pull request changes it, as `gh pr list --state open --limit 1000 --json number,files` shows;
 - a worktree of the main checkout, as `git worktree list` shows, has an uncommitted or untracked change of it;
+- an entry of the [rules queue](/docs/conventions/workflow.md#rule-changes) names it;
 - or the branch of such a worktree changes it, as `git diff origin/main...<branch> -- <file>` shows, and either has no merged pull request or has commits after the head of its last merged one, as `gh pr list --state merged --head <branch>` shows.
 
 The worktrees, branches and pull requests of one run, on branches named `docs-weekly/<date>/…` with the same date, make no file busy for the sessions of that run. No session of the pass changes a busy file. When an edit would have to change one, such as a link in it that a split moves, drop the edits that need it, record in the report which file was busy, and take the document again in the next run; a dropped edit is not a question to the user.

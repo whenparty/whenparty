@@ -32,7 +32,7 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 - [tests.md](/docs/conventions/tests.md): test files.
 - [code.md](/docs/conventions/code.md): source code and test code, the files code loads, such as styles and assets, and configs and scripts, including `.github/workflows`.
 - [serving.md](/docs/conventions/serving.md): how the files that the repository serves reach browsers and which browsers they work in, for those files and the builds and configs that produce and serve them.
-- [workflow.md](/docs/conventions/workflow.md): how to start a task, cut it into pieces and lead them, what the user decides, how to ask the user and what messages to the user and the lead say, how to learn from the user's corrections, when to write a decision record, and when to commit and merge.
+- [workflow.md](/docs/conventions/workflow.md): how to start a task, cut it into pieces and lead them, what the user decides, how to ask the user and what messages to the user and the lead say, how to learn from the user's corrections, when to write a decision record, how a change of a rule of work waits in a queue for the evening, and when to commit and merge.
 - [workflow-specs.md](/docs/conventions/workflow-specs.md): how specifications and code change, and when to stop and ask about them.
 - [workflow-checks.md](/docs/conventions/workflow-checks.md): what to check in documents and code while working on a change, how the findings of a review are classed, how a review ends, when to ask Codex, and how a change and its report are read once more before the user sees them.
 
