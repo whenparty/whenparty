@@ -14,6 +14,7 @@ import {
   snapshotValue,
   stateLog,
   versions,
+  withLobby,
   type Harness,
   type SnapshotFields
 } from './harness.ts'
@@ -33,8 +34,14 @@ interface Recovered {
   readonly calls: readonly string[]
 }
 
-const recover = (outcome: Outcome, record: Json, roster: readonly number[], configure: (h: Harness) => void = () => {}): Recovered => {
-  const h = harness()
+const recover = (
+  outcome: Outcome,
+  record: Json,
+  roster: readonly number[],
+  configure: (h: Harness) => void = () => {},
+  lobby = false
+): Recovered => {
+  const h = harness(lobby ? withLobby : {})
   configure(h)
   recoveringHost(h, record)
   const mark = h.told.length
@@ -60,15 +67,78 @@ const madeFresh = (h: Harness, matchNumber: number, seats: readonly (number | nu
   assert.deepEqual(snapshot.queue, queue)
 }
 
+const freshLobby = (h: Harness, matchNumber: number, seats: readonly (number | null)[], queue: readonly number[] = []): void => {
+  const {snapshot} = lastSnapshot(h)
+  assert.equal(snapshot.running, false)
+  assert.deepEqual(stateLog(lastSnapshot(h)).slice(0, 1), ['lobby'])
+  assert.deepEqual(snapshot.match, {term: 2, number: matchNumber})
+  assert.deepEqual(snapshot.seats, seats)
+  assert.deepEqual(snapshot.queue, queue)
+}
+const noCall = () => {}
+
 const scenarios: Scenarios<Table> = {
   recovering: {
+    rosterWithRecordOfNullStateLobbyTitle: outcome => {
+      const {h, calls} = recover(outcome, usable({running: false, state: null, match: [1, 2], seats: [1, 2]}), [2], noCall, true)
+      freshLobby(h, 2, [1, 2])
+      assert.deepEqual(calls, ['presence lost B', 'presence visible A'])
+      assert.deepEqual(stateLog(lastSnapshot(h)), ['lobby', 'lost B', 'visible A'])
+    },
+    rosterWithUnusableRecordSnapshotLobbyTitle: outcome => {
+      const {h} = recover(outcome, usable({match: [1, 3], state: {nolog: true}}), [2], noCall, true)
+      freshLobby(h, 3, [1, 2])
+    },
+    rosterWithoutRecordSnapshotLobbyTitle: outcome => {
+      const {h} = recover(outcome, {versions}, [3, 2], noCall, true)
+      freshLobby(h, 0, [1, 2], [3])
+    },
+    rosterLacksPlayerNoMatchLobbyTitle: outcome => {
+      const {h, calls} = recover(
+        outcome,
+        usable({running: false, state: {log: ['lobby', 'name B']}, match: [1, 0], seats: [1, 2], queue: [3]}),
+        [3],
+        noCall,
+        true
+      )
+      assert.deepEqual(calls, ['presence left B', 'presence visible A', 'presence lost B'])
+      assert.deepEqual(lastSnapshot(h).snapshot.seats, [1, 3])
+    },
+    rosterLacksPlayerLeftFailsLobbyTitle: outcome => {
+      const {h, calls} = recover(
+        outcome,
+        usable({running: true, state: {log: ['initial', 'name B']}, seats: [1, 2], queue: [3]}),
+        [3],
+        h => h.failing.presence.add('left'),
+        true
+      )
+      assert.deepEqual(calls, ['presence left B', 'presence visible A', 'presence lost B'])
+      assert.equal(lastSnapshot(h).snapshot.running, false)
+      assert.deepEqual(stateLog(lastSnapshot(h)), ['lobby', 'visible A', 'lost B'])
+      assert.deepEqual(lastSnapshot(h).snapshot.seats, [1, 3])
+    },
+    rosterHasPlayerNoMatchLobbyTitle: outcome => {
+      const {calls} = recover(outcome, usable({running: false, state: {log: ['lobby']}, match: [1, 0], seats: [1, 2]}), [2], noCall, true)
+      assert.deepEqual(calls, ['presence lost B', 'presence visible A'])
+    },
+    noMatchRunsAtEndLobbyTitle: outcome => {
+      const {h, calls} = recover(
+        outcome,
+        usable({running: false, state: {log: ['lobby']}, match: [1, 0], seats: [1, null], queue: [3]}),
+        [3],
+        noCall,
+        true
+      )
+      assert.deepEqual(calls, ['presence visible A', 'presence lost B'])
+      assert.deepEqual(lastSnapshot(h).snapshot.seats, [1, 3])
+    },
     rosterWithUsableRecord: outcome => {
       const {h} = recover(outcome, usable({running: false, state: {log: ['kept']}, match: [1, 4], seats: [1, 2]}), [2])
       const {snapshot} = lastSnapshot(h)
       assert.deepEqual(stateLog(lastSnapshot(h)), ['kept'])
       assert.deepEqual(snapshot.match, {term: 1, number: 4})
     },
-    rosterWithRecordOfOtherVersions: outcome => {
+    rosterWithRecordOfOtherVersionsWithoutLobby: outcome => {
       const {h} = recover(
         outcome,
         {versions: [1, format + 1], snapshot: snapshotValue({match: [1, 3], seats: [1, 3]}) as Json, time: 0},
@@ -76,11 +146,11 @@ const scenarios: Scenarios<Table> = {
       )
       madeFresh(h, 3, [1, 2], [3, 4])
     },
-    rosterWithRecordOfOtherForm: outcome => {
+    rosterWithRecordOfOtherFormWithoutLobby: outcome => {
       const {h} = recover(outcome, usable({match: [1, 3], state: {nolog: true}}), [2])
       madeFresh(h, 3, [1, 2])
     },
-    rosterWithoutRecordSnapshot: outcome => {
+    rosterWithoutRecordSnapshotWithoutLobby: outcome => {
       const {h} = recover(outcome, {versions}, [3, 2])
       madeFresh(h, 0, [1, 2], [3])
     },

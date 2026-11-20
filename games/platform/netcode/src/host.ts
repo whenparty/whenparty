@@ -60,6 +60,8 @@ export class Host {
   #canAct = false
   #disposed = false
   #failuresInChange = 0
+  #sweepAll = false
+  readonly #seated = new Set<number>()
 
   private constructor(port: HostPort, recovering: boolean, record: unknown) {
     this.#port = port
@@ -76,6 +78,10 @@ export class Host {
     host.#match = {term, number: 0}
     host.#time = new RoomTime(port.clock, 0)
     host.#seats[0] = hostNumber
+    if (port.rules.lobby !== null) {
+      host.#state = port.rules.lobby
+      host.#sweepAll = true
+    }
     host.#change(true)
     host.#scheduleWrite()
     return host
@@ -107,6 +113,10 @@ export class Host {
     return this.#seats.indexOf(number)
   }
 
+  #outside(): boolean {
+    return this.#running || this.#rules.hasLobby
+  }
+
   #context(roomTime = this.#readTime()): Context {
     const seats: {[seat: string]: {taken: boolean; lost: boolean; hidden: boolean}} = {}
     this.#rules.seats.forEach((seat, index) => {
@@ -118,7 +128,7 @@ export class Host {
         hidden: number === hostNumber ? this.#hostHidden : (presence?.hidden ?? false)
       }
     })
-    return {roomTime, seats}
+    return {roomTime, matchRuns: this.#running, seats}
   }
 
   #playersOf(): string[] {
@@ -147,9 +157,38 @@ export class Host {
   #fillSeats(): void {
     this.#seats.forEach((number, index) => {
       if (number === null && this.#queue.length > 0) {
-        this.#seats[index] = this.#queue.shift() ?? null
+        const taker = this.#queue.shift() ?? null
+        this.#seats[index] = taker
+        if (taker !== null) {
+          this.#seated.add(taker)
+        }
       }
     })
+  }
+
+  #isLost(number: number): boolean {
+    return number !== hostNumber && (this.#presence.get(number)?.lost ?? false)
+  }
+
+  #isHidden(number: number): boolean {
+    return number === hostNumber ? this.#hostHidden : (this.#presence.get(number)?.hidden ?? false)
+  }
+
+  #sweep(): void {
+    const sweepAll = this.#sweepAll
+    const seated = new Set(this.#seated)
+    this.#sweepAll = false
+    this.#seated.clear()
+    if (this.#running || !this.#rules.hasLobby) {
+      return
+    }
+    const swept = this.#seats.filter((number): number is number => number !== null && (sweepAll || seated.has(number)))
+    for (const number of swept.filter(each => this.#isLost(each))) {
+      this.#callPresence(number, 'lost')
+    }
+    for (const number of swept.filter(each => this.#isHidden(each))) {
+      this.#callPresence(number, 'hidden')
+    }
   }
 
   #commit(checkOver: boolean, roomTime: number): void {
@@ -159,6 +198,7 @@ export class Host {
     if (!this.#running) {
       this.#fillSeats()
     }
+    this.#sweep()
     this.#snapshotNumber += 1
     this.#skip = {kind: 'none'}
     const snapshot = this.#snapshot(roomTime)
@@ -184,7 +224,8 @@ export class Host {
   }
 
   #updateCanAct(): void {
-    const canAct = !this.#recovering && this.#running && this.#seatOf(hostNumber) >= 0 && (this.#accepted.get(hostNumber) ?? 0) < numberMax
+    const canAct =
+      !this.#recovering && this.#outside() && this.#seatOf(hostNumber) >= 0 && (this.#accepted.get(hostNumber) ?? 0) < numberMax
     if (canAct !== this.#canAct) {
       this.#canAct = canAct
       this.#port.canAct(canAct)
@@ -290,7 +331,7 @@ export class Host {
 
   #callPresence(number: number, event: PresenceEvent): boolean {
     const seat = this.#seatOf(number)
-    if (!this.#running || seat < 0 || this.#state === null) {
+    if (!this.#outside() || seat < 0 || this.#state === null) {
       return false
     }
     const next = this.#rules.presence(this.#state, this.#rules.seats[seat] ?? '', event, this.#context())
@@ -303,7 +344,7 @@ export class Host {
   }
 
   #presenceChange(number: number, event: PresenceEvent, update: () => void): boolean {
-    const calls = this.#running && this.#seatOf(number) >= 0 && this.#rules.hasPresence
+    const calls = this.#outside() && this.#seatOf(number) >= 0 && this.#rules.hasPresence
     if (calls) {
       this.#beforeChange()
     }
@@ -341,6 +382,7 @@ export class Host {
     const free = this.#seats.indexOf(null)
     if (!this.#running && free >= 0) {
       this.#seats[free] = number
+      this.#seated.add(number)
     } else {
       this.#queue.push(number)
     }
@@ -383,17 +425,20 @@ export class Host {
   #leave(number: number, callPresence: boolean): boolean {
     const seat = this.#seatOf(number)
     let ended = false
-    if (callPresence && this.#running && seat >= 0) {
-      if (!this.#rules.hasPresence) {
+    let reset = false
+    if (callPresence && this.#outside() && seat >= 0) {
+      if (!this.#rules.hasPresence || !this.#callPresence(number, 'left')) {
+        ended = this.#running
         this.#running = false
-        ended = true
-      } else if (!this.#callPresence(number, 'left')) {
-        this.#running = false
-        ended = true
+        reset = this.#rules.hasLobby
       }
     }
     if (seat >= 0) {
       this.#seats[seat] = null
+    }
+    if (reset) {
+      this.#state = this.#rules.lobby
+      this.#sweepAll = true
     }
     this.#queue = this.#queue.filter(each => each !== number)
     this.#accepted.delete(number)
@@ -419,12 +464,14 @@ export class Host {
       return
     }
     const players = this.#playersOf()
-    const allowed = this.#rules.hasCanStart ? this.#rules.canStart(this.#state, players) : players.length === this.#rules.seats.length
+    const allowed = this.#rules.hasCanStart
+      ? this.#rules.canStart(this.#state, players, this.#match.number)
+      : players.length === this.#rules.seats.length
     if (!allowed) {
       this.#port.cannotStart()
       return
     }
-    const initial = this.#rules.initialState(this.#port.random(), this.#context())
+    const initial = this.#rules.initialState(this.#port.random(), this.#context(), this.#state)
     if (initial === undefined) {
       this.#port.rulesError()
       this.#port.cannotStart()
@@ -465,7 +512,7 @@ export class Host {
     const seat = this.#seatOf(from)
     const judged =
       seat >= 0 &&
-      this.#running &&
+      this.#outside() &&
       this.#state !== null &&
       match.term === this.#match.term &&
       match.number === this.#match.number &&
@@ -548,8 +595,10 @@ export class Host {
       recordVersions !== null && sameVersions(recordVersions, this.#port.versions)
         ? parseSnapshot(record.snapshot, this.#rules.seats.length, state => this.#rules.isState(state))
         : null
+    const usableForTitle = usable !== null && usable.state === null && this.#rules.hasLobby ? null : usable
     const members = [...new Set(roster)].filter(number => number !== hostNumber).sort((a, b) => a - b)
-    if (usable !== null) {
+    if (usableForTitle !== null) {
+      const usable = usableForTitle
       this.#state = usable.state
       this.#running = usable.running
       this.#match = usable.match
@@ -559,7 +608,7 @@ export class Host {
       this.#time = new RoomTime(this.#port.clock, Math.max(recordTime, usable.roomTime))
     } else {
       const recordMatch = isRecord(record.snapshot) ? matchOf(record.snapshot.match) : null
-      this.#state = null
+      this.#state = this.#rules.lobby
       this.#running = false
       this.#match = {term, number: recordMatch?.number ?? 0}
       this.#seats = this.#rules.seats.map(() => null)
@@ -579,7 +628,7 @@ export class Host {
     let ended = false
     const present = [...this.#seats, ...this.#queue].filter((number): number is number => number !== null && number !== hostNumber)
     for (const number of present.filter(each => !members.includes(each)).sort((a, b) => a - b)) {
-      ended = this.#leave(number, !ended) || ended
+      ended = this.#leave(number, !ended || this.#rules.hasLobby) || ended
     }
     for (const number of members) {
       if (this.#seatOf(number) < 0 && !this.#queue.includes(number)) {
@@ -587,7 +636,7 @@ export class Host {
       }
       this.#presence.set(number, {lost: true, hidden: false})
     }
-    if (this.#running && this.#rules.hasPresence) {
+    if (this.#outside() && this.#rules.hasPresence) {
       this.#seats.forEach(number => {
         if (number !== null && number !== hostNumber && members.includes(number)) {
           this.#callPresence(number, 'lost')
@@ -596,6 +645,8 @@ export class Host {
       this.#callPresence(hostNumber, this.#hostHidden ? 'hidden' : 'visible')
     }
     this.#snapshotNumber = 0
+    this.#sweepAll = false
+    this.#seated.clear()
     this.#commit(!ended, this.#readTime())
     this.#scheduleWrite()
     this.#batch()

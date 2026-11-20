@@ -67,7 +67,7 @@ export class Participant {
     return (
       !this.#over &&
       last !== null &&
-      last.running &&
+      (last.running || this.#port.rules.hasLobby) &&
       this.seatOf(last) !== null &&
       !this.#away &&
       this.#awaiting === null &&

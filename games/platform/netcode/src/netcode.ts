@@ -3,7 +3,7 @@ import type {ActProblem, End, Environment, Failure, GameHandlers, Json, Netcode,
 import {Host, type HostPort} from './host.ts'
 import {isRecord, isWithin, readBack, valueBytes} from './json.ts'
 import {Participant, type ParticipantPort} from './participant.ts'
-import {seatsOf, TitleRules} from './rules.ts'
+import {checkRules, TitleRules} from './rules.ts'
 import {isActionNumber, matchOf, olderOf, parseSnapshot, protocolVersion, sameVersions, versionsOf, type Versions} from './snapshot.ts'
 
 const hostNumber = 1
@@ -444,12 +444,12 @@ class NetcodePage implements Netcode {
 
   #begin(phase: Phase): Game | null {
     this.leave()
-    const seats = seatsOf(this.title)
-    if (seats === null) {
+    const checked = checkRules(this.title)
+    if (checked === null) {
       callSafely(this.handlers.failed, {cause: 'bad rules'})
       return null
     }
-    const game = new Game(this, new TitleRules(this.title.rules, seats), phase)
+    const game = new Game(this, new TitleRules(this.title.rules, checked.seats, checked.lobby), phase)
     this.#game = game
     return game
   }

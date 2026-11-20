@@ -29,6 +29,7 @@ const board = (...cells: Cell[]): Cell[] => cells
 
 const context = (roomTime: number): Context => ({
   roomTime,
+  matchRuns: true,
   seats: {X: {taken: true, lost: false, hidden: false}, O: {taken: true, lost: false, hidden: false}}
 })
 
@@ -189,7 +190,7 @@ test('1-1 the title gives the netcode its app ID, waiting time, format version a
   assert.deepEqual([title.appId, title.waitingSeconds, title.formatVersion, rules.seats()], ['when.party/tictactoe', 600, 1, ['X', 'O']])
   assert.equal(rules.admit, undefined)
   assert.equal(rules.canStart, undefined)
-  const initial = rules.initialState(0, context(0)) as unknown as Game
+  const initial = rules.initialState(0, context(0), null) as unknown as Game
   assert.deepEqual([initial.board, initial.turn], [[null, null, null, null, null, null, null, null, null], 'X'])
 })
 
