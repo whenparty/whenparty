@@ -147,3 +147,20 @@ test('9-9 the versions are read before anything else in the snapshot', () => {
   h.rooms.on.text(JSON.stringify({...snapshotValue({versions: [2, 1]}), n: 'bad'}), 1)
   assert.deepEqual(since(h, 0).at(-1), ['failed', {cause: 'other version', older: 'page'}])
 })
+
+test('9-2 for a title that gives lobby, the state starts as the lobby state and actions change it before the first match', () => {
+  const h = harness({lobby: {log: ['lobby']}})
+  hosting(h, [2])
+  assert.deepEqual(lastSnapshot(h).snapshot.state, {log: ['lobby']})
+  h.netcode.act('name A')
+  assert.deepEqual(lastSnapshot(h).snapshot.state, {log: ['lobby', 'step A "name A"']})
+  assert.equal(lastSnapshot(h).snapshot.running, false)
+})
+
+test('9-4 for a title that gives lobby, a call of presence outside a match is a change', () => {
+  const h = harness({lobby: {log: ['lobby']}})
+  hosting(h, [2])
+  const before = lastSnapshot(h).snapshot.number
+  h.rooms.on.participantLost(2)
+  assert.equal(lastSnapshot(h).snapshot.number, before + 1)
+})

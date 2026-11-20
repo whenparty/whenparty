@@ -1,4 +1,4 @@
-type State = 'none' | 'awaiting' | 'awaitingAway' | 'over' | 'host' | 'judgeRunning' | 'judgeIdle'
+type State = 'none' | 'awaiting' | 'awaitingAway' | 'over' | 'host' | 'judgeRunning' | 'judgeIdle' | 'judgeLobby'
 
 type PageEvent =
   | 'actCanAct'
@@ -22,6 +22,7 @@ type HostEvent =
   | 'arrivesOldNumber'
   | 'arrivesFromSpectator'
   | 'arrivesOtherMatchId'
+  | 'arrivesWhileNoMatchWithoutLobby'
   | 'arrivesNotAnAction'
   | 'arrivesStepNull'
   | 'arrivesStepFails'
@@ -55,12 +56,17 @@ const answerAfterResend = {
     'the host answers an action it gets, and the page sends it again only when the return completes (8-7); texts of an older connection change nothing (rooms 3-10)'
 } as const
 const hostNoSnapshots = {impossible: "the host's page takes only snapshots that it makes, and is never told host away"} as const
-const noStepWithoutMatch = {impossible: 'without a running match no match ID matches, so step is not called'} as const
+const noStepWithoutMatch = {
+  impossible: 'while no match runs, the host refuses the action of a title without lobby before step (8-5)'
+} as const
+const matchRuns = {impossible: 'a match runs in this state'} as const
+const lobbyJudges = {impossible: 'the title gives lobby in this state'} as const
 
 const hostEventsImpossible = {
   arrivesOldNumber: hostSide,
   arrivesFromSpectator: hostSide,
   arrivesOtherMatchId: hostSide,
+  arrivesWhileNoMatchWithoutLobby: hostSide,
   arrivesNotAnAction: hostSide,
   arrivesStepNull: hostSide,
   arrivesStepFails: hostSide,
@@ -201,6 +207,7 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     },
     arrivesFromSpectator: {ids: ['8-5'], outcome: {next: 'judgeRunning', told: ['refused with the number'], judged: 'refused'}},
     arrivesOtherMatchId: {ids: ['8-5'], outcome: {next: 'judgeRunning', told: ['refused with the number'], judged: 'refused'}},
+    arrivesWhileNoMatchWithoutLobby: matchRuns,
     arrivesNotAnAction: {ids: ['8-5'], outcome: {next: 'judgeRunning', told: ['refused with the number'], judged: 'refused'}},
     arrivesStepNull: {ids: ['8-5'], outcome: {next: 'judgeRunning', told: ['refused with the number'], judged: 'refused'}},
     arrivesStepFails: {ids: ['8-5'], outcome: {next: 'judgeRunning', told: ['refused with the number'], judged: 'refused'}},
@@ -215,10 +222,26 @@ export const table: {readonly [S in State]: {readonly [E in Event]: Cell<Outcome
     },
     arrivesFromSpectator: {ids: ['8-5'], outcome: {next: 'judgeIdle', told: ['refused with the number'], judged: 'refused'}},
     arrivesOtherMatchId: {ids: ['8-5'], outcome: {next: 'judgeIdle', told: ['refused with the number'], judged: 'refused'}},
+    arrivesWhileNoMatchWithoutLobby: {ids: ['8-5'], outcome: {next: 'judgeIdle', told: ['refused with the number'], judged: 'refused'}},
     arrivesNotAnAction: {ids: ['8-5'], outcome: {next: 'judgeIdle', told: ['refused with the number'], judged: 'refused'}},
     arrivesStepNull: noStepWithoutMatch,
     arrivesStepFails: noStepWithoutMatch,
     arrivesAccepted: noStepWithoutMatch,
     arrivesOtherText: {ids: ['8-8'], outcome: {next: 'judgeIdle', judged: 'dropped'}}
+  },
+  judgeLobby: {
+    ...pageEventsImpossible,
+    arrivesOldNumber: {
+      ids: ['8-6'],
+      outcome: {next: 'judgeLobby', sends: "that participant the host's last snapshot", judged: 'not judged'}
+    },
+    arrivesFromSpectator: {ids: ['8-5'], outcome: {next: 'judgeLobby', told: ['refused with the number'], judged: 'refused'}},
+    arrivesOtherMatchId: {ids: ['8-5'], outcome: {next: 'judgeLobby', told: ['refused with the number'], judged: 'refused'}},
+    arrivesWhileNoMatchWithoutLobby: lobbyJudges,
+    arrivesNotAnAction: {ids: ['8-5'], outcome: {next: 'judgeLobby', told: ['refused with the number'], judged: 'refused'}},
+    arrivesStepNull: {ids: ['8-5'], outcome: {next: 'judgeLobby', told: ['refused with the number'], judged: 'refused'}},
+    arrivesStepFails: {ids: ['8-5'], outcome: {next: 'judgeLobby', told: ['refused with the number'], judged: 'refused'}},
+    arrivesAccepted: {ids: ['8-5'], outcome: {next: 'judgeLobby', judged: 'accepted'}},
+    arrivesOtherText: {ids: ['8-8'], outcome: {next: 'judgeLobby', judged: 'dropped'}}
   }
 }

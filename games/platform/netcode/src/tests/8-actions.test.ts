@@ -18,7 +18,9 @@ import {
   snapshotText,
   snapshotValue,
   versions,
-  type Harness
+  withLobby,
+  type Harness,
+  type TitleOptions
 } from './harness.ts'
 
 type Table = typeof table
@@ -209,13 +211,15 @@ const arrive = (h: Harness, from: number, number: number, match: readonly [numbe
   h.rooms.on.text(JSON.stringify({t: 'action', n: number, match, action}), from)
 }
 
-const judge = (setup: (h: Harness) => void, event: (h: Harness) => unknown, from: number, number: number) => (outcome: Outcome) => {
-  const h = harness()
-  setup(h)
-  const mark = h.told.length
-  event(h)
-  hostChecks(h, mark, outcome, from, number)
-}
+const judge =
+  (setup: (h: Harness) => void, event: (h: Harness) => unknown, from: number, number: number, options: TitleOptions = {}) =>
+  (outcome: Outcome) => {
+    const h = harness(options)
+    setup(h)
+    const mark = h.told.length
+    event(h)
+    hostChecks(h, mark, outcome, from, number)
+  }
 
 const endedMatchWithAccepted = (h: Harness): void => {
   running(h)
@@ -317,6 +321,12 @@ scenarios.judgeIdle = {
   ),
   arrivesOtherMatchId: judge(
     h => hosting(h, [2]),
+    h => arrive(h, 2, 1, [1, 5], 'x'),
+    2,
+    1
+  ),
+  arrivesWhileNoMatchWithoutLobby: judge(
+    h => hosting(h, [2]),
     h => arrive(h, 2, 1, [1, 0], 'x'),
     2,
     1
@@ -333,6 +343,42 @@ scenarios.judgeIdle = {
     2,
     0
   )
+}
+
+const lobbyHost = (h: Harness) => hosting(h, [2])
+scenarios.judgeLobby = {
+  arrivesOldNumber: judge(
+    h => {
+      lobbyHost(h)
+      arrive(h, 2, 1, [1, 0], 'x')
+    },
+    h => arrive(h, 2, 1, [1, 0], 'x'),
+    2,
+    1,
+    withLobby
+  ),
+  arrivesFromSpectator: judge(
+    h => hosting(h, [2, 3]),
+    h => arrive(h, 3, 1, [1, 0], 'x'),
+    3,
+    1,
+    withLobby
+  ),
+  arrivesOtherMatchId: judge(lobbyHost, h => arrive(h, 2, 1, [2, 0], 'x'), 2, 1, withLobby),
+  arrivesNotAnAction: judge(lobbyHost, h => arrive(h, 2, 1, [1, 0], 'not an action'), 2, 1, withLobby),
+  arrivesStepNull: judge(lobbyHost, h => arrive(h, 2, 1, [1, 0], 'refuse'), 2, 1, withLobby),
+  arrivesStepFails: judge(
+    h => {
+      lobbyHost(h)
+      h.failing.step = true
+    },
+    h => arrive(h, 2, 1, [1, 0], 'x'),
+    2,
+    1,
+    withLobby
+  ),
+  arrivesAccepted: judge(lobbyHost, h => arrive(h, 2, 1, [1, 0], 'x'), 2, 1, withLobby),
+  arrivesOtherText: judge(lobbyHost, h => h.rooms.on.text('not json', 2), 2, 0, withLobby)
 }
 
 cellTests(table, scenarios as Scenarios<Table>)
@@ -368,4 +414,17 @@ test('8-8 a participant page drops a text from the host that is neither a snapsh
   h.rooms.on.text(JSON.stringify({t: 'action', n: 1, match: [1, 1], action: 'x'}), 1)
   h.rooms.on.text('[]', 1)
   assert.deepEqual(since(h, mark), [])
+})
+
+test('8-1 for a title that gives lobby, a seated page can act while no match runs, and a spectator cannot', () => {
+  const h = harness(withLobby)
+  playingPage(h, {running: false, state: {log: ['lobby']}, match: [1, 0]})
+  assert.equal(h.netcode.act('name B'), null)
+  assert.deepEqual(JSON.parse(h.rooms.last.sent.at(-1) ?? '{}').match, [1, 0])
+  const spectator = harness(withLobby)
+  playingPage(spectator, {running: false, state: {log: ['lobby']}, match: [1, 0], seats: [1, 3], queue: [2]})
+  assert.equal(spectator.netcode.act('name B'), 'cannot act')
+  const plain = harness()
+  playingPage(plain, {running: false, state: null, match: [1, 0]})
+  assert.equal(plain.netcode.act('name B'), 'cannot act')
 })

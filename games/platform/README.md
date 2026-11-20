@@ -26,4 +26,5 @@ The transport server, with the rooms server in it, runs in the [signaling server
 | netcode | [spectators' queue](netcode/docs/specs/4-seats.md) | the participants without a seat, in the order in which they get seats that free up |
 | netcode | [match](netcode/docs/specs/5-matches.md) | one round of a game, from its start on the host's page until it ends; a game can hold several matches, one after another |
 | netcode | [snapshot](netcode/docs/specs/9-snapshots.md) | what the host's page holds about the game after a change, which it sends to the other pages |
-| netcode | [action](netcode/docs/specs/8-actions.md) | a move of a player on a seat while a match runs; the host judges every action, its own included, and the other pages send theirs to it |
+| netcode | [lobby state](netcode/docs/specs/5-matches.md) | the value that a game may give as the state of its room before the first match, such as one with no names; players' actions then change the state, and the netcode returns the state to this value when it cannot drop a leaving player's data |
+| netcode | [action](netcode/docs/specs/8-actions.md) | a move of a player on a seat while a match runs or, in a game with a lobby state, at any time; the host judges every action, its own included, and the other pages send theirs to it |

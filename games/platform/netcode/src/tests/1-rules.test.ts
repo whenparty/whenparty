@@ -71,9 +71,9 @@ test('1-1 a random number is drawn anew for each call', () => {
   const seen: number[] = []
   const rules = h.title.rules
   const initial = rules.initialState.bind(rules)
-  ;(rules as {initialState: Rules['initialState']}).initialState = (random, context) => {
+  ;(rules as {initialState: Rules['initialState']}).initialState = (random, context, last) => {
     seen.push(random)
-    return initial(random, context)
+    return initial(random, context, last)
   }
   running(h)
   h.netcode.act('win')
@@ -347,4 +347,94 @@ test('1-6 entering fails with bad rules before the netcode enters the room', () 
   h.netcode.enter(code)
   assert.deepEqual(since(h, 0), [['failed', {cause: 'bad rules'}]])
   assert.deepEqual(h.rooms.calls, [])
+})
+
+test('1-6 a lobby without presence, a lobby that throws, and a lobby value that is no state are bad rules', () => {
+  const presence = (state: Json) => state
+  assert.equal(badRules({presence, lobby: () => ({names: {}})}), false)
+  assert.equal(badRules({lobby: () => ({names: {}})}), true)
+  assert.equal(badRules({presence, lobby: 'not a function'}), true)
+  assert.equal(
+    badRules({
+      presence,
+      lobby: () => {
+        throw new Error('lobby')
+      }
+    }),
+    true
+  )
+  assert.equal(badRules({presence, lobby: () => null}), true)
+  assert.equal(badRules({presence, lobby: () => undefined}), true)
+  assert.equal(badRules({presence, lobby: () => 'text'}), true)
+  assert.equal(badRules({presence, lobby: () => ({a: 'é'.repeat(30_716)})}), false)
+  assert.equal(badRules({presence, lobby: () => ({a: 'é'.repeat(30_717)})}), true)
+})
+
+test('1-6 entering fails with bad rules when lobby throws', () => {
+  const failed: unknown[] = []
+  const rooms = new FakeRooms()
+  const rules = {
+    ...baseRules,
+    presence: (state: Json) => state,
+    lobby: () => {
+      throw new Error('lobby')
+    }
+  }
+  const title = {appId: 'when.party/test', waitingSeconds: null, formatVersion: 1, rules} as unknown as Title
+  const netcode = createNetcode(
+    title,
+    {failed: failure => failed.push(failure)},
+    {
+      rooms,
+      clock: new FakeClock(),
+      visibility: new FakeVisibility(),
+      random: () => 7
+    }
+  )
+  netcode.enter(code)
+  assert.deepEqual(failed, [{cause: 'bad rules'}])
+  assert.equal(rooms.calls.length, 0)
+})
+
+test('1-1 initial state gets the last state, and can start gets the match number of the last snapshot', () => {
+  const seen: unknown[] = []
+  const h = harness({
+    lobby: {log: ['lobby']},
+    canStart: (last, seats, matchNumber) => {
+      seen.push([last, seats, matchNumber])
+      return true
+    }
+  })
+  hosting(h, [2])
+  h.netcode.act('name A')
+  h.netcode.startMatch()
+  h.netcode.act('win')
+  h.netcode.startMatch()
+  assert.deepEqual(seen, [
+    [{log: ['lobby', 'step A "name A"']}, ['A', 'B'], 0],
+    [{log: ['initial', 'step A "win"'], over: true}, ['A', 'B'], 1]
+  ])
+  const lastStates = h.calls.filter(call => call.name === 'initial state').map(call => JSON.parse(call.detail))
+  assert.deepEqual(lastStates, [{log: ['lobby', 'step A "name A"']}, {log: ['initial', 'step A "win"'], over: true}])
+  const plain = harness()
+  running(plain)
+  assert.deepEqual(
+    plain.calls.filter(call => call.name === 'initial state').map(call => call.detail),
+    ['null']
+  )
+})
+
+test('1-2 the context says whether a match runs, which is no in a call of initial state', () => {
+  const h = harness({lobby: {log: ['lobby']}})
+  hosting(h, [2])
+  h.netcode.act('name A')
+  h.rooms.on.participantLost(2)
+  h.netcode.startMatch()
+  h.rooms.on.participantBack(2, 'visible')
+  const runs = (name: string, detail?: string) =>
+    h.calls.filter(call => call.name === name && (detail === undefined || call.detail === detail)).map(call => call.context?.matchRuns)
+  assert.deepEqual(runs('step'), [false])
+  assert.deepEqual(runs('presence', 'lost B'), [false, true])
+  assert.deepEqual(runs('initial state'), [false])
+  assert.deepEqual(runs('presence', 'back B'), [true])
 })

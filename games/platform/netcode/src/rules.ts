@@ -2,7 +2,7 @@ import type {Context, Json, PresenceEvent, Rules, Title} from './api.ts'
 import {copy, isWhole, isWithin, readBack, valueBytes} from './json.ts'
 
 const required = ['seats', 'initialState', 'step', 'over', 'isAction', 'isState'] as const
-const optional = ['presence', 'deadlines', 'deadline', 'admit', 'canStart'] as const
+const optional = ['presence', 'deadlines', 'deadline', 'admit', 'canStart', 'lobby'] as const
 
 export const roomTimeMax = 2 ** 53 - 1
 const deadlinesMax = 64
@@ -13,6 +13,36 @@ const isSeatName = (value: unknown): value is string => {
   }
   const points = [...value].length
   return points >= 1 && points <= 16
+}
+
+export interface Checked {
+  readonly seats: readonly string[]
+  readonly lobby: Json | null
+}
+
+const lobbyOf = (rules: Rules, seats: readonly string[]): Json | null | undefined => {
+  const lobby = rules.lobby
+  if (lobby === undefined) {
+    return null
+  }
+  try {
+    const back = readBack(lobby.call(rules))
+    if (back === null || back.value === null || !isWithin(back.json, valueBytes)) {
+      return undefined
+    }
+    return new TitleRules(rules, seats, null).isState(back.value) ? back.value : undefined
+  } catch {
+    return undefined
+  }
+}
+
+export const checkRules = (title: Title): Checked | null => {
+  const seats = seatsOf(title)
+  if (seats === null) {
+    return null
+  }
+  const lobby = lobbyOf(title.rules, seats)
+  return lobby === undefined ? null : {seats, lobby}
 }
 
 export const seatsOf = (title: Title): readonly string[] | null => {
@@ -27,6 +57,9 @@ export const seatsOf = (title: Title): readonly string[] | null => {
     return null
   }
   if (rules.deadlines !== undefined && rules.deadline === undefined) {
+    return null
+  }
+  if (rules.lobby !== undefined && rules.presence === undefined) {
     return null
   }
   let seats: unknown
@@ -52,10 +85,16 @@ const yes = (answer: () => unknown): boolean => {
 export class TitleRules {
   readonly #rules: Rules
   readonly seats: readonly string[]
+  readonly lobby: Json | null
 
-  constructor(rules: Rules, seats: readonly string[]) {
+  constructor(rules: Rules, seats: readonly string[], lobby: Json | null) {
     this.#rules = rules
     this.seats = seats
+    this.lobby = lobby
+  }
+
+  get hasLobby(): boolean {
+    return this.lobby !== null
   }
 
   get hasPresence(): boolean {
@@ -83,10 +122,11 @@ export class TitleRules {
     return admit === undefined || yes(() => admit.call(this.#rules, number))
   }
 
-  canStart(lastState: Json | null, seatsWithPlayers: readonly string[]): boolean {
+  canStart(lastState: Json | null, seatsWithPlayers: readonly string[], matchNumber: number): boolean {
     const canStart = this.#rules.canStart
     return (
-      canStart !== undefined && yes(() => canStart.call(this.#rules, lastState === null ? null : copy(lastState), [...seatsWithPlayers]))
+      canStart !== undefined &&
+      yes(() => canStart.call(this.#rules, lastState === null ? null : copy(lastState), [...seatsWithPlayers], matchNumber))
     )
   }
 
@@ -102,8 +142,8 @@ export class TitleRules {
     }
   }
 
-  initialState(random: number, context: Context): Json | undefined {
-    return this.#state(() => this.#rules.initialState(random, context))
+  initialState(random: number, context: Context, lastState: Json | null): Json | undefined {
+    return this.#state(() => this.#rules.initialState(random, context, lastState === null ? null : copy(lastState)))
   }
 
   step(state: Json, seat: string, action: Json, random: number, context: Context): Json | null | undefined {

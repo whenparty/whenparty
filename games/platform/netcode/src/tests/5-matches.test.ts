@@ -14,6 +14,7 @@ import {
   snapshots,
   snapshotValue,
   stateLog,
+  withLobby,
   type Harness,
   type TitleOptions
 } from './harness.ts'
@@ -54,7 +55,7 @@ const act = (outcome: Outcome, setup: (h: Harness) => void, event: (h: Harness) 
   }
   const after = h.told.some(([name]) => name === 'snapshot') ? lastSnapshot(h) : null
   if (after !== null && before !== null && h.netcode.phase === 'hosting') {
-    assert.equal(after.snapshot.running, outcome.next === 'running')
+    assert.equal(after.snapshot.running, outcome.next === 'running' || outcome.next === 'lobbyRunning')
   }
   if (outcome.matchNumber === 'grows by 1') {
     assert.equal(after?.snapshot.match.number, (before?.snapshot.match.number ?? 0) + 1)
@@ -83,6 +84,24 @@ const leave3 = (h: Harness) => h.rooms.on.participantLeft(3)
 const runningWith3 = (h: Harness) => running(h, [3])
 
 const recoveryRecord = recordOf(snapshotValue({running: true, state: {log: ['initial']}, match: [1, 1], seats: [1, 2]}))
+const lobbyRecord = recordOf(snapshotValue({running: false, state: {log: ['lobby', 'name B']}, match: [1, 0], seats: [1, 2]}))
+const L = withLobby
+const startRoom = (h: Harness) => {
+  h.netcode.start()
+  h.rooms.on.created('BCDFG', 1)
+}
+const hiddenHost = (h: Harness) => h.visibility.set(true)
+const recoverWithout = (record: typeof recoveryRecord) => (h: Harness) => recoveringHost(h, record)
+const returnAlone = (h: Harness) => h.rooms.on.ownerReturned(2, [])
+const lostSpectatorWaits = (h: Harness) => {
+  hosting(h, [2, 3])
+  lose3(h)
+}
+const runningLostSpectatorWaits = (h: Harness) => {
+  running(h, [3])
+  lose3(h)
+}
+const win = (h: Harness) => h.netcode.act('win')
 
 const scenarios: Scenarios<Table> = {
   none: {
@@ -131,7 +150,21 @@ const scenarios: Scenarios<Table> = {
     playerLeaves: outcome => assert.deepEqual(act(outcome, twoPlayers, leave2).calls, []),
     playerLeavesNoPresenceTitle: outcome => assert.deepEqual(act(outcome, twoPlayers, leave2, {presence: false}).calls, []),
     spectatorLeaves: outcome => assert.deepEqual(act(outcome, h => hosting(h, [2, 3]), leave3).calls, []),
-    otherChange: outcome => assert.deepEqual(act(outcome, twoPlayers, h => h.rooms.on.participantJoined(3, 'visible')).calls, [])
+    otherChange: outcome => assert.deepEqual(act(outcome, twoPlayers, h => h.rooms.on.participantJoined(3, 'visible')).calls, []),
+    seatTaken: outcome => {
+      const run = act(
+        outcome,
+        h => hosting(h),
+        h => h.rooms.on.participantJoined(3, 'hidden')
+      )
+      assert.deepEqual(run.calls, [])
+      assert.deepEqual(lastSnapshot(run.h).snapshot.seats, [1, 3])
+    },
+    startingCompletes: outcome => {
+      const run = act(outcome, hiddenHost, startRoom)
+      assert.deepEqual(run.calls, [])
+      assert.equal(lastSnapshot(run.h).snapshot.state, null)
+    }
   },
   running: {
     startAllowed: outcome => assert.deepEqual(act(outcome, h => running(h), start).calls, []),
@@ -159,7 +192,7 @@ const scenarios: Scenarios<Table> = {
       assert.deepEqual(run.calls, ['presence lost B'])
       assert.ok(names(run.h, 0).includes('rules error'))
     },
-    recoveryPresenceFails: outcome => {
+    recoveryLostOrVisibilityFails: outcome => {
       const run = act(
         outcome,
         h => {
@@ -216,6 +249,242 @@ const scenarios: Scenarios<Table> = {
         h => h.netcode.act('win')
       )
       assert.deepEqual(run.calls, ['over'])
+    },
+    overYesSpectatorWaits: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          runningLostSpectatorWaits(h)
+          leave2(h)
+        },
+        win
+      )
+      assert.deepEqual(run.calls, ['over'])
+      assert.deepEqual(lastSnapshot(run.h).snapshot.seats, [1, 3])
+    },
+    recoveryLeftFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          recoveringHost(h, recoveryRecord)
+          h.failing.presence.add('left')
+        },
+        returnAlone
+      )
+      assert.deepEqual(run.calls, ['presence left B'])
+      assert.deepEqual(run.log, ['initial'])
+    }
+  },
+  lobby: {
+    startAllowed: outcome => {
+      const run = act(outcome, lostAndHidden, start, L)
+      assert.deepEqual(run.calls, ['initial state', 'presence lost B', 'presence hidden A', 'over'])
+      assert.deepEqual(run.log, ['initial', 'lost B', 'hidden A'])
+      assert.deepEqual(JSON.parse(run.h.calls.find(call => call.name === 'initial state')?.detail ?? 'null'), {
+        log: ['lobby', 'lost B', 'hidden A']
+      })
+    },
+    startPresenceFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          lostAndHidden(h)
+          h.failing.presence.add('lost')
+        },
+        start,
+        L
+      )
+      assert.deepEqual(run.calls, ['initial state', 'presence lost B', 'presence hidden A', 'over'])
+      assert.deepEqual(run.log, ['initial', 'hidden A'])
+    },
+    startRefused: outcome => assert.deepEqual(act(outcome, h => hosting(h), start, L).calls, []),
+    startInitialFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          twoPlayers(h)
+          h.failing.initialState = true
+        },
+        start,
+        L
+      )
+      assert.deepEqual(run.calls, ['initial state'])
+    },
+    startOnOtherPage: outcome => {
+      const run = act(outcome, h => playingPage(h, {running: false, state: {log: ['lobby']}, match: [1, 0]}), start, L)
+      assert.deepEqual(run.h.rooms.last.sent, [])
+      assert.deepEqual(run.calls, [])
+    },
+    playerEvent: outcome => {
+      const run = act(outcome, twoPlayers, lose2, L)
+      assert.deepEqual(run.calls, ['presence lost B'])
+      assert.deepEqual(run.log, ['lobby', 'lost B'])
+    },
+    playerEventPresenceFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          twoPlayers(h)
+          h.failing.presence.add('lost')
+        },
+        lose2,
+        L
+      )
+      assert.deepEqual(run.calls, ['presence lost B'])
+    },
+    recoveryLostOrVisibilityFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          recoveringHost(h, lobbyRecord)
+          h.failing.presence.add('lost')
+        },
+        h => h.rooms.on.ownerReturned(2, [2]),
+        L
+      )
+      assert.deepEqual(run.calls, ['presence lost B', 'presence visible A'])
+      assert.deepEqual(run.log, ['lobby', 'name B', 'visible A'])
+    },
+    spectatorEvent: outcome => assert.deepEqual(act(outcome, h => hosting(h, [2, 3]), lose3, L).calls, []),
+    playerLeaves: outcome => {
+      const run = act(outcome, twoPlayers, leave2, L)
+      assert.deepEqual(run.calls, ['presence left B'])
+      assert.deepEqual(run.log, ['lobby', 'left B'])
+    },
+    playerLeavesPresenceFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          lostSpectatorWaits(h)
+          h.netcode.act('name A')
+          h.failing.presence.add('left')
+        },
+        leave2,
+        L
+      )
+      assert.deepEqual(run.calls, ['presence left B', 'presence lost B'])
+      assert.deepEqual(run.log, ['lobby', 'lost B'])
+      assert.deepEqual(lastSnapshot(run.h).snapshot.seats, [1, 3])
+    },
+    spectatorLeaves: outcome => assert.deepEqual(act(outcome, h => hosting(h, [2, 3]), leave3, L).calls, []),
+    otherChange: outcome => assert.deepEqual(act(outcome, twoPlayers, h => h.rooms.on.participantJoined(3, 'visible'), L).calls, []),
+    seatTaken: outcome => {
+      const run = act(
+        outcome,
+        h => hosting(h),
+        h => h.rooms.on.participantJoined(3, 'hidden'),
+        L
+      )
+      assert.deepEqual(run.calls, ['presence hidden B'])
+      assert.deepEqual(run.log, ['lobby', 'hidden B'])
+    },
+    startingCompletes: outcome => {
+      const run = act(outcome, hiddenHost, startRoom, L)
+      assert.deepEqual(run.calls, ['presence hidden A'])
+      assert.deepEqual(run.log, ['lobby', 'hidden A'])
+    },
+    recoveryLeftFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          recoverWithout(lobbyRecord)(h)
+          h.failing.presence.add('left')
+        },
+        returnAlone,
+        L
+      )
+      assert.deepEqual(run.calls, ['presence left B', 'presence visible A'])
+      assert.deepEqual(run.log, ['lobby', 'visible A'])
+    }
+  },
+  lobbyRunning: {
+    startAllowed: outcome => assert.deepEqual(act(outcome, h => running(h), start, L).calls, []),
+    startPresenceFails: outcome => assert.deepEqual(act(outcome, h => running(h), start, L).calls, []),
+    startRefused: outcome => assert.deepEqual(act(outcome, h => running(h), start, L).calls, []),
+    startInitialFails: outcome => assert.deepEqual(act(outcome, h => running(h), start, L).calls, []),
+    startOnOtherPage: outcome => {
+      const run = act(outcome, h => playingPage(h), start, L)
+      assert.deepEqual(run.h.rooms.last.sent, [])
+    },
+    playerEvent: outcome => assert.deepEqual(act(outcome, h => running(h), lose2, L).calls, ['presence lost B', 'over']),
+    playerEventPresenceFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          running(h)
+          h.failing.presence.add('lost')
+        },
+        lose2,
+        L
+      )
+      assert.deepEqual(run.calls, ['presence lost B'])
+    },
+    recoveryLostOrVisibilityFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          recoveringHost(h, recoveryRecord)
+          h.failing.presence.add('lost')
+        },
+        h => h.rooms.on.ownerReturned(2, [2]),
+        L
+      )
+      assert.deepEqual(run.calls, ['presence lost B', 'presence visible A', 'over'])
+      assert.deepEqual(run.log, ['initial', 'visible A'])
+    },
+    spectatorEvent: outcome => assert.deepEqual(act(outcome, runningWith3, lose3, L).calls, []),
+    playerLeaves: outcome => assert.deepEqual(act(outcome, h => running(h), leave2, L).calls, ['presence left B', 'over']),
+    playerLeavesPresenceFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          runningLostSpectatorWaits(h)
+          h.failing.presence.add('left')
+        },
+        leave2,
+        L
+      )
+      assert.deepEqual(run.calls, ['presence left B', 'presence lost B'])
+      assert.deepEqual(run.log, ['lobby', 'lost B'])
+      assert.deepEqual(lastSnapshot(run.h).snapshot.seats, [1, 3])
+    },
+    spectatorLeaves: outcome => assert.deepEqual(act(outcome, runningWith3, leave3, L).calls, ['over']),
+    otherChange: outcome =>
+      assert.deepEqual(
+        act(
+          outcome,
+          h => running(h),
+          h => h.rooms.on.participantJoined(3, 'visible'),
+          L
+        ).calls,
+        ['over']
+      ),
+    overYes: outcome => assert.deepEqual(act(outcome, h => running(h), win, L).calls, ['over']),
+    overYesSpectatorWaits: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          runningLostSpectatorWaits(h)
+          leave2(h)
+        },
+        win,
+        L
+      )
+      assert.deepEqual(run.calls, ['over', 'presence lost B'])
+      assert.deepEqual(lastSnapshot(run.h).snapshot.seats, [1, 3])
+    },
+    recoveryLeftFails: outcome => {
+      const run = act(
+        outcome,
+        h => {
+          recoveringHost(h, recoveryRecord)
+          h.failing.presence.add('left')
+        },
+        returnAlone,
+        L
+      )
+      assert.deepEqual(run.calls, ['presence left B', 'presence visible A'])
+      assert.deepEqual(run.log, ['lobby', 'visible A'])
     }
   }
 }
@@ -274,4 +543,21 @@ test('5-6 the host page tells hidden and visible about the host', () => {
   h.visibility.set(true)
   h.visibility.set(false)
   assert.deepEqual(callsSince(h, mark), ['presence hidden A', 'over', 'presence visible A', 'over'])
+})
+
+test('5-5 recovery keeps the match ID of the record snapshot, and a fallback keeps its own until a match starts', () => {
+  const h = harness(withLobby)
+  recoveringHost(h, lobbyRecord)
+  h.rooms.on.ownerReturned(2, [2])
+  assert.deepEqual(lastSnapshot(h).snapshot.match, {term: 1, number: 0})
+  h.rooms.on.text(JSON.stringify({t: 'action', n: 1, match: [1, 0], action: 'name'}), 2)
+  assert.deepEqual(lastSnapshot(h).snapshot.accepted, [[2, 1]])
+  const fallback = harness(withLobby)
+  recoveringHost(fallback, {versions: [1, 99], snapshot: null, time: 0})
+  fallback.rooms.on.ownerReturned(2, [2])
+  assert.deepEqual(lastSnapshot(fallback).snapshot.match, {term: 2, number: 0})
+  fallback.rooms.on.participantJoined(3, 'visible')
+  assert.deepEqual(lastSnapshot(fallback).snapshot.match, {term: 2, number: 0})
+  fallback.rooms.on.text(JSON.stringify({t: 'action', n: 1, match: [1, 0], action: 'name'}), 2)
+  assert.deepEqual(lastSnapshot(fallback).snapshot.accepted, [])
 })

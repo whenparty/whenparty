@@ -5,6 +5,9 @@ import {FakeClock, FakeJoinRequest, FakeRooms, FakeVisibility, type FakeRoom} fr
 
 export const code = 'BCDFG'
 export const format = 3
+
+export const lobbyValue: Json = {log: ['lobby']}
+export const withLobby: TitleOptions = {lobby: lobbyValue}
 export const versions: [number, number] = [1, format]
 
 export interface Play {
@@ -17,7 +20,8 @@ export type Call = {readonly name: string; readonly detail: string; readonly con
 
 export interface TitleOptions {
   readonly presence?: boolean
-  readonly canStart?: (last: Json | null, seats: readonly string[]) => boolean
+  readonly canStart?: (last: Json | null, seats: readonly string[], matchNumber: number) => boolean
+  readonly lobby?: Json | (() => Json)
   readonly admit?: (number: number) => boolean
   readonly seats?: readonly string[]
 }
@@ -58,8 +62,8 @@ const testRules = (calls: Call[], failing: Failing, options: TitleOptions): Rule
       }
       return options.seats ?? ['A', 'B']
     },
-    initialState: (_random, context) => {
-      record('initial state', '', context)
+    initialState: (_random, context, last) => {
+      record('initial state', JSON.stringify(last), context)
       if (failing.initialState) {
         throw new Error('initial')
       }
@@ -115,6 +119,10 @@ const testRules = (calls: Call[], failing: Failing, options: TitleOptions): Rule
       const play = state as unknown as Play
       return {...play, log: [...play.log, `${event} ${seat}`]} as Json
     }
+  }
+  if (options.lobby !== undefined) {
+    const lobby = options.lobby
+    rules.lobby = () => (typeof lobby === 'function' ? lobby() : lobby)
   }
   if (options.canStart) {
     rules.canStart = options.canStart

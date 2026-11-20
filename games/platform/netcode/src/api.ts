@@ -12,12 +12,13 @@ export interface SeatContext {
 
 export interface Context {
   readonly roomTime: number
+  readonly matchRuns: boolean
   readonly seats: {readonly [seat: string]: SeatContext}
 }
 
 export interface Rules<S extends Json = Json, A extends Json = Json> {
   seats(): readonly string[]
-  initialState(random: number, context: Context): S
+  initialState(random: number, context: Context, lastState: S | null): S
   step(state: S, seat: string, action: A, random: number, context: Context): S | null
   over(state: S): boolean
   isAction(value: Json): boolean
@@ -26,7 +27,8 @@ export interface Rules<S extends Json = Json, A extends Json = Json> {
   deadlines?(state: S): readonly number[]
   deadline?(state: S, time: number, random: number, context: Context): S
   admit?(number: number): boolean
-  canStart?(lastState: S | null, seatsWithPlayers: readonly string[]): boolean
+  canStart?(lastState: S | null, seatsWithPlayers: readonly string[], matchNumber: number): boolean
+  lobby?(): S
 }
 
 export interface Title<S extends Json = Json, A extends Json = Json> {
