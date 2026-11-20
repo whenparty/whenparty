@@ -12,7 +12,10 @@ on:
 
 jobs:
   check:
+    needs: changes
     uses: ./.github/workflows/check-games.yml
+    with:
+      deployments: ${{ needs.changes.outputs.deployments }}
 
   turn:
     uses: ./.github/workflows/check-turn.yml

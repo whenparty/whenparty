@@ -1,6 +1,6 @@
 # Packages and deployments a games change reaches
 
-[games-changes.yml](/.github/workflows/games-changes.yml) finds the packages and [deployments](/docs/glossary.md#deployment) of `games/` that a change reaches. `ci.yml` passes the packages to `check-games.yml`, as [checks.md](/.github/docs/checks.md) says, and `games.yml` deploys the deployments. [games-check-scope.md](/docs/decisions/games-check-scope.md) explains why pnpm finds them on the runner.
+[games-changes.yml](/.github/workflows/games-changes.yml) finds the packages and [deployments](/docs/glossary.md#deployment) of `games/` that a change reaches. `ci.yml` passes the packages and the deployments to `check-games.yml`, and `games.yml` passes it the deployments and deploys them, as [checks.md](/.github/docs/checks.md) says. [games-check-scope.md](/docs/decisions/games-check-scope.md) explains why pnpm finds them on the runner.
 
 ## The base
 
@@ -23,4 +23,4 @@ The `packages` output is `all`, empty, or the folders of the selected packages u
 
 ## Deployments
 
-When only some packages are affected, the `deployments` output holds those that have a `compose.yml`, and `games/platform/turn/` when a file there other than Markdown changes. When every package is affected, it holds every folder `games/*/` and `games/*/*/` that has a `compose.yml`, the same depths that `check-project-names.yml` and `image-scan.yml` read. It also holds every such folder that the change deletes, so that `deploy-project.yml` removes it from the VPS. A manual run, or a base that is not in the history, finds no deleted folders.
+When only some packages are affected, the `deployments` output holds those that have a `compose.yml`, and `games/platform/turn/` when a file there other than Markdown changes. When every package is affected, it holds every folder `games/*/` and `games/*/*/` that has a `compose.yml`, the same depths that `check-games.yml`, `check-project-names.yml` and `image-scan.yml` read. It also holds every such folder that the change deletes, so that `deploy-project.yml` removes it from the VPS. A manual run, or a base that is not in the history, finds no deleted folders.
