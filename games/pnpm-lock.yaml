@@ -236,6 +236,9 @@ importers:
 
   titles/calisthenics:
     dependencies:
+      '@whenparty/netcode':
+        specifier: workspace:*
+        version: link:../../platform/netcode
       '@whenparty/p2p':
         specifier: workspace:*
         version: link:../../platform/p2p

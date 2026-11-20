@@ -1,18 +1,25 @@
 import './style.css'
-import {openRoom, visitNow} from '../../connection.ts'
+import {openRoom, type Room} from '../../connection.ts'
 import {mountPanel} from '../shared/panel.ts'
 
 const interfaceLink = document.getElementById('interface-link') as HTMLAnchorElement
+let room: Room | null = null
 const panel = mountPanel(
   document.getElementById('panel')!,
-  {create: () => room.create(), join: code => room.join(code), send: move => room.send(move)},
-  {roomTimeOf: visitNow}
+  {
+    create: () => room?.create(),
+    submit: text => room?.submit(text) ?? true,
+    leave: () => room?.leave(),
+    startChampionship: () => room?.startChampionship(),
+    send: move => room?.send(move)
+  },
+  {roomTime: () => room?.roomTime() ?? 0}
 )
 const announcement = document.getElementById('announcement')!
 const underAnnouncement = [...document.querySelectorAll<HTMLElement>('main > *')].filter(each => !each.contains(announcement))
-const room = openRoom(visit => {
+room = openRoom(visit => {
   panel.render(visit)
-  interfaceLink.href = `./${visit ? `#${visit.code}` : ''}`
+  interfaceLink.href = `./${visit?.code ? `#${visit.code}` : ''}`
   const covered = announcement.checkVisibility()
   underAnnouncement.forEach(each => (each.inert = covered))
 })

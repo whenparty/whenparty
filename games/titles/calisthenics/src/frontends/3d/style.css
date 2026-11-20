@@ -366,6 +366,15 @@ h1 {
   border-bottom: 1px solid var(--line);
   color: var(--muted);
 }
+#leave {
+  justify-self: start;
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+#leave:hover:not(:disabled) {
+  background: var(--wash);
+}
 #entry > p {
   margin-top: 0;
 }

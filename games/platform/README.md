@@ -6,7 +6,7 @@ The platform lets the pages of a game find each other and play together. It is t
 - **[rooms](rooms/AGENTS.md)** gathers the people of a game into [rooms](rooms/docs/specs/1-room.md) over those connections, lets the [owner](rooms/docs/specs/1-room.md) of a room decide who comes in, and brings a person's page back into the room after a break or a reload;
 - **[netcode](netcode/AGENTS.md)** runs a game in a room: the [host's](netcode/docs/specs/2-page.md) page keeps the game state, and the other pages play through it.
 
-The transport server, with the rooms server in it, runs in the [signaling server](signaling/AGENTS.md) at `signaling.when.party`, and the TURN server at `turn.when.party` is part of transport. [Calisthenics](../titles/calisthenics/AGENTS.md) plays through the [p2p module](p2p/AGENTS.md) instead.
+The transport server, with the rooms server in it, runs in the [signaling server](signaling/AGENTS.md) at `signaling.when.party`, and the TURN server at `turn.when.party` is part of transport.
 
 ## What each layer is made of
 

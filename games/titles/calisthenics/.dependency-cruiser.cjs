@@ -9,10 +9,10 @@ module.exports = {
     },
     {
       name: 'core-has-no-runtime-platform-or-three',
-      comment: 'src/core/ has no browser, network or three.js code; it may use types of the p2p module.',
+      comment: 'src/core/ has no browser, network or three.js code; it may use types of the netcode module.',
       severity: 'error',
       from: {path: '^src/core/'},
-      to: {path: ['/platform/p2p/', '/node_modules/three/'], dependencyTypesNot: ['type-only']}
+      to: {path: ['/platform/', '/node_modules/three/'], dependencyTypesNot: ['type-only']}
     },
     {
       name: 'connection-uses-only-core',

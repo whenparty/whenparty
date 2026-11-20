@@ -1,11 +1,10 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
-import {applyIntent, createRoomState, joinPlayer} from '@whenparty/p2p'
-import {bodyVolume, calisthenics, createChampionship, isMove, podiumOf, startingCondition, type Championship} from '../core/index.ts'
+import {bodyVolume, canStart, createChampionship, isChampionship, isMove, podiumOf, startChampionship, startingCondition, type Championship} from '../core/index.ts'
 import {appearanceOf, defaultAppearance} from '../frontends/3d/appearance.ts'
 import {demonstrationMotion, performanceMotion} from '../frontends/3d/presentation.ts'
 import {positionOf, withAthleteModel} from './athlete-fixtures.ts'
-import {lobbyOf, move, must, plan, started} from './fixtures.ts'
+import {contextOf, lobbyOf, move, must, plan, reconnect, started} from './fixtures.ts'
 
 describe('4-presentation', () => {
   it('4-1 defaults each unchosen part, accepts both color cases, and preserves name and previous choices', () => {
@@ -20,13 +19,13 @@ describe('4-presentation', () => {
     assert.deepEqual(appearanceOf(state.profiles['1']!), {...appearanceOf(profile), shoes: '#000000'})
     state = must(move(state, '1', {type: 'appearance', appearance: {bodyType: 'male'}}))
     assert.deepEqual(appearanceOf(state.profiles['1']!), {...appearanceOf(profile), bodyType: 'male', shoes: '#000000'})
-    assert.ok(calisthenics.isState(state))
+    assert.ok(isChampionship(state))
   })
 
   it('4-1 permits appearance before a name and accepts no invalid hairstyle or color', () => {
     assert.equal(appearanceOf({}).bodyType, 'male')
     const chosen = must(move(createChampionship(), '1', {type: 'appearance', appearance: {hairstyle: 'bald'}}))
-    assert.equal(move(chosen, '1', {type: 'start'}), null)
+    assert.equal(canStart(chosen, ['1', '2']), false)
     for (const appearance of [
       {bodyType: 'other'},
       {bodyType: 1},
@@ -46,7 +45,7 @@ describe('4-presentation', () => {
 
   it('4-1 keeps appearance in the championship without changing condition or scoring', () => {
     const lobby = must(move(lobbyOf(2), '1', {type: 'appearance', appearance: {bodyType: 'female', skin: '#123456'}}))
-    const active = must(move(lobby, '1', {type: 'start'}))
+    const active = startChampionship(lobby, contextOf(2))
     const ordinary = started().athletes[0]!
     const customized = active.athletes[0]!
     assert.deepEqual(customized.levels, ordinary.levels)
@@ -56,22 +55,16 @@ describe('4-presentation', () => {
   })
 
   it('4-2 keeps one athlete, appearance and confirmed plan when the same player reconnects from either interface', () => {
-    const member = (id: string, peerId = id) => ({playerId: id, peerId})
-    let room = joinPlayer(createRoomState(calisthenics, member('host')), member('guest'))
-    room = applyIntent(calisthenics, room, 'host', {type: 'move', id: 1, move: {type: 'profile', profile: {name: 'Host'}}})
-    room = applyIntent(calisthenics, room, 'guest', {
-      type: 'move',
-      id: 1,
-      move: {type: 'profile', profile: {name: 'Guest', appearance: {shirt: '#123456'}}}
-    })
-    room = applyIntent(calisthenics, room, 'host', {type: 'move', id: 2, move: {type: 'start'}})
-    room = applyIntent(calisthenics, room, 'host', {type: 'move', id: 3, move: {type: 'train'}})
-    room = applyIntent(calisthenics, room, 'guest', {type: 'move', id: 2, move: {type: 'confirm', plan: plan({arms: 1}, 2)}})
-    const switched = joinPlayer(room, member('guest', 'text-connection'))
-    assert.deepEqual(switched.game, room.game)
-    assert.equal(switched.game.athletes.length, 2)
-    assert.equal(appearanceOf(switched.game.athletes[1]!.profile).shirt, '#123456')
-    assert.deepEqual(switched.game.athletes[1]!.plan, plan({arms: 1}, 2))
+    let state = must(move(createChampionship(), '1', {type: 'profile', profile: {name: 'Host'}}))
+    state = must(move(state, '2', {type: 'profile', profile: {name: 'Guest', appearance: {shirt: '#123456'}}}))
+    state = startChampionship(state, contextOf(2))
+    state = must(move(state, '1', {type: 'train'}))
+    state = must(move(state, '2', {type: 'confirm', plan: plan({arms: 1}, 2)}))
+    const switched = reconnect(state, '2')
+    assert.deepEqual(switched, state)
+    assert.equal(switched.athletes.length, 2)
+    assert.equal(appearanceOf(switched.athletes[1]!.profile).shirt, '#123456')
+    assert.deepEqual(switched.athletes[1]!.plan, plan({arms: 1}, 2))
   })
 
   it('4-3 maps every successive arms and legs level to strictly larger independent volumes', () => {

@@ -1,5 +1,4 @@
 import './style.css'
-import {seatOf} from '@whenparty/p2p'
 import {
   athleteAt,
   challenges,
@@ -12,7 +11,7 @@ import {
   startingCondition,
   type Appearance
 } from '../../core/index.ts'
-import {openRoom, visitNow, type Visit} from '../../connection.ts'
+import {openRoom, type Room, type Visit} from '../../connection.ts'
 import {mountPanel} from '../shared/panel.ts'
 import {appearanceOf} from './appearance.ts'
 import creditsUrl from './assets/CREDITS.txt?url&no-inline'
@@ -20,10 +19,18 @@ import {ClubScene, type SceneView, type VisualAthlete} from './scene.ts'
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 const lobbyExtra = (element<HTMLTemplateElement>('lobby-extra').content.firstElementChild as HTMLElement).cloneNode(true) as HTMLElement
+let room: Room | null = null
+const roomTime = () => room?.roomTime() ?? 0
 const panel = mountPanel(
   element('panel'),
-  {create: () => room.create(), join: code => room.join(code), send: move => room.send(move)},
-  {roomTimeOf: visitNow, lobbyExtra}
+  {
+    create: () => room?.create(),
+    submit: text => room?.submit(text) ?? true,
+    leave: () => room?.leave(),
+    startChampionship: () => room?.startChampionship(),
+    send: move => room?.send(move)
+  },
+  {roomTime, lobbyExtra}
 )
 element<HTMLAnchorElement>('credits-link').href = creditsUrl
 let visit: Visit | null = null
@@ -37,7 +44,7 @@ const colors = ['hair', 'skin', 'shirt', 'shorts', 'shoes'] as const
 const loader = element('scene-loader'),
   error = element('scene-error')
 const updateLinks = () => {
-  const hash = visit ? `#${visit.code}` : ''
+  const hash = visit?.code ? `#${visit.code}` : ''
   element<HTMLAnchorElement>('fallback-link').href = `text.html${hash}`
   element<HTMLAnchorElement>('interface-link').href = `text.html${hash}`
 }
@@ -59,13 +66,13 @@ try {
 const update = (next: Visit | null) => {
   visit = next
   updateLinks()
-  const state = next?.view?.room?.game
-  const seat = next?.view?.room ? seatOf(next.view.room, next.view.playerId) : null
+  const state = next?.phase === 'playing' ? (next.game ?? undefined) : undefined
+  const seat = next?.seat ?? null
   const me = state ? athleteAt(state, seat) : null
   const shownAthlete = me ?? state?.athletes[0]
   const profile = (state?.stage === 'lobby' && seat ? state.profiles[seat] : shownAthlete?.profile) ?? {name: 'Your athlete'}
   const look = appearanceOf(profile)
-  appearance.disabled = !state || state.stage !== 'lobby' || !seat || !next?.view?.inControl
+  appearance.disabled = !state || state.stage !== 'lobby' || !seat
   hairstyle.value = look.hairstyle
   bodyType.value = look.bodyType
   for (const key of colors) element<HTMLInputElement>(`look-${key}`).value = look[key]
@@ -147,9 +154,9 @@ const update = (next: Visit | null) => {
       if (turn) {
         view.activeSeat = state.athletes[turn.index]?.seat
         view.elapsed =
-          Math.min(performanceMs, Math.max(0, performanceMs - (turn.endsAt === null ? turn.remainingMs : turn.endsAt - visitNow(next)))) /
+          Math.min(performanceMs, Math.max(0, performanceMs - (turn.endsAt === null ? turn.remainingMs : turn.endsAt - roomTime()))) /
           1000
-        view.paused = isPaused(state) || Boolean(next?.view?.waitingForHost)
+        view.paused = isPaused(state) || Boolean(next?.hostAway)
         caption.textContent = `${state.athletes[turn.index]?.profile.name} · ${turn.index + 1} of ${state.athletes.length}`
       }
       if (isFinished(state)) {
@@ -167,7 +174,7 @@ const update = (next: Visit | null) => {
 }
 
 update(null)
-const room = openRoom(next => {
+room = openRoom(next => {
   panel.render(next)
   update(next)
 })
@@ -177,7 +184,7 @@ previewSelect.addEventListener('change', () => {
 })
 const choose = (choice: Partial<Appearance>) => {
   previewSeat = ''
-  room.send({type: 'appearance', appearance: choice})
+  room?.send({type: 'appearance', appearance: choice})
 }
 hairstyle.addEventListener('change', () => choose({hairstyle: hairstyle.value as Appearance['hairstyle']}))
 bodyType.addEventListener('change', () => choose({bodyType: bodyType.value as Appearance['bodyType']}))

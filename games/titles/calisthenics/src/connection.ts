@@ -1,155 +1,263 @@
-import {createRoomCode, playerIdFrom, roomCodeFromHash, startSession} from '@whenparty/p2p'
-import type {Session, SessionView} from '@whenparty/p2p'
-import {calisthenics, type Championship, type Move} from './core/index.ts'
+import {createNetcode, type End, type Failure, type GameHandlers, type Json, type Netcode, type SnapshotView, type Waiting} from '@whenparty/netcode'
+import {browserEnvironment} from '@whenparty/netcode/browser'
+import {seats, title, type Championship, type Move} from './core/index.ts'
 
-const appId = 'when.party/calisthenics'
-const hostHintMs = 10_000
-const hintRefreshMs = 2_000
-const hostingKey = 'calisthenics:hosting'
+export type Finish = {readonly kind: 'failed'; readonly failure: Failure} | {readonly kind: 'ended'; readonly end: End}
 
-export type Search = 'looking' | 'unreachable' | 'offline' | 'nobody'
+export type Phase = 'starting' | 'entering' | 'playing' | 'over'
 
+// What the page knows of its game; null while it shows the start screen.
 export interface Visit {
-  code: string
-  view: SessionView<Championship> | null
-  search: Search
-  receivedAt: number
+  readonly code: string | null
+  readonly phase: Phase
+  readonly waiting: Waiting | null
+  readonly waitedForHost: boolean
+  readonly hostAway: boolean
+  readonly serverLost: boolean
+  readonly rulesError: boolean
+  readonly finish: Finish | null
+  readonly game: Championship | null
+  readonly seat: string | null
+  readonly isHost: boolean
+  readonly occupied: readonly string[]
+  readonly matchNumber: number
+  readonly canAct: boolean
 }
 
-export const visitNow = (visit: Visit | null) =>
-  (visit?.view?.room?.clock ?? 0) + (visit ? Math.max(0, performance.now() - visit.receivedAt) : 0)
-
-export interface Room {
-  create: () => void
-  join: (code: string) => void
-  send: (move: Move) => void
+export interface PageDeps {
+  createNetcode(handlers: GameHandlers): Netcode
+  hash(): string
+  replaceAddress(code: string | null): void
+  changed(visit: Visit | null): void
 }
 
-const hostedRoom = (): string | null => {
+interface Kept {
+  readonly move: Move
+  readonly screen: string
+}
+
+const screenOf = (game: Championship) => `${game.stage}:${game.challenge}`
+
+const decoded = (text: string): string => {
   try {
-    return sessionStorage.getItem(hostingKey)
+    return decodeURIComponent(text)
   } catch {
-    return null
+    return text
   }
 }
 
-const rememberHosting = (code: string | null) => {
-  try {
-    if (code) {
-      sessionStorage.setItem(hostingKey, code)
-    } else {
-      sessionStorage.removeItem(hostingKey)
-    }
-  } catch {}
-}
+const fresh = (code: string | null, phase: Phase): Visit => ({
+  code,
+  phase,
+  waiting: null,
+  waitedForHost: false,
+  hostAway: false,
+  serverLost: false,
+  rulesError: false,
+  finish: null,
+  game: null,
+  seat: null,
+  isHost: false,
+  occupied: [],
+  matchNumber: 0,
+  canAct: false
+})
 
-interface Current {
-  code: string
-  session: Session<Move> | null
-  view: SessionView<Championship> | null
-  hostIsLate: boolean
-  stopHint: () => void
-  receivedAt: number
-}
+// The page's side of a game (6-page.md): entering and leaving, the address, join requests and kept actions.
+export class Room {
+  readonly #deps: PageDeps
+  readonly #netcode: Netcode
+  #visit: Visit | null = null
+  #kept: Kept[] = []
 
-const searchOf = ({session, view, hostIsLate}: Current): Search => {
-  if (view?.unreachable) {
-    return 'unreachable'
+  constructor(deps: PageDeps) {
+    this.#deps = deps
+    this.#netcode = deps.createNetcode(this.#handlers())
   }
 
-  if (!hostIsLate) {
-    return 'looking'
+  get visit(): Visit | null {
+    return this.#visit
   }
 
-  return session?.isSignalingOpen() === false ? 'offline' : 'nobody'
-}
-
-export const openRoom = (onChange: (visit: Visit | null) => void): Room => {
-  const playerId = playerIdFrom(() => localStorage)
-  let current: Current | null = null
-
-  const publish = (entry: Current) => {
-    if (current === entry) {
-      onChange({code: entry.code, view: entry.view, search: searchOf(entry), receivedAt: entry.receivedAt})
-    }
+  get kept(): readonly Move[] {
+    return this.#kept.map(each => each.move)
   }
 
-  const startHint = (entry: Current) => {
-    entry.stopHint()
-    entry.hostIsLate = false
-    let interval: ReturnType<typeof setInterval> | undefined
-    const timeout = setTimeout(() => {
-      entry.hostIsLate = true
-      publish(entry)
-      interval = setInterval(() => publish(entry), hintRefreshMs)
-    }, hostHintMs)
-    entry.stopHint = () => {
-      clearTimeout(timeout)
-      clearInterval(interval)
+  #show(visit: Visit | null): void {
+    this.#visit = visit
+    this.#deps.changed(visit)
+  }
+
+  #update(change: Partial<Visit>): void {
+    if (this.#visit !== null) {
+      this.#show({...this.#visit, ...change})
     }
   }
 
-  const enter = (code: string, isHost: boolean, rejoinAsHost = false) => {
-    const entry: Current = {code, session: null, view: null, hostIsLate: false, stopHint: () => {}, receivedAt: performance.now()}
+  #handlers(): GameHandlers {
+    return {
+      code: code => {
+        this.#update({code})
+        this.#deps.replaceAddress(code)
+      },
+      entering: () => this.#update({phase: 'entering', waiting: null}),
+      waiting: host => this.#update({waiting: host, waitedForHost: true}),
+      failed: failure => this.#end({kind: 'failed', failure}),
+      ended: end => this.#end({kind: 'ended', end}),
+      serverLost: () => this.#update({serverLost: true}),
+      serverBack: () => this.#update({serverLost: false}),
+      snapshot: view => this.#snapshot(view),
+      hostAway: () => this.#update({hostAway: true}),
+      hostBack: () => this.#update({hostAway: false}),
+      canAct: canAct => {
+        this.#update({canAct})
+        if (canAct) {
+          this.#sendKept()
+        }
+      },
+      joinRequest: request => request.letIn(),
+      rulesError: () => this.#update({rulesError: true})
+    }
+  }
 
-    current = entry
-    history.replaceState(null, '', `#${code}`)
-    entry.session = startSession({
-      appId,
-      code,
-      playerId,
+  #end(finish: Finish): void {
+    this.#kept = []
+    this.#update({phase: 'over', finish, waiting: null, canAct: false})
+  }
+
+  #snapshot({snapshot, seat, isHost}: SnapshotView): void {
+    this.#update({
+      phase: 'playing',
+      waiting: null,
+      game: snapshot.state as unknown as Championship | null,
+      seat,
       isHost,
-      rejoinAsHost,
-      rules: calisthenics,
-      onChange: view => {
-        if (entry.view?.room !== view.room) entry.receivedAt = performance.now()
-        if (entry.view?.room && !view.room) {
-          startHint(entry)
-        }
-
-        entry.view = view
-
-        if (current === entry && view.room) {
-          rememberHosting(view.isHost ? code : null)
-        }
-
-        publish(entry)
-      }
+      occupied: seats.filter((_, index) => snapshot.seats[index] != null),
+      matchNumber: snapshot.match.number
     })
-    startHint(entry)
-    publish(entry)
   }
 
-  const leave = () => {
-    current?.session?.leave().catch(error => console.warn('p2p:', error))
-    current?.stopHint()
-    current = null
-    rememberHosting(null)
-    history.replaceState(null, '', location.pathname)
-    onChange(null)
+  #codeOf(text: string): string | null {
+    return this.#netcode.parseCode(decoded(text))
   }
 
-  const joinLinked = (rejoinAsHost: boolean) => {
-    const code = roomCodeFromHash(location.hash)
+  #goesOn(): boolean {
+    return this.#visit !== null && this.#visit.phase !== 'over'
+  }
 
-    if (!code || code === current?.code) {
+  #enter(code: string): void {
+    this.#kept = []
+    this.#show(fresh(code, 'entering'))
+    this.#deps.replaceAddress(code)
+    this.#netcode.enter(code)
+  }
+
+  open(): void {
+    const code = this.#codeOf(this.#deps.hash())
+    if (code === null) {
+      this.#show(null)
+    } else {
+      this.#enter(code)
+    }
+  }
+
+  create(): void {
+    if (this.#visit !== null) {
       return
     }
+    this.#show(fresh(null, 'starting'))
+    this.#netcode.start()
+  }
 
-    if (current) {
-      leave()
+  // Enters the game of the text, or answers false when the netcode turns it into no room code (6-1).
+  submit(text: string): boolean {
+    const code = this.#codeOf(text)
+    if (code === null) {
+      return false
     }
-
-    enter(code, false, rejoinAsHost)
+    if (this.#visit === null) {
+      this.#enter(code)
+    }
+    return true
   }
 
-  addEventListener('hashchange', () => joinLinked(false))
-  const linked = roomCodeFromHash(location.hash)
-  joinLinked(linked !== null && hostedRoom() === linked)
-
-  return {
-    create: () => enter(createRoomCode(), true),
-    join: code => enter(code, false),
-    send: move => current?.session?.send({type: 'move', move})
+  addressChanged(): void {
+    const code = this.#codeOf(this.#deps.hash())
+    if (code === null || code === this.#visit?.code) {
+      return
+    }
+    if (this.#goesOn()) {
+      this.#netcode.leave()
+    }
+    this.#enter(code)
   }
+
+  leave(): void {
+    if (this.#visit === null) {
+      return
+    }
+    if (this.#goesOn()) {
+      this.#netcode.leave()
+    }
+    this.#kept = []
+    this.#deps.replaceAddress(null)
+    this.#show(null)
+  }
+
+  startChampionship(): void {
+    this.#netcode.startMatch()
+  }
+
+  send(move: Move): void {
+    const game = this.#visit?.game
+    if (!this.#goesOn() || !game) {
+      return
+    }
+    if (this.#kept.length > 0 || this.#netcode.act(move as unknown as Json) === 'cannot act') {
+      this.#keep(move, game)
+    }
+  }
+
+  roomTime(): number {
+    return this.#netcode.roomTime() ?? 0
+  }
+
+  #keep(move: Move, game: Championship): void {
+    const screen = screenOf(game)
+    const last = this.#kept.at(-1)
+    if (move.type === 'appearance' && last?.move.type === 'appearance') {
+      const appearance = {...last.move.appearance, ...move.appearance}
+      this.#kept = [...this.#kept.slice(0, -1), {screen: last.screen, move: {type: 'appearance', appearance}}]
+      return
+    }
+    const name = move.type === 'profile' ? this.#kept.findIndex(each => each.move.type === 'profile') : -1
+    this.#kept = name >= 0 ? this.#kept.with(name, {move, screen}) : [...this.#kept, {move, screen}]
+  }
+
+  #sendKept(): void {
+    const game = this.#visit?.game
+    if (!game) {
+      return
+    }
+    this.#kept = this.#kept.filter(each => each.screen === screenOf(game))
+    while (this.#kept.length > 0 && this.#visit?.canAct === true) {
+      const [first, ...rest] = this.#kept
+      if (this.#netcode.act(first!.move as unknown as Json) === 'cannot act') {
+        return
+      }
+      this.#kept = rest
+    }
+  }
+}
+
+export const openRoom = (changed: (visit: Visit | null) => void): Room => {
+  const room = new Room({
+    createNetcode: handlers => createNetcode(title, handlers, browserEnvironment()),
+    hash: () => location.hash.slice(1),
+    replaceAddress: code => history.replaceState(null, '', code === null ? `${location.pathname}${location.search}` : `#${code}`),
+    changed
+  })
+  addEventListener('hashchange', () => room.addressChanged())
+  room.open()
+  return room
 }
