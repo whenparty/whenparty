@@ -6,14 +6,14 @@ The page at the root of `games.when.party` lists the games and links to them. It
 
 [`games/`](../../AGENTS.md) holds the platform in `platform/` and the games in `titles/`. Each game in `titles/` has an app ID and the path `/<name>/`, as [hosting.md](../../titles/docs/hosting.md) says. The [platform](../../platform/AGENTS.md) consists of [modules](/docs/glossary.md#module) that the games rely on. `pnpm-workspace.yaml` lists the folders of packages.
 
-`games-changes.yml` and `check-project-names.yml` find the deployments of `games/` by the folder depths of their `compose.yml`, and `image-scan.yml` scans their images. games-changes.md and [names.md](/temp-sites/docs/names.md) state those depths, so a deployment at a new depth changes all five files. The titles and the platform's deployments are two levels below `games/`.
+`games-changes.yml`, `check-games.yml` and `check-project-names.yml` find the deployments of `games/` by the folder depths of their `compose.yml`, and `image-scan.yml` scans their images. games-changes.md and [names.md](/temp-sites/docs/names.md) state those depths, so a deployment at a new depth changes all six files. The titles and the platform's deployments are two levels below `games/`.
 
 ## Options
 
 - `games/titles/index`. The fewest changes, next to the games it lists. The rules of `titles/` would no longer hold for every folder there.
 - `games/platform/index`. Two levels down, like the titles and the platform's deployments. The page is not a module that games rely on.
 - A folder of its own that holds the page one level down, such as `games/site/index`. Two levels down, so no workflow changes. Every path and link to the page carries a level that holds one [subproject](/docs/glossary.md#subproject).
-- `games/index`. One level, next to `platform/` and `titles/`. The three workflows and two [documents](/docs/glossary.md#document) change to find deployments one level below `games/` too. Every `compose.yml` one level below `games/` then becomes a deployment. `pnpm-workspace.yaml` gets a line for it, as with any new folder of packages.
+- `games/index`. One level, next to `platform/` and `titles/`. The four workflows and two [documents](/docs/glossary.md#document) change to find deployments one level below `games/` too. Every `compose.yml` one level below `games/` then becomes a deployment. `pnpm-workspace.yaml` gets a line for it, as with any new folder of packages.
 
 ## Decision
 
@@ -22,5 +22,5 @@ The page at the root of `games.when.party` lists the games and links to them. It
 ## Consequences
 
 - [index/AGENTS.md](../../index/AGENTS.md), [games/AGENTS.md](../../AGENTS.md) and [pnpm-workspace.yaml](../../pnpm-workspace.yaml).
-- [games-changes.yml](/.github/workflows/games-changes.yml), [check-project-names.yml](/.github/workflows/check-project-names.yml) and [image-scan.yml](/.github/workflows/image-scan.yml).
+- [games-changes.yml](/.github/workflows/games-changes.yml), [check-games.yml](/.github/workflows/check-games.yml), [check-project-names.yml](/.github/workflows/check-project-names.yml) and [image-scan.yml](/.github/workflows/image-scan.yml).
 - [games-changes.md](/.github/docs/games-changes.md) and [names.md](/temp-sites/docs/names.md).

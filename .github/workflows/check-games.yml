@@ -8,6 +8,11 @@ on:
         required: false
         type: string
         default: all
+      deployments:
+        description: all, or a JSON list of the deployments of games/ whose images to build, each as {path, image}
+        required: false
+        type: string
+        default: '[]'
 
 permissions:
   contents: read
@@ -48,6 +53,53 @@ jobs:
               pnpm "$@" --if-present typecheck
             fi
           '
+
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and start the images of the deployments
+        env:
+          DEPLOYMENTS: ${{ inputs.deployments }}
+        run: |
+          set -euo pipefail
+          if [ "$DEPLOYMENTS" = all ]; then
+            folders=$(
+              git ls-tree -r --name-only HEAD -- games |
+                { grep -E '^games/([^/]+/)?[^/]+/compose\.yml$' || true; } |
+                sed 's#/compose\.yml$##'
+            )
+          else
+            folders=$(jq -r '.[].path' <<< "$DEPLOYMENTS")
+          fi
+          for folder in $folders; do
+            if [ -f "$folder/Dockerfile" ]; then
+              echo "::group::$folder"
+              image="games-check-$(basename "$folder")"
+              docker build -t "$image" -f "$folder/Dockerfile" games
+              container=$(docker run -d --health-interval 1s "$image")
+              state=
+              for _ in $(seq 30); do
+                state=$(docker inspect -f '{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}without a health check{{end}}' "$container")
+                [ "$state" = 'running starting' ] || break
+                sleep 1
+              done
+              if [ "$state" != 'running healthy' ]; then
+                docker logs "$container"
+                case $state in
+                  *'without a health check') echo "::error::$folder: the image has no health check" ;;
+                  *) echo "::error::$folder: the container did not pass its health check within 30 seconds ($state)" ;;
+                esac
+                exit 1
+              fi
+              docker rm -f "$container" > /dev/null
+              echo "::endgroup::"
+            fi
+          done
 
   browser:
     runs-on: ubuntu-latest

@@ -11,4 +11,4 @@ flowchart LR
   others --> signaling
 ```
 
-The games play through a shared [platform](platform/README.md): rooms, seats and connections come from it, and each game keeps its own rules and results. Both play through the platform's layers transport, rooms and netcode. A change [goes live](/.github/docs/deploys.md) when it reaches `main` and the games' [tests pass](/.github/docs/checks.md#the-checks).
+The games play through a shared [platform](platform/README.md): rooms, seats and connections come from it, and each game keeps its own rules and results. Both play through the platform's layers transport, rooms and netcode. A change [goes live](/.github/docs/deploys.md) when it reaches `main`, the games' [tests pass](/.github/docs/checks.md#the-checks) and their images build and start.

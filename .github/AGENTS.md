@@ -13,7 +13,7 @@
 - [screenshot-updates.md](/www/docs/decisions/screenshot-updates.md): why `check-www.yml` makes the new screenshots of `www/` for an agent to commit.
 - [ci-checks.md](/docs/decisions/ci-checks.md): why the checks are reusable workflows without secrets, why `ci.yml` skips checks with `if:`, and why it runs on pushes to `main` too.
 - [docs-check.md](/docs/decisions/docs-check.md): why `ci.yml` checks the links of the [documents](/docs/glossary.md#document) and the tests of the requirements in every change.
-- [games-check-scope.md](/docs/decisions/games-check-scope.md): which packages of `games/` `ci.yml` tests, why pnpm finds them on the runner, which deployments `games.yml` deploys, and why it tests the whole workspace.
+- [games-check-scope.md](/docs/decisions/games-check-scope.md): which packages of `games/` `ci.yml` tests, why pnpm finds them on the runner, which deployments `games.yml` deploys, why it tests the whole workspace, which images the checks build, and why they start them and wait for their health checks.
 - [pnpm-in-images.md](/games/docs/decisions/pnpm-in-images.md): why `check-games.yml` and the Dockerfiles in `games/` take pnpm from `ghcr.io/pnpm/pnpm` instead of Corepack or npm. Read it before changing how they get pnpm or Node.
 - [games-routing.md](/docs/decisions/games-routing.md): why nginx reaches the containers of the games itself, which is why the games deploy onto their own network `wp_games`.
 - [game-names-check.md](/docs/decisions/game-names-check.md): why a check of its own keeps other containers off the names that nginx reaches for the games, and why no deploy calls it.

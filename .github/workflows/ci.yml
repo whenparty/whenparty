@@ -103,6 +103,7 @@ jobs:
     uses: ./.github/workflows/check-games.yml
     with:
       packages: ${{ needs.changes.outputs.games-workflows == 'true' && 'all' || needs.games-changes.outputs.packages }}
+      deployments: ${{ needs.changes.outputs.games-workflows == 'true' && 'all' || needs.games-changes.outputs.deployments }}
 
   turn:
     needs: changes
