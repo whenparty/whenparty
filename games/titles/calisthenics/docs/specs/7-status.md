@@ -1,0 +1,50 @@
+# Status
+
+- `7-1` From when the page starts or enters a game until starting or entering fails or the game ends, the status of both interfaces is the text of the first row of this table that applies; 7-2 gives it after that. CODE stands for the room code, NAME for an athlete's name and NAMES for athletes' names joined with commas. Waiting for the host, "host away", the lost server, "rules error" and the last snapshot that the page took are as the netcode tells them in the game ([2-1](../../../../platform/netcode/docs/specs/2-page.md), [2-9](../../../../platform/netcode/docs/specs/2-page.md) and [2-10](../../../../platform/netcode/docs/specs/2-page.md), [3-2](../../../../platform/netcode/docs/specs/3-entry.md) and [3-6](../../../../platform/netcode/docs/specs/3-entry.md), [1-4](../../../../platform/netcode/docs/specs/1-rules.md)). Waiting for the host lasts from the netcode's notice that the page waits until the netcode next tells that the page is entering ([2-6](../../../../platform/netcode/docs/specs/2-page.md)) or the page takes its first snapshot.
+  | When | Status |
+  | --- | --- |
+  | the page started the game, and has taken no snapshot in it | Creating a room… |
+  | the page waits for the host, who decides | Waiting for the host of CODE to let you in… |
+  | the page waits for the host, who is offline | Waiting for the host of CODE to come back… |
+  | the netcode told the page "host away" and not "host back" since | The connection to the host is lost. The game goes on when it is back. The room closes if the host is away for 10 minutes. |
+  | while the server is lost; the status is this text, a space and the text of the first later row that applies | New players cannot join right now: the game server is out of reach. |
+  | after the netcode told "rules error"; the status is this text, a space and the text of the first later row that applies | This game has an error. |
+  | the page entered the game, and has taken no snapshot in it | Looking for room CODE… |
+  | the last snapshot shows the lobby after a lost championship ([3-7](3-match.md)) | This room lost its championship. Create a new room to play again. |
+  | the lobby, on the host's page | Send the code to the other players. Start when everyone has entered a name. |
+  | the lobby, on another seated player's page | Enter a name. The host starts the championship. |
+  | the championship is over with one winner, NAME ([2-4](2-scoring.md)) | NAME wins the championship. |
+  | the championship is over with several winners, NAMES | NAMES share the win. |
+  | the player of each athlete in NAMES has left the room ([3-4](3-match.md)) | Paused for good: the player of NAMES left the room. |
+  | the player of each athlete in NAMES is absent, and none has left | Paused: the player of NAMES is away. The championship waits for them to come back. |
+  | this page has no athlete | You are watching the championship. |
+  | the announcement, on the host's page | Talk the challenge over, then start training. |
+  | the announcement, on another page | The host starts training. |
+  | preparation, this page's plan is confirmed | Waiting for the others to confirm their plans. |
+  | preparation, this page's plan is not confirmed | Plan three actions for your athlete, then confirm. |
+  | the results, while athletes take their turns | Watch each athlete take their turn. Their result appears after the performance. |
+  | the results after the last turn, on the host's page | Announce the next challenge when everyone has seen the results. |
+  | the results after the last turn, on another page | The host announces the next challenge. |
+- `7-2` After starting or entering failed or the game ended, the status is the text of the first row of this table that applies, in which CODE stands for the room code, NAME for an athlete's name and NAMES for athletes' names joined with commas. The causes and whose side is older are as the netcode tells them ([2-2](../../../../platform/netcode/docs/specs/2-page.md), [2-3](../../../../platform/netcode/docs/specs/2-page.md), [2-5](../../../../platform/netcode/docs/specs/2-page.md), [2-7](../../../../platform/netcode/docs/specs/2-page.md), [2-8](../../../../platform/netcode/docs/specs/2-page.md) and [2-13](../../../../platform/netcode/docs/specs/2-page.md), [3-2](../../../../platform/netcode/docs/specs/3-entry.md), [3-4](../../../../platform/netcode/docs/specs/3-entry.md) and [3-5](../../../../platform/netcode/docs/specs/3-entry.md), [1-6](../../../../platform/netcode/docs/specs/1-rules.md)).
+  | When | Status |
+  | --- | --- |
+  | the game ended with "other version", and the host's versions are older | The host runs an older version of the game. Ask them to reload the page. |
+  | the game ended, or entering failed, with "other version" and this page's versions are older, or with "outdated" and this page's side is older | This game was updated. Reload the page. |
+  | starting or entering failed, or the game ended, with "outdated", and the server's side is older | The game server is being updated. Try again in a few minutes. |
+  | entering failed with "other version", and the host's versions are older | The host of CODE runs an older version of the game. Ask them to reload the page. |
+  | the game ended with "removed" | You were away too long, so you left this game. |
+  | the game ended with "owner away" | The connection was lost for too long, so the game is over. |
+  | the game ended with "idle" | Nobody played for a while, so the room is closed. |
+  | the game ended with "unreachable" or "no relay" | Lost the connection to the host and could not get it back. |
+  | the game ended with "room closed" | The room is closed, so the game is over. |
+  | starting or entering failed with "bad rules" | This game has an error and cannot start. |
+  | starting or entering failed with "busy" | The game server is busy. Try again in a few minutes. |
+  | starting or entering failed with "outdated", "bad app" or "bad wait" | This game was updated. Reload the page. |
+  | entering failed with "no room" after the page waited for the host | Room CODE is closed. |
+  | entering failed with "no room" | Nobody hosts CODE. Check the code with the room creator. |
+  | entering failed with "owner away" | The host of CODE is offline. Try again in a moment. |
+  | entering failed with "full" | Room CODE is full. |
+  | entering failed with "refused" | The host of CODE did not let you in. |
+  | entering failed with "unreachable" | Found room CODE, but could not connect to its host. A network on the way may block the connection. Try again in a moment, or switch between Wi-Fi and mobile data. |
+  | starting or entering failed with "offline" | Cannot reach the game server. Check your internet connection. |
+  | starting or entering failed with "open elsewhere" | This game is open in another tab. Close it and reload this page. |

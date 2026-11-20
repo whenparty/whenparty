@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict'
+import type {Context} from '@whenparty/netcode'
 import {
   applyMove,
   createChampionship,
+  notePresence,
   onPerformanceDeadline,
-  performanceKey,
   seats,
+  startChampionship,
   type Athlete,
   type Championship,
   type Move,
@@ -13,23 +15,35 @@ import {
 
 export const seated = (count: number) => seats.slice(0, count)
 
-export const contextOf = (count: number) => ({occupiedSeats: seated(count), absentSeats: [], now: 0})
+export const contextOf = (count: number, roomTime = 0, absent: readonly string[] = []): Context => ({
+  roomTime,
+  matchRuns: true,
+  seats: Object.fromEntries(
+    seats.map(seat => [seat, {taken: seated(count).includes(seat), lost: absent.includes(seat), hidden: false}])
+  )
+})
 
 export const must = (state: Championship | null): Championship => {
   assert.ok(state, 'the move was rejected')
   return state
 }
 
-export const move = (state: Championship, seat: string, next: Move, count = Math.max(state.athletes.length, 2)) =>
-  applyMove(state, seat, next, contextOf(count))
+export const move = (state: Championship, seat: string, next: Move, now = 0) => applyMove(state, seat, next, now)
+
+// A page that reloads or switches interfaces is lost to the host, then back with its page visible.
+export const reconnect = (state: Championship, seat: string): Championship => {
+  const count = Math.max(state.athletes.length, 2)
+  const lost = notePresence(state, seat, 'lost', contextOf(count, 5000, [seat]))
+  return notePresence(lost, seat, 'back', contextOf(count, 9000))
+}
 
 export const lobbyOf = (count: number) =>
   seated(count).reduce(
-    (state, seat) => must(move(state, seat, {type: 'profile', profile: {name: `Athlete ${seat}`}}, count)),
+    (state, seat) => must(move(state, seat, {type: 'profile', profile: {name: `Athlete ${seat}`}})),
     createChampionship()
   )
 
-export const announced = (count = 2) => must(move(lobbyOf(count), '1', {type: 'start'}, count))
+export const announced = (count = 2) => startChampionship(lobbyOf(count), contextOf(count))
 
 export const train = (state: Championship) => must(move(state, '1', {type: 'train'}))
 
@@ -50,7 +64,7 @@ export const performing = (state: Championship, plans: Record<string, Plan> = {}
 export const finishPerformances = (state: Championship) => {
   let next = state
   while (next.performance?.endsAt !== null && next.performance?.endsAt !== undefined) {
-    next = onPerformanceDeadline(next, performanceKey(next), {...contextOf(next.athletes.length), now: next.performance.endsAt})
+    next = onPerformanceDeadline(next, next.performance.endsAt, next.performance.endsAt)
   }
   return next
 }

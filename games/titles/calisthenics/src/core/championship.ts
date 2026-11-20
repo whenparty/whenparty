@@ -1,4 +1,4 @@
-import type {GameRules, RoomContext, SeatPresence} from '@whenparty/p2p'
+import type {Context, Json, PresenceEvent, Rules, Title} from '@whenparty/netcode'
 import {
   actionsPerPlan,
   applyPlan,
@@ -63,7 +63,6 @@ export interface Championship {
 export type Move =
   | {type: 'profile'; profile: Profile}
   | {type: 'appearance'; appearance: Partial<Appearance>}
-  | {type: 'start'}
   | {type: 'confirm'; plan: Plan}
   | {type: 'train'}
   | {type: 'perform'}
@@ -95,7 +94,8 @@ export const winnersOf = (state: Championship): Athlete[] => {
   return state.athletes.filter(athlete => athlete.points === top)
 }
 
-export const canStart = (state: Championship, occupiedSeats: readonly string[]) =>
+export const canStart = (state: Championship, occupiedSeats: readonly string[], matchNumber = 0) =>
+  matchNumber === 0 &&
   state.stage === 'lobby' &&
   occupiedSeats.length >= minAthletes &&
   occupiedSeats.every(seat => {
@@ -121,6 +121,7 @@ const withAthlete = (state: Championship, seat: string, change: (athlete: Athlet
 const start = (state: Championship, occupiedSeats: readonly string[]): Championship => ({
   ...state,
   stage: 'announcement',
+  away: [],
   athletes: seats
     .filter(seat => occupiedSeats.includes(seat))
     .map(seat => ({
@@ -180,24 +181,19 @@ const advancePerformance = (state: Championship, now: number): Championship => {
   return {...state, performance: index < state.athletes.length ? {index, endsAt: now + performanceMs, remainingMs: performanceMs} : null}
 }
 
-export const performanceKey = (state: Championship) => `performance:${state.challenge}:${state.performance?.index}`
+const runningEnd = (state: Championship): number | null =>
+  state.stage === 'results' && !isPaused(state) && typeof state.performance?.endsAt === 'number' ? state.performance.endsAt : null
 
-export const performanceDeadlines = (state: Championship): Record<string, number> =>
-  state.stage === 'results' && state.performance?.endsAt !== null && state.performance?.endsAt !== undefined && !isPaused(state)
-    ? {[performanceKey(state)]: state.performance.endsAt}
-    : {}
+export const performanceDeadlines = (state: Championship): number[] => {
+  const end = runningEnd(state)
+  return end === null ? [] : [end]
+}
 
-export const onPerformanceDeadline = (state: Championship, key: string, {now}: RoomContext): Championship =>
-  state.stage === 'results' &&
-  key === performanceKey(state) &&
-  state.performance?.endsAt !== null &&
-  state.performance?.endsAt !== undefined &&
-  now >= state.performance.endsAt &&
-  !isPaused(state)
-    ? advancePerformance(state, now)
-    : state
+// The next turn starts at the room time of the call, so a late call still gives the next athlete twelve seconds (3-5).
+export const onPerformanceDeadline = (state: Championship, time: number, now: number): Championship =>
+  runningEnd(state) === time ? advancePerformance(state, Math.max(now, time)) : state
 
-export const applyMove = (state: Championship, seat: string, move: Move, {occupiedSeats, now}: RoomContext): Championship | null => {
+export const applyMove = (state: Championship, seat: string, move: Move, now: number): Championship | null => {
   switch (move.type) {
     case 'profile': {
       const profile = normalizeProfile(move.profile)
@@ -217,8 +213,6 @@ export const applyMove = (state: Championship, seat: string, move: Move, {occupi
       const profile = state.profiles[seat] ?? {name: ''}
       return {...state, profiles: {...state.profiles, [seat]: {...profile, appearance: {...profile.appearance, ...move.appearance}}}}
     }
-    case 'start':
-      return isHostSeat(seat) && canStart(state, occupiedSeats) ? start(state, occupiedSeats) : null
     case 'confirm':
       return confirm(state, seat, move.plan)
     case 'train':
@@ -239,25 +233,41 @@ export const applyMove = (state: Championship, seat: string, move: Move, {occupi
   }
 }
 
-export const notePresence = (state: Championship, seat: string, presence: SeatPresence, now = 0): Championship => {
-  const away = state.away.filter(each => each !== seat)
-  if (presence === 'left' && state.stage === 'lobby') {
+const takenSeats = (context: Context) => seats.filter(seat => context.seats[seat]?.taken === true)
+
+const absentSeats = (context: Context, leaving: string | null = null) =>
+  seats.filter(seat => {
+    const each = context.seats[seat]
+    return seat !== leaving && each?.taken === true && (each.lost || each.hidden)
+  })
+
+// The turn's timer stops when the championship becomes paused and runs again only when it stops being paused (3-4).
+const timed = (before: Championship, after: Championship, now: number): Championship => {
+  const turn = after.performance
+  if (!turn) return after
+  if (!isPaused(before) && isPaused(after) && turn.endsAt !== null) {
+    return {...after, performance: {...turn, remainingMs: Math.max(0, turn.endsAt - now), endsAt: null}}
+  }
+  if (isPaused(before) && !isPaused(after) && turn.endsAt === null) {
+    return {...after, performance: {...turn, endsAt: now + turn.remainingMs}}
+  }
+  return after
+}
+
+export const notePresence = (state: Championship, seat: string, event: PresenceEvent, context: Context): Championship => {
+  const away = absentSeats(context, event === 'left' ? seat : null)
+  if (event === 'left' && state.stage === 'lobby') {
     const {[seat]: _, ...profiles} = state.profiles
     return {...state, away, profiles}
   }
-
-  let next = presence === 'lost' ? {...state, away: [...away, seat]} : {...state, away}
-  if (presence === 'left') next = withAthlete(next, seat, athlete => ({...athlete, left: true}))
-  const turn = next.performance
-  if (turn) {
-    if (isPaused(next) && turn.endsAt !== null) {
-      next = {...next, performance: {...turn, remainingMs: Math.max(0, turn.endsAt - now), endsAt: null}}
-    } else if (!isPaused(next) && turn.endsAt === null) {
-      next = {...next, performance: {...turn, endsAt: now + turn.remainingMs}}
-    }
-  }
-  return next
+  const next = event === 'left' ? withAthlete({...state, away}, seat, athlete => ({...athlete, left: true})) : {...state, away}
+  return timed(state, next, context.roomTime)
 }
+
+export const startChampionship = (lobby: Championship, context: Context): Championship => ({
+  ...start(lobby, takenSeats(context)),
+  away: absentSeats(context)
+})
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
@@ -331,7 +341,6 @@ export const isMove = (value: unknown): value is Move => {
       return isProfile(value.profile)
     case 'confirm':
       return isPlan(value.plan)
-    case 'start':
     case 'train':
     case 'perform':
     case 'next':
@@ -341,14 +350,24 @@ export const isMove = (value: unknown): value is Move => {
   }
 }
 
-export const calisthenics: GameRules<Championship, Move> = {
-  seats,
-  createState: createChampionship,
-  applyMove,
-  isOver: () => false,
-  onPresence: (state, seat, presence, {now}) => notePresence(state, seat, presence, now),
-  deadlinesOf: performanceDeadlines,
-  onDeadline: onPerformanceDeadline,
-  isMove,
-  isState: isChampionship
+const asJson = (state: Championship): Json => state as unknown as Json
+const asState = (state: Json): Championship => state as unknown as Championship
+
+export const rules: Rules = {
+  seats: () => seats,
+  lobby: () => asJson(createChampionship()),
+  canStart: (last, seatsWithPlayers, matchNumber) => last !== null && canStart(asState(last), seatsWithPlayers, matchNumber),
+  initialState: (_random, context, last) => asJson(startChampionship(last === null ? createChampionship() : asState(last), context)),
+  step: (state, seat, action, _random, context) => {
+    const next = isMove(action) ? applyMove(asState(state), seat, action, context.roomTime) : null
+    return next === null ? null : asJson(next)
+  },
+  over: () => false,
+  isAction: isMove,
+  isState: isChampionship,
+  presence: (state, seat, event, context) => asJson(notePresence(asState(state), seat, event, context)),
+  deadlines: state => performanceDeadlines(asState(state)),
+  deadline: (state, time, _random, context) => asJson(onPerformanceDeadline(asState(state), time, context.roomTime))
 }
+
+export const title: Title = {appId: 'when.party/calisthenics', waitingSeconds: 600, formatVersion: 1, rules}

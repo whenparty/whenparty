@@ -1,4 +1,3 @@
-import {seatOf} from '@whenparty/p2p'
 import {
   actionsPerPlan,
   athleteAt,
@@ -17,7 +16,7 @@ import {
   type Plan,
   type PlanProblem
 } from '../../core/index.ts'
-import type {Search, Visit} from '../../connection.ts'
+import type {Finish, Visit} from '../../connection.ts'
 
 export const characteristicNames: Record<Characteristic, string> = {
   arms: 'Arms',
@@ -38,13 +37,7 @@ export const problemNote = (problem: PlanProblem, plan: Plan, athlete: Athlete):
       ? `Not enough energy: the trainings cost ${trainingCost * trainingsOf(plan)}, and the athlete has ${athlete.energy}.`
       : `Levels go up to ${maxLevel}.`
 
-const searchNotes: Record<Search, (code: string) => string> = {
-  looking: code => `Looking for room ${code}…`,
-  unreachable: code =>
-    `Found room ${code}, but could not connect to the players in it. A network on the way blocks the connection. Try again in a moment, or switch between Wi-Fi and mobile data.`,
-  offline: () => 'Cannot reach the game server. Check your internet connection.',
-  nobody: code => `Nobody is hosting ${code}. Check the code with the room creator.`
-}
+export const notACode = 'That is not a room code. Codes have 5 characters, like K7MXQ.'
 
 export const trainedText = (trained: Counts) => {
   const parts = characteristics.filter(each => trained[each]).map(each => `${characteristicNames[each]} +${trained[each]}`)
@@ -69,35 +62,73 @@ const pauseText = (state: Championship) => {
   return away.length > 0 ? `Paused: the player of ${namesOf(away)} is away. The championship waits for them to come back.` : null
 }
 
-export const statusOf = ({code, view, search}: Visit): string => {
-  if (view?.hostLeft) {
-    return 'The host left, so the championship is over.'
+const endingOf = (finish: Finish, code: string, waitedForHost: boolean): string => {
+  if (finish.kind === 'ended') {
+    const {end} = finish
+    switch (end.cause) {
+      case 'other version':
+        return end.older === 'host'
+          ? 'The host runs an older version of the game. Ask them to reload the page.'
+          : 'This game was updated. Reload the page.'
+      case 'outdated':
+        return end.older === 'page' ? 'This game was updated. Reload the page.' : 'The game server is being updated. Try again in a few minutes.'
+      case 'removed':
+        return 'You were away too long, so you left this game.'
+      case 'owner away':
+        return 'The connection was lost for too long, so the game is over.'
+      case 'idle':
+        return 'Nobody played for a while, so the room is closed.'
+      case 'unreachable':
+      case 'no relay':
+        return 'Lost the connection to the host and could not get it back.'
+      case 'room closed':
+        return 'The room is closed, so the game is over.'
+    }
   }
-
-  if (view?.waitingForHost) {
-    return view.room ? 'Waiting for the room creator. The room closes if they are away for two minutes.' : 'Restoring your room…'
+  const {failure} = finish
+  switch (failure.cause) {
+    case 'other version':
+      return failure.older === 'page'
+        ? 'This game was updated. Reload the page.'
+        : `The host of ${code} runs an older version of the game. Ask them to reload the page.`
+    case 'outdated':
+      return failure.older === 'page' ? 'This game was updated. Reload the page.' : 'The game server is being updated. Try again in a few minutes.'
+    case 'bad rules':
+      return 'This game has an error and cannot start.'
+    case 'busy':
+      return 'The game server is busy. Try again in a few minutes.'
+    case 'bad app':
+    case 'bad wait':
+      return 'This game was updated. Reload the page.'
+    case 'no room':
+      return waitedForHost ? `Room ${code} is closed.` : `Nobody hosts ${code}. Check the code with the room creator.`
+    case 'owner away':
+      return `The host of ${code} is offline. Try again in a moment.`
+    case 'full':
+      return `Room ${code} is full.`
+    case 'refused':
+      return `The host of ${code} did not let you in.`
+    case 'unreachable':
+      return `Found room ${code}, but could not connect to its host. A network on the way may block the connection. Try again in a moment, or switch between Wi-Fi and mobile data.`
+    case 'offline':
+      return 'Cannot reach the game server. Check your internet connection.'
+    case 'open elsewhere':
+      return 'This game is open in another tab. Close it and reload this page.'
   }
+}
 
-  if (!view?.room) {
-    return searchNotes[search](code)
-  }
+export const isLostLobby = (visit: Pick<Visit, 'game' | 'matchNumber'>) => visit.game?.stage === 'lobby' && visit.matchNumber > 0
 
-  if (!view.inControl) {
-    return 'This championship is open in another tab of yours, which plays now.'
-  }
-
-  const state = view.room.game
-  const seat = seatOf(view.room, view.playerId)
+const championshipText = (visit: Visit, state: Championship): string => {
+  const {seat, isHost} = visit
   const me = athleteAt(state, seat)
 
-  if (state.stage === 'lobby') {
-    if (!seat) {
-      return 'The room is full. You are watching.'
-    }
+  if (isLostLobby(visit)) {
+    return 'This room lost its championship. Create a new room to play again.'
+  }
 
-    return view.isHost
-      ? 'Send the code to the other players. Start when everyone has entered a name.'
-      : 'Enter a name. The host starts the championship.'
+  if (state.stage === 'lobby') {
+    return isHost ? 'Send the code to the other players. Start when everyone has entered a name.' : 'Enter a name. The host starts the championship.'
   }
 
   if (isFinished(state)) {
@@ -111,12 +142,12 @@ export const statusOf = ({code, view, search}: Visit): string => {
     return pause
   }
 
-  if (!me || me.left) {
+  if (!me) {
     return 'You are watching the championship.'
   }
 
   if (state.stage === 'announcement') {
-    return view.isHost ? 'Talk the challenge over, then start training.' : 'The host starts training.'
+    return isHost ? 'Talk the challenge over, then start training.' : 'The host starts training.'
   }
 
   if (state.stage === 'preparation') {
@@ -125,5 +156,31 @@ export const statusOf = ({code, view, search}: Visit): string => {
 
   if (state.performance) return 'Watch each athlete take their turn. Their result appears after the performance.'
 
-  return view.isHost ? 'Announce the next challenge when everyone has seen the results.' : 'The host announces the next challenge.'
+  return isHost ? 'Announce the next challenge when everyone has seen the results.' : 'The host announces the next challenge.'
+}
+
+// The status of 7-1 and, after a failure or an end, of 7-2 in 7-status.md.
+export const statusOf = (visit: Visit): string => {
+  const code = visit.code ?? ''
+  if (visit.finish !== null) {
+    return endingOf(visit.finish, code, visit.waitedForHost)
+  }
+  if (visit.phase === 'starting') {
+    return 'Creating a room…'
+  }
+  if (visit.waiting === 'decides') {
+    return `Waiting for the host of ${code} to let you in…`
+  }
+  if (visit.waiting === 'offline') {
+    return `Waiting for the host of ${code} to come back…`
+  }
+  if (visit.hostAway) {
+    return 'The connection to the host is lost. The game goes on when it is back. The room closes if the host is away for 10 minutes.'
+  }
+  const prefixes = [
+    ...(visit.serverLost ? ['New players cannot join right now: the game server is out of reach.'] : []),
+    ...(visit.rulesError ? ['This game has an error.'] : [])
+  ]
+  const rest = visit.phase === 'entering' || visit.game === null ? `Looking for room ${code}…` : championshipText(visit, visit.game)
+  return [...prefixes, rest].join(' ')
 }

@@ -1,7 +1,7 @@
 import {expect, test as base, type Page} from '@playwright/test'
+import {leaveRoom, networkWaitMs, watchSignaling} from './browser-rooms.ts'
 
 const pageUrl = 'http://localhost:5175/calisthenics/text.html'
-const networkWaitMs = 10_000
 const minContrast = 4.5
 
 interface Players {
@@ -17,6 +17,7 @@ const test = base.extend<{players: Players}>({
     if (!host || !guest) {
       throw new Error('missing a player page')
     }
+    const sockets = [watchSignaling(host), watchSignaling(guest)] as const
 
     await host.goto(pageUrl)
     await host.getByRole('button', {name: 'Create a room'}).click()
@@ -38,8 +39,13 @@ const test = base.extend<{players: Players}>({
     await expect(start).toBeEnabled({timeout: networkWaitMs})
     await start.click()
     await expect(guest.locator('#announcement')).toBeVisible({timeout: networkWaitMs})
-    await use({host, guest})
-    await Promise.all(contexts.map(context => context.close()))
+    try {
+      await use({host, guest})
+    } finally {
+      await leaveRoom(guest, sockets[1])
+      await leaveRoom(host, sockets[0])
+      await Promise.all(contexts.map(context => context.close()))
+    }
   }
 })
 
@@ -59,7 +65,7 @@ const contrastOf = (first: string, second: string) => {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
-test('Tab reaches only the controls of the announcement while it covers the page, and the link to the 3D interface can take focus after it', async ({
+test('Tab reaches only the controls of the announcement, Start training and Leave the room, while it covers the page, and the link to the 3D interface can take focus after it', async ({
   players: {host}
 }) => {
   const reached = new Set<string>()
@@ -69,7 +75,7 @@ test('Tab reaches only the controls of the announcement while it covers the page
     reached.add(await focusedOf(host))
   }
 
-  expect([...reached].filter(each => each !== 'body')).toEqual(['Start training'])
+  expect([...reached].filter(each => each !== 'body').sort()).toEqual(['Leave the room', 'Start training'])
   await host.getByRole('button', {name: 'Start training'}).click()
   await expect(host.locator('#announcement')).toBeHidden({timeout: networkWaitMs})
   const interfaceLink = host.locator('#interface-link')

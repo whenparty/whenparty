@@ -1,8 +1,7 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
-import {applyIntent, createRoomState, joinPlayer, type RoomState} from '@whenparty/p2p'
-import {athletesOf, calisthenics, emptyPlan, previewOf, type Championship, type Move, type Plan} from '../core/index.ts'
-import {must, move, perform, plan, prepare, rests, started, withAthlete} from './fixtures.ts'
+import {athletesOf, emptyPlan, previewOf, type Championship, type Plan} from '../core/index.ts'
+import {must, move, perform, plan, prepare, reconnect, rests, started, withAthlete} from './fixtures.ts'
 
 const athlete = (state: Championship, seat = '1') => state.athletes.find(each => each.seat === seat)!
 
@@ -85,20 +84,14 @@ describe('1-preparation', () => {
   })
 
   it('1-6 applies a confirmed plan once after its player reloads the page', () => {
-    const member = (id: string, peer = id) => ({playerId: id, peerId: peer})
-    const act = (room: RoomState<Championship>, player: string, next: Move, id: number) =>
-      applyIntent(calisthenics, room, player, {type: 'move', move: next, id})
-    const lobby = ['a', 'b'].reduce(
-      (room, id, index) => act(room, id, {type: 'profile', profile: {name: id}}, index + 1),
-      joinPlayer(createRoomState(calisthenics, member('a')), member('b'))
-    )
-    const training = act(act(lobby, 'a', {type: 'start'}, 3), 'a', {type: 'train'}, 4)
-    const confirmedRoom = act(act(training, 'a', {type: 'confirm', plan: plan({arms: 1}, 2)}, 5), 'b', {type: 'confirm', plan: rests}, 6)
-    const reloaded = joinPlayer(confirmedRoom, member('a', 'a2'))
-    const performed = act(act(reloaded, 'a', {type: 'confirm', plan: plan({arms: 1}, 2)}, 7), 'a', {type: 'perform'}, 8)
+    const confirmed = must(confirm(must(confirm(started(), plan({arms: 1}, 2))), rests, '2'))
+    const reloaded = reconnect(confirmed, '1')
+    const performed = must(move(reloaded, '1', {type: 'perform'}))
 
-    assert.equal(athlete(performed.game).levels.arms, 1)
-    assert.equal(performed.game.stage, 'results')
+    assert.deepEqual(reloaded, confirmed)
+    assert.equal(confirm(reloaded, plan({arms: 1}, 2)), null)
+    assert.equal(athlete(performed).levels.arms, 1)
+    assert.equal(performed.stage, 'results')
   })
 
   it('1-7 keeps no plan in the room until it is confirmed', () => {

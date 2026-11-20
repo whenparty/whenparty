@@ -189,6 +189,13 @@ ol.list {
   display: none;
 }
 
+#game:has(#announcement:not([hidden])) #leave {
+  position: fixed;
+  z-index: 1;
+  inset-block-start: 1rem;
+  inset-inline-end: 1rem;
+}
+
 .list li.split .value {
   float: right;
   margin-left: 1rem;

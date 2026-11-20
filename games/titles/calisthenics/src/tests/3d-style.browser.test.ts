@@ -1,16 +1,26 @@
 import {expect, test, type Page} from '@playwright/test'
+import {leaveRoom, networkWaitMs, watchSignaling} from './browser-rooms.ts'
 
 const pageUrl = 'http://localhost:5175/calisthenics/'
-const networkWaitMs = 10_000
 const phone = {width: 375, height: 812}
 const minTextPx = 12
 const minTouchTargetPx = 44
 
+const sockets = new WeakMap<Page, ReturnType<typeof watchSignaling>>()
+
 const openLobby = async (page: Page) => {
+  sockets.set(page, watchSignaling(page))
   await page.goto(pageUrl)
   await page.getByRole('button', {name: 'Create a room'}).click()
   await expect(page.getByLabel('Athlete name')).toBeVisible({timeout: networkWaitMs})
 }
+
+test.afterEach(async ({page}) => {
+  const opened = sockets.get(page)
+  if (opened) {
+    await leaveRoom(page, opened)
+  }
+})
 
 test('the scene overlay takes its narrow layout by the width of the stage, not of the window', async ({page}) => {
   const toolbarTopAt = async (width: number) => {

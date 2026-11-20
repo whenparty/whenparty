@@ -1,4 +1,3 @@
-import {ROOM_CODE_LENGTH, normalizeRoomCode, seatOf} from '@whenparty/p2p'
 import {
   actionsOf,
   actionsPerPlan,
@@ -35,16 +34,19 @@ import {
   type Plan
 } from '../../core/index.ts'
 import type {Visit} from '../../connection.ts'
-import {athleteStatus, characteristicNames, completionNames, levelsText, namesOf, problemNote, statusOf, trainedText} from './texts.ts'
+import {athleteStatus, characteristicNames, notACode, completionNames, levelsText, namesOf, problemNote, statusOf, trainedText} from './texts.ts'
 
 export interface PanelActions {
   create: () => void
-  join: (code: string) => void
+  // Enters the game of the text, or answers false when the text is no room code.
+  submit: (text: string) => boolean
+  leave: () => void
+  startChampionship: () => void
   send: (move: Move) => void
 }
 
 export interface PanelOptions {
-  roomTimeOf: (visit: Visit | null) => number
+  roomTime: () => number
   lobbyExtra?: HTMLElement
 }
 
@@ -77,6 +79,7 @@ const markup = `
       <button id="copy-link" type="button" class="quiet">Copy invite link</button>
     </p>
     <p id="status" aria-live="polite"></p>
+    <button id="leave" type="button" class="quiet">Leave the room</button>
 
     <div id="lobby" hidden>
       <h2 id="players-title">Players</h2>
@@ -170,7 +173,7 @@ const countOf = (plan: Plan, key: ActionKey) => (key === 'rest' ? plan.rest : (p
 const withCount = (plan: Plan, key: ActionKey, count: number): Plan =>
   key === 'rest' ? {...plan, rest: count} : {...plan, training: {...plan.training, [key]: count}}
 
-export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomTimeOf, lobbyExtra}: PanelOptions) => {
+export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomTime, lobbyExtra}: PanelOptions) => {
   container.innerHTML = markup
 
   const find = <T extends Element>(selector: string): T => {
@@ -238,10 +241,7 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomT
     lobby.insertBefore(lobbyExtra, nameForm)
   }
 
-  const myAthlete = () => {
-    const room = visit?.view?.room
-    return room && visit?.view ? athleteAt(room.game, seatOf(room, visit.view.playerId)) : null
-  }
+  const myAthlete = () => (visit?.game ? athleteAt(visit.game, visit.seat) : null)
 
   const changeCount = (key: ActionKey, wanted: number) => {
     const me = myAthlete()
@@ -284,7 +284,7 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomT
     })
   )
 
-  const renderLobby = (state: Championship, occupied: string[], seat: string | null, isHost: boolean) => {
+  const renderLobby = (state: Championship, occupied: readonly string[], seat: string | null, isHost: boolean, matchNumber: number) => {
     playersTitle.textContent = `Players: ${occupied.length} of ${seats.length}`
     players.replaceChildren(
       ...occupied.map(each => {
@@ -294,7 +294,7 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomT
     )
     nameForm.hidden = !seat
     startButton.hidden = !isHost
-    startButton.disabled = !canStart(state, occupied)
+    startButton.disabled = !canStart(state, occupied, matchNumber)
   }
 
   const renderPlan = (state: Championship, me: Athlete) => {
@@ -336,9 +336,9 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomT
   }
 
   const updatePerformanceClock = () => {
-    const turn = visit?.view?.room?.game.performance
+    const turn = visit?.game?.performance
     if (!turn) return
-    const remaining = turn.endsAt === null ? turn.remainingMs : Math.max(0, turn.endsAt - roomTimeOf(visit))
+    const remaining = turn.endsAt === null ? turn.remainingMs : Math.max(0, turn.endsAt - roomTime())
     performanceClock.textContent =
       turn.endsAt === null ? `Paused · ${Math.ceil(remaining / 1000)} s remaining` : `${Math.ceil(remaining / 1000)} s remaining`
   }
@@ -388,14 +388,11 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomT
       return
     }
 
-    const {view} = visit
-    const room = view?.room ?? null
-    const live = Boolean(room && view?.inControl && !view.hostLeft && !view.waitingForHost)
-    const state = room?.game ?? null
-    const seat = view && room ? seatOf(room, view.playerId) : null
-    const isHost = Boolean(view?.isHost)
+    const state = visit.game
+    const live = visit.phase === 'playing' && state !== null
+    const {seat, isHost} = visit
 
-    roomCode.textContent = visit.code
+    roomCode.textContent = visit.code ?? ''
     statusText.textContent = statusOf(visit)
     hostBadge.hidden = !isHost
     lobby.hidden = !live || state?.stage !== 'lobby'
@@ -404,21 +401,16 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomT
     preparation.hidden = !live || state?.stage !== 'preparation'
     results.hidden = !live || state?.stage !== 'results'
 
-    if (!live || !room || !state) {
+    if (!live || !state) {
       return
     }
 
     if (state.stage === 'lobby') {
-      renderLobby(
-        state,
-        seats.filter(each => room.seats[each]),
-        seat,
-        isHost
-      )
+      renderLobby(state, visit.occupied, seat, isHost, visit.matchNumber)
     } else if (state.stage === 'announcement') {
       renderAnnouncement(state, statusText.textContent ?? '', isHost)
     } else if (state.stage === 'preparation') {
-      renderPreparation(state, athleteAt(state, seat), visit.code, isHost)
+      renderPreparation(state, athleteAt(state, seat), visit.code ?? '', isHost)
     } else {
       renderResults(state, isHost)
     }
@@ -434,15 +426,7 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomT
 
   find('#join').addEventListener('submit', event => {
     event.preventDefault()
-    const code = normalizeRoomCode(codeInput.value)
-
-    if (!code) {
-      joinError.textContent = `That is not a room code. Codes have ${ROOM_CODE_LENGTH} characters, like K7MXQ.`
-      return
-    }
-
-    joinError.textContent = ''
-    actions.join(code)
+    joinError.textContent = actions.submit(codeInput.value) ? '' : notACode
   })
 
   nameForm.addEventListener('submit', event => {
@@ -465,13 +449,14 @@ export const mountPanel = (container: HTMLElement, actions: PanelActions, {roomT
     )
   })
 
-  startButton.addEventListener('click', () => actions.send({type: 'start'}))
+  startButton.addEventListener('click', () => actions.startChampionship())
+  find('#leave').addEventListener('click', () => actions.leave())
   confirmButton.addEventListener('click', () => actions.send({type: 'confirm', plan: draft.plan}))
   performButton.addEventListener('click', () => actions.send({type: 'perform'}))
   trainButton.addEventListener('click', () => actions.send({type: 'train'}))
   nextButton.addEventListener('click', () => actions.send({type: 'next'}))
   nextAthleteButton.addEventListener('click', () => {
-    const state = visit?.view?.room?.game
+    const state = visit?.game
     if (state?.performance) actions.send({type: 'next-athlete', challenge: state.challenge, index: state.performance.index})
   })
   const clockTimer = setInterval(updatePerformanceClock, 100)
