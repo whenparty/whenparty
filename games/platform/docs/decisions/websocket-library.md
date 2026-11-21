@@ -2,9 +2,9 @@
 
 ## Context
 
-The [transport server](../../transport/AGENTS.md) accepts the signaling connections of pages as WebSocket connections at `/platform` (`1-13` of [1-signaling.md](../../transport/docs/specs/1-signaling.md)). It runs in the [signaling deployment](../../signaling/AGENTS.md), as [layers.md](layers.md) decides, and the deployment also runs the [relay](../../signaling/docs/relay.md) of [p2p](../../p2p/AGENTS.md) through `@trystero-p2p/ws-relay`. Node has no WebSocket server of its own.
+The [transport server](../../transport/AGENTS.md) accepts the signaling connections of pages as WebSocket connections at `/platform` (`1-13` of [1-signaling.md](../../transport/docs/specs/1-signaling.md)). It runs in the [signaling deployment](../../signaling/AGENTS.md), as [layers.md](layers.md) decides. Node has no WebSocket server of its own.
 
-`ws` 8.22.0 is already in the workspace lockfile: `@trystero-p2p/ws-relay` depends on it, and the tests of signaling use it. pnpm lets a package import only its own dependencies, so signaling cannot import the `ws` that the relay depends on. The relay leaves the deployment, and its `ws` with it, when no title plays through p2p.
+The tests of signaling use `ws` as the client of their WebSocket connections.
 
 A title that plays through [netcode](../../netcode/AGENTS.md), such as [tictactoe](../../../titles/tictactoe/AGENTS.md), depends on `@whenparty/transport` through netcode and [rooms](../../rooms/AGENTS.md), so the build stage of its image installs the dependencies of transport. The image it serves holds only the built pages, which never import the transport server.
 

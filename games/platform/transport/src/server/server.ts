@@ -124,7 +124,7 @@ class Server implements TransportServer, Hub<Connection> {
   }
 
   handleUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): boolean {
-    if (new URL(request.url ?? '/', 'http://localhost').pathname !== signalingPath) {
+    if ((request.url ?? '/').split('?')[0] !== signalingPath) {
       return false
     }
     if (!isAllowedOrigin(request.headers.origin)) {

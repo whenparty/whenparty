@@ -3,7 +3,6 @@ FROM node:26.13.1-alpine3.24 AS build
 WORKDIR /games
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
-COPY platform/p2p/ platform/p2p/
 COPY platform/transport/ platform/transport/
 COPY platform/rooms/ platform/rooms/
 COPY platform/netcode/ platform/netcode/

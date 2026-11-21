@@ -12,7 +12,6 @@ services:
       - no-new-privileges:true
     environment:
       TURN_SECRET: ${TURN_SECRET:-}
-      TURN_URLS: turn:turn.when.party:3478?transport=udp,turn:turn.when.party:3478?transport=tcp
     networks:
       - wp_games
 

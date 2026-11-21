@@ -2,7 +2,7 @@
 
 ## Context
 
-The rooms server, the server part of the [rooms module](../../rooms/AGENTS.md), runs in the transport server in the [signaling deployment](../../signaling/AGENTS.md), as [layers.md](layers.md) decides. That deployment restarts on every deploy, which follows every change that reaches it, as [games-changes.md](/.github/docs/games-changes.md) says, changes to the rooms and transport packages included. Creating a room, joining it and returning to it after a break need the rooms server (`4-2` of [4-owner.md](../../rooms/docs/specs/4-owner.md), `2-3` of [2-join.md](../../rooms/docs/specs/2-join.md), `3-4` of [3-participant.md](../../rooms/docs/specs/3-participant.md) and `5-1` of [5-owner-return.md](../../rooms/docs/specs/5-owner-return.md)). The [relay](../../signaling/docs/relay.md) of the [p2p module](../../p2p/AGENTS.md) keeps no rooms, so a game played through p2p outlives a restart.
+The rooms server, the server part of the [rooms module](../../rooms/AGENTS.md), runs in the transport server in the [signaling deployment](../../signaling/AGENTS.md), as [layers.md](layers.md) decides. That deployment restarts on every deploy, which follows every change that reaches it, as [games-changes.md](/.github/docs/games-changes.md) says, changes to the rooms and transport packages included. Creating a room, joining it and returning to it after a break need the rooms server (`4-2` of [4-owner.md](../../rooms/docs/specs/4-owner.md), `2-3` of [2-join.md](../../rooms/docs/specs/2-join.md), `3-4` of [3-participant.md](../../rooms/docs/specs/3-participant.md) and `5-1` of [5-owner-return.md](../../rooms/docs/specs/5-owner-return.md)).
 
 ## Options
 

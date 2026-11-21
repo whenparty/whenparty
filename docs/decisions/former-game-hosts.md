@@ -6,7 +6,7 @@
 
 A host that no server of nginx names falls to the wildcard server of `temp-sites.conf`. Traefik finds no router for it and answers 418, which nginx shows as its page for unknown hosts with status 404, as [nginx-configs.md](/infra/docs/nginx-configs.md) and `3-3` of [3-sites.md](/infra/docs/specs/3-sites.md) say.
 
-A title builds its invite links from the address of its page, as [hosting.md](/games/titles/docs/hosting.md) says, so every invite link to a former host was made before 3 November 2026. A room closes soon after its creator leaves, as [session.md](/games/platform/p2p/docs/session.md) says.
+A title builds its invite links from the address of its page, as [hosting.md](/games/titles/docs/hosting.md) says, so every invite link to a former host was made before 3 November 2026. A room closes at the latest 24 hours after it was created (`10-3` of [10-server-room.md](/games/platform/rooms/docs/specs/10-server-room.md)).
 
 ## Options
 

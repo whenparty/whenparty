@@ -1,14 +1,13 @@
 {
   "name": "@whenparty/signaling",
   "private": true,
-  "description": "Signaling server of the games on *.when.party: the transport and rooms servers and the Trystero relay of p2p",
+  "description": "Signaling server of the games on *.when.party: the transport and rooms servers",
   "type": "module",
   "scripts": {
     "start": "node src/main.mjs",
     "test": "node --test"
   },
   "dependencies": {
-    "@trystero-p2p/ws-relay": "catalog:",
     "@whenparty/rooms": "workspace:*",
     "@whenparty/transport": "workspace:*",
     "ws": "8.22.0"

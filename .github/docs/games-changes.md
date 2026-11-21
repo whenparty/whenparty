@@ -19,7 +19,7 @@
 - pnpm counts any other file outside the packages, such as a file directly in `games/`, in `games/titles/` or `games/platform/` themselves, or in a removed package folder, as a change to the root package, and the workflow then makes every package affected.
 - When pnpm fails, for example because the base is not in the history after a force push, every package is affected.
 
-The `packages` output is `all`, empty, or the folders of the selected packages under `games/`, separated by spaces, such as `platform/p2p titles/tictactoe`.
+The `packages` output is `all`, empty, or the folders of the selected packages under `games/`, separated by spaces, such as `titles/calisthenics titles/tictactoe`.
 
 ## Deployments
 

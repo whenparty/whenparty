@@ -5,6 +5,7 @@ import {signalingUrlFor} from '../environment.ts'
 import {transportVersion} from '../protocol.ts'
 import {table} from './1-signaling.states.ts'
 import {PageHarness, type Notice} from './fake-page.ts'
+import {ServerHarness} from './fake-server.ts'
 import {pick, seeded} from './seeded.ts'
 
 type Table = typeof table
@@ -492,6 +493,15 @@ test('1-13 a page on localhost or 127.0.0.1 connects to ws://localhost:8080/plat
   assert.equal(signalingUrlFor('127.0.0.1'), 'ws://localhost:8080/platform')
   assert.equal(signalingUrlFor('games.when.party'), 'wss://signaling.when.party/platform')
   assert.equal(signalingUrlFor('localhost.when.party'), 'wss://signaling.when.party/platform')
+})
+
+test('1-13 the transport server takes an upgrade only at the path /platform, with or without a query', () => {
+  const h = new ServerHarness()
+  for (const target of ['/', '//', '///', '//a/platform', '/a/../platform', '/platform/']) {
+    assert.equal(h.upgrade('https://games.when.party', target).handled, false, target)
+  }
+  assert.equal(h.upgrade('https://games.when.party', '/platform').handled, true)
+  assert.equal(h.upgrade('https://games.when.party', '/platform?x=1').handled, true)
 })
 
 test('1-14 a closed connection does not open again, and the page opens no other by itself', () => {
