@@ -42,3 +42,22 @@ jobs:
       image: ${{ matrix.project.image }}
       context: games
     secrets: inherit
+
+  smoke:
+    needs: [changes, deploy]
+    if: ${{ !cancelled() && needs.deploy.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check the deployments on the live site
+        env:
+          DEPLOYMENTS: ${{ needs.changes.outputs.deployments }}
+        run: |
+          mapfile -t folders < <(jq -r '.[].path' <<< "$DEPLOYMENTS")
+          python3 -I .github/scripts/smoke-games.py "${folders[@]}"

@@ -35,11 +35,28 @@ What the deploy leaves behind:
 `deploy-project.yml` deploys one deployment of `games/` or `temp-sites/projects/`. Its callers name the image after the last part of the folder's path.
 
 - When the folder has a `Dockerfile`, it builds the image and pushes it with the tags `latest` and `sha-<commit>`. Each image has its own build cache scope, so images built side by side do not evict each other's cache.
-- It copies the folder to the same path under `/opt/services/whenparty/` and runs `docker compose up -d --remove-orphans` there, with `IMAGE` set to the `sha-<commit>` image when it built one. The copy never deletes files, so a file removed from a folder that still exists stays on the VPS.
+- It copies the folder to the same path under `/opt/services/whenparty/` and runs `docker compose up -d --remove-orphans --wait` there, with `IMAGE` set to the `sha-<commit>` image when it built one. The copy never deletes files, so a file removed from a folder that still exists stays on the VPS.
+- When a container does not run, or does not pass its health check, within 2 minutes, it prints `docker compose ps --all` without the containers' logs, which can hold the addresses of visitors and would show in the public run, and fails. A container without a health check only has to run. The new containers stay in place, also one that does not run: nothing rolls back, as [deploy-checks.md](/docs/decisions/deploy-checks.md) decides.
 - When the folder's `compose.yml` names `TURN_SECRET`, it writes the secret to a private `.env` next to it when the secret is set, and otherwise warns. [github-setup.md](/.github/docs/github-setup.md) says which deployments use it.
 - When the folder is gone, it runs `docker compose down` on the VPS and deletes the folder there.
 
 Deployment names of `games/` and `temp-sites/projects/` share one namespace, and `check-project-names.yml` checks it.
+
+## games.yml
+
+After the deploys, also when some of them failed, the `smoke` job of `games.yml` runs [smoke-games.py](/.github/scripts/smoke-games.py) with every deployment of the run. It checks the live site over public HTTPS, through Cloudflare, needs no secrets and fails the run when a check fails. [deploy-checks.md](/docs/decisions/deploy-checks.md) explains why it checks the live site, opens no room and rolls nothing back.
+
+| Deployment | What it checks |
+| --- | --- |
+| a title in `games/titles/<name>/` | `https://games.when.party/<name>/`, and each page and file under `/<name>/` that a page names in `src` or `href`, a stylesheet in `url()` or a script as a quoted path that starts with `/` or `./` and ends in an extension, such as a 3D model |
+| `games/index/` | `https://games.when.party/`, and each page and file named in the same way whose path goes to the index page, not to a title (`4-1` and `4-3` of [4-games.md](/infra/docs/specs/4-games.md)) |
+| `games/platform/signaling/` | `https://signaling.when.party/health`, and a WebSocket upgrade at `/platform` with the origin `https://games.when.party` |
+| `games/platform/turn/` and a removed deployment | nothing |
+
+- Each page and file answers 200, and `/health` too. Each response carries once, with its value, every header that the `add_header <name> "<value>" always;` lines of [default.conf](/infra/nginx/conf.d/default.conf) and of the host's server in [games.conf](/infra/nginx/conf.d/games.conf) add, which are those of `2-1` and `2-2` in [2-headers.md](/infra/docs/specs/2-headers.md). The script reads those lines from the commit of the run, so a manual run on a branch that adds such a line or changes its value fails while the VPS runs the proxy of `main`.
+- The upgrade answers 101, and the script closes the connection at once. So the connection names no versions and gets no peer ID, and the check opens no room.
+- On each attempt, the script adds `smoke=<the current time in nanoseconds>` to the query of each URL on `games.when.party`, so that Cloudflare, which keeps the files of the titles, passes the request to the VPS, as the Caching Level of `when.party` in [setup.md](/infra/docs/setup.md#cloudflare) allows. It also needs that no setting or rule of that zone, such as Bot Fight Mode, challenges requests from GitHub's runners. `/health` answers 404 to a URL with a query, and Cloudflare does not keep it.
+- When a check of a deployment fails, the script tries it up to 7 times in all, 5 seconds apart, about 30 seconds, because nginx can send requests to a container's old address for 5 seconds after a deploy, as [sites.md](/infra/docs/sites.md) says. Then it prints each failed URL with its answer.
 
 ## Which deployments a push reaches
 
