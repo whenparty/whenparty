@@ -2,6 +2,19 @@
 
 These rules say how to work on any change. [workflow-specs.md](/docs/conventions/workflow-specs.md) adds how specifications and code change, and [workflow-checks.md](/docs/conventions/workflow-checks.md) says what to check along the way.
 
+## How to use these files
+
+The three workflow files, this one, workflow-specs.md and workflow-checks.md, are a working hypothesis of how to work, not rules for every case.
+
+- When the user asks a question, answer it directly, without the steps that these files give for a change.
+- When the user asks you to build something or to think something through, first propose one plan of next steps, taken from these files. The user removes or adds steps, and you do the plan that the user approves. Propose no other plans, and do not estimate the user's time or the tokens unless the user asks.
+- A fix of a few lines, and a change that repeats elsewhere a change the user already agreed, need no plan: do them at once.
+- A session that another session started proposes no plan: it follows the steps of its brief, and goes to the user only when the brief does not cover its case.
+
+These hold in every case, outside the hypothesis: the [conventions files](/AGENTS.md#conventions-files) other than the workflow files, which say how files look; the scheduled skills [`rules-evening`](/.claude/skills/rules-evening/SKILL.md) and [`docs-weekly`](/.claude/skills/docs-weekly/SKILL.md), which run their steps as written; the hook [doc-context.sh](/.claude/hooks/docs/doc-context.md), which makes a session read the workflow files and the writing rules before it edits; and saving the user's corrections, as [Decisions](#decisions) says.
+
+The workflow files change from what happens on tasks: at the weekly review of `whenparty-notes/interaction-log.md`, the user and you look at which proposed steps the user accepted, removed or added, and change these files from that.
+
 ## Starting
 
 Before starting work, read the [writing rules](/docs/conventions/writing.md) and the conventions files that cover what the task changes, as the [map](/AGENTS.md) lists them, and follow them.
@@ -38,7 +51,7 @@ Within the limits above, you may revise earlier decisions by common sense, whoev
 
 Save at once each correction that the user makes to your work as an entry of your memory that records its case, and apply it to that case. When a question or correction of the user shows that the two of you understood something differently, also add it to `whenparty-notes/weekly-review/mismatches.md`, with the date, the user's words and what was understood differently, for the weekly pass that the [`docs-weekly` skill](/.claude/skills/docs-weekly/SKILL.md) describes. Take a lesson for other cases only from an answer in which the user says that they are sure and has not said that they are tired, and save it in your memory. When the user says that you propose too much, reconsider how you cut the task and put your questions, and propose a change of these rules when they cause it.
 
-The user has the final word, even when it contradicts these rules. When it does, remind the user of the rule, then follow their decision.
+The user has the final word, even when it contradicts the rules. When it contradicts a rule that [How to use these files](#how-to-use-these-files) says holds in every case, remind the user of the rule, then follow their decision.
 
 After any decision under this section, yours or the user's, or on an open question, write a decision record when the decision record rules call for one; after a decision of the user, tell the user whether the rules call for one and why. The record reaches `main` with the first change that follows from it, or on its own when the decision changes nothing. A change that goes against a decision record rewrites or deletes the record in the same change, as the decision record rules describe. A change that moves or renames something linked under the record's Consequences updates the link.
 

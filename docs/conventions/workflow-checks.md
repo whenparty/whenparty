@@ -1,6 +1,6 @@
 # Workflow: checks
 
-These rules say what to check while working on a change that the workflow files, [workflow.md](/docs/conventions/workflow.md) and [workflow-specs.md](/docs/conventions/workflow-specs.md), describe. They also say how the findings of a review are classed, how a review ends, when to ask Codex, and how a change and its report are read once more before the user sees them.
+These rules say what to check while working on a change that the workflow files, [workflow.md](/docs/conventions/workflow.md) and [workflow-specs.md](/docs/conventions/workflow-specs.md), describe. They also say how the findings of a review are classed, how a review ends, when to ask Codex, and how a change and its report are read once more before the user sees them. [How to use these files](/docs/conventions/workflow.md#how-to-use-these-files) says how an agent uses all three workflow files.
 
 ## Documents
 
