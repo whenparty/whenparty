@@ -119,6 +119,7 @@ proxy_wait() {
     fi
     sleep 0.2
   done
+  sleep 1
 }
 
 proxy_reload() {
