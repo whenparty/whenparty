@@ -7,5 +7,5 @@
 - `7-5` When more than 262,144 bytes that the server sent to a signaling connection have not left the server, it closes the connection.
 - `7-6` The server accepts a WebSocket connection only from a page whose origin is `https://when.party`, `https://` with a host that ends in `.when.party`, `http://localhost` or `http://127.0.0.1`, each with any port or none, and refuses a connection with another origin or none.
 - `7-7` A restart or deploy of the transport server closes every signaling connection. When its process fails, it tells no page, and the pages close their connections as [1-5](1-signaling.md) and [1-6](1-signaling.md) say.
-- `7-8` When 250 signaling connections are opening or open, the server refuses the next WebSocket connection. The connections that the [signaling deployment](../../../signaling/AGENTS.md) serves to [p2p](../../../p2p/AGENTS.md) do not count.
+- `7-8` When 250 signaling connections are opening or open, the server refuses the next WebSocket connection.
 - `7-9` When a page has not named its versions 10 seconds after the server accepted its connection, the server closes the connection.

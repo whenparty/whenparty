@@ -11,17 +11,13 @@ The packages of `games/` form one pnpm workspace, whose folders [pnpm-workspace.
 
 ## Running a title locally
 
-Start signaling with `pnpm --filter @whenparty/signaling start`, then the title's dev script. Pages on `localhost` connect to that signaling at `localhost:8080` (`1-13` of [1-signaling.md](../platform/transport/docs/specs/1-signaling.md), [signaling-url.ts](../platform/p2p/src/signaling-url.ts)).
+Start signaling with `pnpm --filter @whenparty/signaling start`, then the title's dev script. Pages on `localhost` connect to that signaling at `localhost:8080` (`1-13` of [1-signaling.md](../platform/transport/docs/specs/1-signaling.md)).
 
-The dev and preview servers of every title send the headers in `src/dev-headers.ts` of the [p2p module](../platform/p2p/AGENTS.md). Keep them the same as the headers of the proxy that [games-conf.md](/infra/docs/games-conf.md) says they copy, apart from the local signaling server that they add to `connect-src`.
+The dev and preview servers of every title send the headers in [dev-headers.ts](../platform/netcode/src/dev-headers.ts) of the [netcode module](../platform/netcode/AGENTS.md), as [dev-headers.md](decisions/dev-headers.md) decides. Keep them the same as the headers of the proxy that [games-conf.md](/infra/docs/games-conf.md) says they copy, apart from the local signaling server that they add to `connect-src`.
 
 ## Builds
 
 By default, Vite adds a modulepreload polyfill to every page that loads a module script, and [serving.md](/docs/conventions/serving.md) does not allow it, so the `vite.config.ts` of every package that builds such a page sets `build.modulePreload.polyfill` to `false`.
-
-## Dependencies
-
-Signaling and p2p take `@trystero-p2p/ws-relay` from the catalog in `pnpm-workspace.yaml`, so both speak the same Trystero protocol. Change its version there and update `pnpm-lock.yaml` in the same commit.
 
 ## Images and deploys
 

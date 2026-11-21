@@ -13,7 +13,7 @@ export default async () => {
   }
   const signaling = await Promise.all([
     startSignalingServer({port: 8080, parts: {[roomsModule]: createRoomsServer()}}),
-    startSignalingServer({port: 8081, turn: {secret, urls: [], ttlSeconds: 86_400}})
+    startSignalingServer({port: 8081, turnSecret: secret})
   ])
   const pages = await Promise.all([
     createServer({configFile: false, root: games, server: {port: 5173, ...unwatched}}),

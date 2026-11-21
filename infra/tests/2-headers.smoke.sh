@@ -36,7 +36,7 @@ done <<'EOF'
 www.when.party|default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://static.cloudflareinsights.com; frame-ancestors 'self';
 blog.when.party|default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://static.cloudflareinsights.com; frame-ancestors 'self';
 www.nii.au|default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; img-src 'self'; media-src 'self' blob:; connect-src 'self' https://static.cloudflareinsights.com; frame-ancestors 'self';
-games.when.party|default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://signaling.when.party https://signaling.when.party; frame-ancestors 'none';
+games.when.party|default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://signaling.when.party; frame-ancestors 'none';
 dtm-cleaning.when.party|default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';
 when.party|
 nii.au|

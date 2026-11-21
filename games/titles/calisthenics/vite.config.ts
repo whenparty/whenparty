@@ -1,4 +1,4 @@
-import {devHeaders} from '@whenparty/p2p/dev-headers'
+import {devHeaders} from '@whenparty/netcode/dev-headers'
 import {defineConfig} from 'vite'
 
 export default defineConfig({
