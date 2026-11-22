@@ -1,6 +1,6 @@
 import {expect, test, type Page} from '@playwright/test'
+import {pageUrl} from './browser-rooms.ts'
 
-const pageUrl = 'http://localhost:5175/calisthenics/'
 const sceneWaitMs = 20_000
 const motionWaitMs = 5_000
 const stillFrames = 30
@@ -64,7 +64,7 @@ test('4-5 without WebGL the 3D page says that 3D is unavailable and links to the
 test('4-5 when the athlete fails to load the 3D page says that 3D is unavailable and links to the text interface for the same room', async ({
   page
 }) => {
-  await page.route('**/athlete.glb', route => route.fulfill({status: 404}))
+  await page.route('**/athlete*.glb', route => route.fulfill({status: 404}))
   await page.goto(`${pageUrl}#B2CDF`)
   await expectTextInterfaceLink(page, 'B2CDF')
 })

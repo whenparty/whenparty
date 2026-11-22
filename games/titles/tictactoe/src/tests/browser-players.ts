@@ -1,8 +1,9 @@
 import {expect, test as base, type Locator, type Page, type WebSocket} from '@playwright/test'
 
-export const pageUrl = 'http://localhost:5174/tictactoe/'
+const onImages = !!process.env.GAMES_E2E
+export const pageUrl = onImages ? 'https://games.when.party/tictactoe/' : 'http://localhost:5174/tictactoe/'
 export const networkWaitMs = 10_000
-const signalingUrl = 'ws://localhost:8080/platform'
+const signalingUrl = onImages ? 'wss://signaling.when.party/platform' : 'ws://localhost:8080/platform'
 
 export interface Players {
   readonly host: Page

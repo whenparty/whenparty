@@ -2,7 +2,7 @@
 
 ## Context
 
-The [deploy workflows](/.github/docs/deploys.md) run on a push to `main` and hold the VPS SSH key and other [secrets](/.github/docs/github-setup.md#secrets). `games.yml` runs the tests and typechecks of `games/`, the TURN smoke test and the project name check in the same run that deploys, and `infra.yml` runs `nginx -t` and the proxy's smoke tests the same way, as [checks.md](/.github/docs/checks.md#the-checks) says. `temp-sites.yml`, `traefik.yml`, `www.yml`, `blog.yml` and `nii-au.yml` run none of these checks. A ruleset on `main` requires a pull request and the `result` check of `ci.yml`, but not that the pull request's branch is up to date with `main`, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides. So a merge can combine changes that each passed alone. A workflow that runs on `pull_request` gets the repository secrets when the pull request comes from a branch of this repository.
+The [deploy workflows](/.github/docs/deploys.md) run on a push to `main` and hold the VPS SSH key and other [secrets](/.github/docs/github-setup.md#secrets). `games.yml` runs the tests and typechecks of `games/`, the TURN smoke test and the project name check in the same run that deploys, and `infra.yml` runs `nginx -t` and the proxy's smoke tests the same way, as [checks.md](/.github/docs/checks.md#the-checks) says. `temp-sites.yml`, `traefik.yml`, `www.yml`, `blog.yml` and `nii-au.yml` run none of these checks. A ruleset on `main` requires a pull request, the `result` check of `ci.yml` and a merge queue, which runs `ci.yml` on each pull request together with `main` before it merges, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides. So only a direct push that the user allows puts on `main` a commit that no run of `ci.yml` checked. A workflow that runs on `pull_request` gets the repository secrets when the pull request comes from a branch of this repository.
 
 GitHub keeps a required status check pending when `paths` keeps its workflow from running. A job skipped by `if:` counts as successful, and so does a job skipped because a job it needs failed. Workflows that the same push starts run side by side, and a deploy workflow does not wait for one it does not call.
 
@@ -24,7 +24,7 @@ How a check that a change does not need is skipped:
 When `ci.yml` runs:
 
 - On pull requests only. Each change is checked once. What a merge puts on `main` is never checked when `main` changed after the pull request's run.
-- On pull requests and on pushes to `main`. What a merge puts on `main` is checked too. Every merge runs `ci.yml` once more, and a merge that deploys runs that deploy's checks twice. The deploy does not wait, so `ci.yml` reports a problem only after it has started.
+- On pull requests and on pushes to `main`, and on the merge groups that the merge queue needs. What reaches `main` is checked too, also after a direct push. Every merge runs `ci.yml` twice more, in the queue and on the push, and a merge that deploys runs that deploy's checks twice. The deploy does not wait, so `ci.yml` reports a problem only after it has started.
 
 ## Decision
 
@@ -32,7 +32,7 @@ The checks of the projects are reusable workflows, and `ci.yml` runs them withou
 
 `ci.yml` skips the checks that only some changes need with `if:`, so a check can become required without blocking the changes that do not need it. One longer file with a final job costs less than checks that cannot be required.
 
-`ci.yml` runs on pull requests and on pushes to `main`, so a problem that a merge combines from changes that each passed alone is reported by the run on `main`. On a push, `ci.yml` runs only the checks of what it changes, and the deploy does not wait for them, so a merged change such as a temporary site is not slowed down. The repeated runs use runner time, and nobody waits for them. Such a problem shows after its deploy has started, which is still earlier than the next pull request that touches the same files.
+`ci.yml` runs on pull requests, on the merge groups of the merge queue and on pushes to `main`, so a problem that reaches `main` without the queue, such as through a direct push, is reported by the run on `main`. On a push, `ci.yml` runs only the checks of what it changes, and the deploy does not wait for them, so a merged change such as a temporary site is not slowed down. The repeated runs use runner time, and nobody waits for them. Such a problem shows after its deploy has started, which is still earlier than the next pull request that touches the same files.
 
 ## Consequences
 

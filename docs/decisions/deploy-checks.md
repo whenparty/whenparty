@@ -2,7 +2,7 @@
 
 ## Context
 
-`games.yml` checks `games/` and builds and starts the images of the [deployments](/docs/glossary.md#deployment) a push reaches before it deploys them, as [games-check-scope.md](/docs/decisions/games-check-scope.md) decides. Then `deploy-project.yml` starts the new containers on the VPS. A title whose `base` differs from its container name, or whose build lacks a file, starts and passes its health check, which asks only for `/`, while its page answers 404 through the proxy, as [hosting.md](/games/titles/docs/hosting.md) says.
+`games.yml` checks `games/`, builds and starts the images of the [deployments](/docs/glossary.md#deployment) a push reaches and runs the end-to-end tests on them before it deploys them, as [games-check-scope.md](/docs/decisions/games-check-scope.md) and [browser-tests.md](/games/docs/decisions/browser-tests.md) decide. Then `deploy-project.yml` starts the new containers on the VPS. A title whose `base` differs from its container name, or whose build lacks a file, starts and passes its health check, which asks only for `/`, while its page answers 404 through the proxy, as [hosting.md](/games/titles/docs/hosting.md) says.
 
 - Players reach the games through Cloudflare and nginx. nginx accepts only requests that carry Cloudflare's client certificate (`1-2` of [1-connections.md](/infra/docs/specs/1-connections.md)), so a request from the VPS or the runner that skips Cloudflare does not reach the sites through nginx.
 - Cloudflare keeps the files of the titles, so a request for a file that the VPS no longer has can still answer 200. A query that Cloudflare has not seen passes the request to the VPS.
@@ -39,7 +39,7 @@ Which deploys wait for their containers' health:
 
 Every deploy of `deploy-project.yml` waits for its containers' health, because a container that does not start is a failed deploy for a temporary site as for a game. Then `games.yml` checks the live site over public HTTPS from the runner, with a query that gets past Cloudflare's cache and attempts over 30 seconds that outlast nginx's 5 seconds. Only a check through Cloudflare and nginx sees what players see, and it needs neither a secret nor a client certificate.
 
-The check opens no room, because the 10 rooms of production belong to players. A game that breaks in play is for the browser tests that `check-games.yml` runs before the deploy, where no player's room is at stake.
+The check opens no room, because the 10 rooms of production belong to players. A game that breaks in play is for the browser tests that run before the deploy, in `check-games.yml` and on the images in `games.yml`, where no player's room is at stake.
 
 A failed check fails the run and rolls nothing back. A rollback needs a record of the previous images, ends the rooms again, can split the protocol versions of pages and signaling, and does not fix a failure outside the images.
 

@@ -26,3 +26,13 @@
 - The tests of calisthenics open its 3D page and its text page, as its [verification.md](../titles/calisthenics/docs/verification.md) says.
 
 A failed run leaves its results in `test-results/`, and in CI also the HTML report in `playwright-report/`; CI uploads both, as [checks.md](/.github/docs/checks.md) says.
+
+## End-to-end tests on the images
+
+[tests/e2e.sh](../tests/e2e.sh) runs the browser tests of the titles on built images behind the proxy, as players reach them, and `games.yml` runs it before each deploy, as [deploys.md](/.github/docs/deploys.md#gamesyml) says. Its arguments name the image of each deployment with a `Dockerfile`, such as `games/titles/tictactoe=whenparty-games/tictactoe`, and it fails when one has none. It needs Docker, Google Chrome and the port 443 of `127.0.0.1`.
+
+- It creates the Docker network `wp_games` and starts each deployment of `games/` with a `Dockerfile` from its own `compose.yml`, and coturn from the `compose.yml` of the [turn deployment](../platform/turn/AGENTS.md), with a test TURN secret that signaling gets too.
+- It starts nginx, in the image of [infra/docker-compose.yml](/infra/docker-compose.yml), on that network and on `127.0.0.1:443`, with a copy of [infra/nginx/conf.d/](/infra/nginx/conf.d/) and certificates that it creates for `when.party` and `nii.au`. The copy turns `ssl_verify_client` off, because the browser has no client certificate of Cloudflare (`1-2` of [1-connections.md](/infra/docs/specs/1-connections.md)); the rest of the proxy, its headers and limits included, is that of production.
+- With `GAMES_E2E` set, [playwright.config.ts](../playwright.config.ts) runs only the tests in `titles/`, starts no servers, runs one test at a time and starts Chrome with `games.when.party`, `signaling.when.party` and `turn.when.party` mapped to `127.0.0.1` and with certificate errors ignored. The tests open `https://games.when.party/<title>/` and connect to `wss://signaling.when.party/platform` (`1-13` of [1-signaling.md](../platform/transport/docs/specs/1-signaling.md)). One test runs at a time because every page reaches nginx from one address, and the per-address limits of `default.conf` are those of one player.
+- coturn's config denies relays to private addresses, so the pages connect directly; the tests of transport check the relay on their own test page.
+- When the tests fail, it prints how many answers of each status nginx gave, and it removes the containers and the network when it ends.

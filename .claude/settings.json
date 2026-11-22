@@ -14,7 +14,8 @@
   "permissions": {
     "allow": [
       "Bash(pnpx modern-web-guidance@latest search *)",
-      "Bash(pnpx modern-web-guidance@latest retrieve *)"
+      "Bash(pnpx modern-web-guidance@latest retrieve *)",
+      "Bash(pnpm deps:cached)"
     ],
     "ask": [
       "Edit(**/package.json)",
