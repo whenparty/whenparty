@@ -23,6 +23,7 @@ trap cleanup EXIT
 {
   cat "$turn/turnserver.conf"
   echo "max-allocate-lifetime=$GAMES_TURN_ALLOCATION_SECONDS"
+  echo verbose
 } > "$config"
 chmod 644 "$config"
 
@@ -48,20 +49,26 @@ if [ "$ready" != true ]; then
   exit 1
 fi
 
+status=0
 if [ -n "${CI:-}" ]; then
-  pnpm exec playwright test "$@"
-  exit
+  pnpm exec playwright test "$@" || status=$?
+else
+  masks='-v /games/node_modules'
+  for package in index platform/* titles/*; do
+    if [ -f "$package/package.json" ]; then
+      masks="$masks -v /games/$package/node_modules"
+    fi
+  done
+
+  docker run --rm --init --ipc=host --network host \
+    -e GAMES_TURN_HOST -e GAMES_TURN_SECRET -e GAMES_TURN_ALLOCATION_SECONDS -e PNPM=$pnpm \
+    -v "$PWD:/games" $masks -v games-browser-tests-pnpm:/pnpm-store -w /games \
+    "mcr.microsoft.com/playwright:v$playwright-noble" \
+    sh -c 'npm install --global --silent "pnpm@$PNPM" && pnpm install --frozen-lockfile --store-dir /pnpm-store && pnpm exec playwright test "$@"' sh "$@" || status=$?
 fi
 
-masks='-v /games/node_modules'
-for package in index platform/* titles/*; do
-  if [ -f "$package/package.json" ]; then
-    masks="$masks -v /games/$package/node_modules"
-  fi
-done
-
-docker run --rm --init --ipc=host --network host \
-  -e GAMES_TURN_HOST -e GAMES_TURN_SECRET -e GAMES_TURN_ALLOCATION_SECONDS -e PNPM=$pnpm \
-  -v "$PWD:/games" $masks -v games-browser-tests-pnpm:/pnpm-store -w /games \
-  "mcr.microsoft.com/playwright:v$playwright-noble" \
-  sh -c 'npm install --global --silent "pnpm@$PNPM" && pnpm install --frozen-lockfile --store-dir /pnpm-store && pnpm exec playwright test "$@"' sh "$@"
+if [ "$status" -ne 0 ]; then
+  docker logs "$name" 2>&1 | docker run --rm -i --user 0 -v "$PWD:/games" --entrypoint sh "$image" \
+    -c 'mkdir -p /games/test-results && cat > /games/test-results/coturn.log' || true
+fi
+exit "$status"

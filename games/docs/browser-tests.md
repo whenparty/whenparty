@@ -4,7 +4,7 @@
 
 ## Servers
 
-- [tests/browser.sh](../tests/browser.sh) starts coturn in Docker with the [turnserver.conf](../platform/turn/turnserver.conf) and [start.sh](../platform/turn/start.sh) of the [turn deployment](../platform/turn/AGENTS.md), as [`smoke.sh`](../platform/turn/docs/smoke-test.md) does, at `11.11.11.10` on an internal Docker network whose addresses no denied range of coturn covers. It adds `max-allocate-lifetime` to the config, so that Chrome refreshes its allocations within seconds: Chrome refreshes an allocation after half its lifetime when the lifetime is under 2 minutes. The test of `8-6` in [8-turn.md](../platform/transport/docs/specs/8-turn.md) needs a refresh after the credentials expired.
+- [tests/browser.sh](../tests/browser.sh) starts coturn in Docker with the [turnserver.conf](../platform/turn/turnserver.conf) and [start.sh](../platform/turn/start.sh) of the [turn deployment](../platform/turn/AGENTS.md), as [`smoke.sh`](../platform/turn/docs/smoke-test.md) does, at `11.11.11.10` on an internal Docker network whose addresses no denied range of coturn covers. It adds `max-allocate-lifetime` to the config, so that Chrome refreshes its allocations within seconds: Chrome refreshes an allocation after half its lifetime when the lifetime is under 2 minutes. The test of `8-6` in [8-turn.md](../platform/transport/docs/specs/8-turn.md) needs a refresh after the credentials expired. `browser.sh` also adds `verbose`, so that coturn's log shows each allocation and each peer address that coturn refuses, with its time. It keeps the denied ranges of the config, as [browser-tests.md](decisions/browser-tests.md#decision) explains.
 - [tests/servers.mjs](../tests/servers.mjs), the global setup of Playwright, starts in Node:
   - [signaling](../platform/signaling/AGENTS.md) with the [rooms server](../platform/rooms/docs/specs/1-room.md) at `localhost:8080`, where pages on `localhost` connect to the transport server (`1-13` of [1-signaling.md](../platform/transport/docs/specs/1-signaling.md)), without a TURN secret, so that no page asks coturn at `turn.when.party` (`8-1` of [8-turn.md](../platform/transport/docs/specs/8-turn.md));
   - signaling with coturn's test secret at `localhost:8081`;
@@ -25,7 +25,7 @@
 - Like the fixtures of rooms, tictactoe and calisthenics, make a test that opens rooms of the rooms module leave them when it ends, also when it fails, and wait until its pages have closed their signaling connections: the rooms server of a run keeps at most 10 open rooms (`12-1` of [12-server-answers.md](../platform/rooms/docs/specs/12-server-answers.md)), and a room that its owner's page did not leave stays open for minutes (`10-3` of [10-server-room.md](../platform/rooms/docs/specs/10-server-room.md)).
 - The tests of calisthenics open its 3D page and its text page, as its [verification.md](../titles/calisthenics/docs/verification.md) says.
 
-A failed run leaves its results in `test-results/`, and in CI also the HTML report in `playwright-report/`; CI uploads both, as [checks.md](/.github/docs/checks.md) says.
+A failed run leaves its results in `test-results/`, with coturn's log in `coturn.log`, and in CI also the HTML report in `playwright-report/`; CI uploads both folders, as [checks.md](/.github/docs/checks.md) says. When the peer connection of a test of transport does not open on both pages, its failure also prints what the transport told each page, such as the reason with which a page closed.
 
 ## End-to-end tests on the images
 
