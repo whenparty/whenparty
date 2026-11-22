@@ -8,7 +8,7 @@ Google Fonts serves the font through a stylesheet on `fonts.googleapis.com`, whi
 
 Google picks the `latin` file by the User-Agent. Safari and Chrome on macOS, Safari on iOS and Chrome on Android get a file without TrueType instructions; Chrome and Firefox on Windows and Linux get the same file with a 7-byte `prep` program that turns on dropout control. macOS and iOS do not run TrueType instructions. Chromium on Linux draws the two files differently.
 
-The site's look is checked by eye in Safari on macOS. The [browser tests](../tests.md) run in Chromium in a Linux Docker image, serve the page's own files and leave other requests to the network. The approved storyboards are taken in CI, as [screenshot-updates.md](screenshot-updates.md#decision) decides.
+The site's look is checked by eye in Safari on macOS. The [browser tests](../tests.md) run in Chromium and WebKit in a Linux Docker image, serve the page's own files and leave other requests to the network. The approved storyboards are taken in CI, as [screenshot-updates.md](screenshot-updates.md#decision) decides.
 
 ## Options
 

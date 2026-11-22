@@ -8,9 +8,11 @@ A browser test can measure each part at a set time of an animation, or take a sc
 
 As [ci-checks.md](/docs/decisions/ci-checks.md) decides, `ci.yml` checks every pull request, merge group of the merge queue and push to `main`, and only `games.yml` and `infra.yml` wait for their checks. A ruleset on `main` requires a pull request, the `result` check of `ci.yml` and a merge queue, which checks each pull request together with `main` before it merges, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides. The site deploys in about 1.5 minutes, and the browser tests take about half a minute in CI.
 
+The owner looks at the site in Safari, whose engine is WebKit. The Playwright image holds WebKit too, and a test in it counts for Safari apart from how styles and animations look and move, as the [serving rules](/docs/conventions/serving.md) say.
+
 ## Options
 
-This decision has three parts. Where the approved screenshots are made is decided in [screenshot-updates.md](screenshot-updates.md).
+This decision has four parts. Where the approved screenshots are made is decided in [screenshot-updates.md](screenshot-updates.md).
 
 How the animations are checked:
 
@@ -25,6 +27,12 @@ Where the approved screenshots live:
 - Git LFS. The repository stays small. It needs setup, CI checkouts with LFS, and the transfer quota.
 - Their hashes in git. The smallest. A hash allows no tolerance, so one pixel fails the test, and a failure has no approved image to compare with.
 
+Which browsers run the tests:
+
+- Chromium alone. One pass. A fault that only Safari's engine has, such as where Tab goes during the takeoff, shows only to someone who watches.
+- Chromium, and WebKit for the tests without screenshots, while the storyboards carry the tag `@chromium`. Such a fault fails the pull request, and each run runs most tests twice.
+- Both browsers for the storyboards too. A takeoff that WebKit draws apart from Chromium would fail. But a WebKit screenshot does not show how Safari draws, and every intended change would need a second set of approved screenshots.
+
 Whether the deploy waits for the tests:
 
 - `www.yml` calls the check before it deploys. Failing tests stop the page from going live, even after a direct push. Every deploy takes about half a minute longer.
@@ -32,7 +40,7 @@ Whether the deploy waits for the tests:
 
 ## Decision
 
-Storyboards of the takeoff at a desktop and a phone width, compared with PNG files in git, and a few tests without screenshots, such as when the link opens. Approving a sheet of frames by eye costs less than an assertion for every part, and it catches mistakes nobody foresaw. The page has no components for stories. A few hundred kilobytes per update do not justify Git LFS, and hashes would hide the difference that makes a failure useful.
+Storyboards of the takeoff at a desktop and a phone width, compared with PNG files in git, and a few tests without screenshots, such as when the link opens. Approving a sheet of frames by eye costs less than an assertion for every part, and it catches mistakes nobody foresaw. The page has no components for stories. A few hundred kilobytes per update do not justify Git LFS, and hashes would hide the difference that makes a failure useful. The tests without screenshots also run in WebKit, so that Safari's engine fails a pull request that breaks what they check, while the storyboards stay in Chromium, where their approved screenshots are made.
 
 The deploy does not wait for the tests. A pull request that fails them cannot merge, and a merged change goes live at once. A direct push can put a broken page live until a fix follows, which costs less than half a minute on every deploy.
 

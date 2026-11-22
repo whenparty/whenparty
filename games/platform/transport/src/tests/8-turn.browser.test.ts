@@ -24,16 +24,18 @@ test('8-2 8-5 two pages that reach each other only through the TURN server conne
   await waitForTexts(caller, ['to caller'])
 })
 
-test('8-5 a page with credentials connects through the TURN server to a page without any that sends UDP to its relayed address', async ({
-  context
-}) => {
-  const [caller, callee] = await openPair(context, {relayOnly: true}, {turn: 'none'})
-  for (const page of [caller, callee]) {
-    expect(await noticesOf(page)).toContainEqual(expect.objectContaining({kind: 'open', path: 'turn'}))
+test(
+  '8-5 a page with credentials connects through the TURN server to a page without any that sends UDP to its relayed address',
+  {tag: '@chromium'},
+  async ({context}) => {
+    const [caller, callee] = await openPair(context, {relayOnly: true}, {turn: 'none'})
+    for (const page of [caller, callee]) {
+      expect(await noticesOf(page)).toContainEqual(expect.objectContaining({kind: 'open', path: 'turn'}))
+    }
+    await send(callee, ['through the relay'])
+    await waitForTexts(caller, ['through the relay'])
   }
-  await send(callee, ['through the relay'])
-  await waitForTexts(caller, ['through the relay'])
-})
+)
 
 test('8-6 a peer connection open through the TURN server goes on after its credentials expired before the browser refreshed its allocations', async ({
   context

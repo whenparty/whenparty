@@ -65,50 +65,56 @@ const contrastOf = (first: string, second: string) => {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
-test('Tab reaches only the controls of the announcement, Start training and Leave the room, while it covers the page, and the link to the 3D interface can take focus after it', async ({
-  players: {host}
-}) => {
-  const reached = new Set<string>()
+test(
+  'Tab reaches only the controls of the announcement, Start training and Leave the room, while it covers the page, and the link to the 3D interface can take focus after it',
+  {tag: '@chromium'},
+  async ({players: {host}}) => {
+    const reached = new Set<string>()
 
-  for (let press = 0; press < 3; press++) {
-    await host.keyboard.press('Tab')
-    reached.add(await focusedOf(host))
+    for (let press = 0; press < 3; press++) {
+      await host.keyboard.press('Tab')
+      reached.add(await focusedOf(host))
+    }
+
+    expect([...reached].filter(each => each !== 'body').sort()).toEqual(['Leave the room', 'Start training'])
+    await host.getByRole('button', {name: 'Start training'}).click()
+    await expect(host.locator('#announcement')).toBeHidden({timeout: networkWaitMs})
+    const interfaceLink = host.locator('#interface-link')
+    await interfaceLink.focus()
+    await expect(interfaceLink).toBeFocused()
   }
+)
 
-  expect([...reached].filter(each => each !== 'body').sort()).toEqual(['Leave the room', 'Start training'])
-  await host.getByRole('button', {name: 'Start training'}).click()
-  await expect(host.locator('#announcement')).toBeHidden({timeout: networkWaitMs})
-  const interfaceLink = host.locator('#interface-link')
-  await interfaceLink.focus()
-  await expect(interfaceLink).toBeFocused()
-})
+test(
+  'the Now performing card keeps its text readable in the light and the dark color scheme',
+  {tag: '@chromium'},
+  async ({players: {host, guest}}) => {
+    await host.getByRole('button', {name: 'Start training'}).click()
 
-test('the Now performing card keeps its text readable in the light and the dark color scheme', async ({players: {host, guest}}) => {
-  await host.getByRole('button', {name: 'Start training'}).click()
+    for (const page of [host, guest]) {
+      const rest = page.getByLabel('Rest', {exact: true})
+      await expect(rest).toBeVisible({timeout: networkWaitMs})
+      await rest.fill('3')
+      await page.getByRole('button', {name: 'Ready for the challenge'}).click()
+    }
 
-  for (const page of [host, guest]) {
-    const rest = page.getByLabel('Rest', {exact: true})
-    await expect(rest).toBeVisible({timeout: networkWaitMs})
-    await rest.fill('3')
-    await page.getByRole('button', {name: 'Ready for the challenge'}).click()
-  }
+    const perform = host.getByRole('button', {name: 'Start the challenge'})
+    await expect(perform).toBeEnabled({timeout: networkWaitMs})
+    await perform.click()
+    const card = host.locator('#performance-card')
+    await expect(card).toBeVisible({timeout: networkWaitMs})
 
-  const perform = host.getByRole('button', {name: 'Start the challenge'})
-  await expect(perform).toBeEnabled({timeout: networkWaitMs})
-  await perform.click()
-  const card = host.locator('#performance-card')
-  await expect(card).toBeVisible({timeout: networkWaitMs})
+    for (const colorScheme of ['light', 'dark'] as const) {
+      await host.emulateMedia({colorScheme})
+      const {background, texts} = await card.evaluate(element => ({
+        background: getComputedStyle(element).backgroundColor,
+        texts: [...element.querySelectorAll(':scope > :not(button)')].map(line => getComputedStyle(line).color)
+      }))
+      expect(texts).toHaveLength(3)
 
-  for (const colorScheme of ['light', 'dark'] as const) {
-    await host.emulateMedia({colorScheme})
-    const {background, texts} = await card.evaluate(element => ({
-      background: getComputedStyle(element).backgroundColor,
-      texts: [...element.querySelectorAll(':scope > :not(button)')].map(line => getComputedStyle(line).color)
-    }))
-    expect(texts).toHaveLength(3)
-
-    for (const text of texts) {
-      expect(contrastOf(text, background), colorScheme).toBeGreaterThanOrEqual(minContrast)
+      for (const text of texts) {
+        expect(contrastOf(text, background), colorScheme).toBeGreaterThanOrEqual(minContrast)
+      }
     }
   }
-})
+)

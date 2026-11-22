@@ -7,6 +7,7 @@ Some requirements of `games/` hold only in a real browser with real servers: tha
 - `www/` runs its browser tests in the Playwright image, locally and in CI, as [tests.md](/www/docs/tests.md) says. The image pins the browser, and a CI runner pulls about 2 GB of it on every run. Playwright can instead install its pinned Chromium and the libraries it needs on the runner, also on every run.
 - A browser on a Mac does not reach the addresses of a Docker network, and a container on Docker's host network does.
 - GitHub's `ubuntu-latest` runner comes with Google Chrome and Docker. Its Chrome is the browser that most players use, and its version changes with the runner image.
+- Other players use Safari, whose engine is WebKit. Playwright runs its WebKit on Linux, in its image and on a runner after `playwright install --with-deps webkit`, and a test there counts for Safari apart from how styles and animations look and move, as the [serving rules](/docs/conventions/serving.md) say. Some tests did not pass in WebKit in its image and have not run in it on a runner, as [browser-tests.md](../browser-tests.md#browsers) says: among them every test of two players of a title, which are also the tests of the focus and the colours of the titles' pages.
 - `games/` is one [pnpm workspace](../workspace.md), and its root package holds the tools that every package shares.
 - The [signaling deployment](../../platform/signaling/AGENTS.md) starts its servers in Node with `startSignalingServer` of [server.mjs](../../platform/signaling/src/server.mjs), which takes a TURN secret and the server parts, such as the [rooms server](../../platform/rooms/docs/specs/1-room.md). coturn runs in Docker from the [turn deployment](../../platform/turn/AGENTS.md)'s config and start script, as its [smoke test](../../platform/turn/docs/smoke-test.md) does.
 - On the runner and on Docker's host network on a Mac, a page with camera and microphone permission has host candidates on the bridge to coturn's network and on addresses that coturn's denied ranges cover, as [browser-tests.md](../browser-tests.md#test-pages) says, and coturn cannot reach those addresses from its internal network. When coturn refuses to relay to the peer address of a candidate pair, Chrome drops the pair at once, and a page that relays only through TURN and has no pair left reports its connection failed, which closes the transport's side (`3-9` of [3-connection.md](../../platform/transport/docs/specs/3-connection.md)). A player's page does not relay only through TURN, so it keeps its other pairs. When coturn fails to send to an allowed peer address that it cannot reach, it stops relaying for that allocation.
@@ -16,7 +17,7 @@ Some requirements of `games/` hold only in a real browser with real servers: tha
 
 ## Options
 
-This decision has six parts.
+This decision has seven parts.
 
 Whether to test in a browser:
 
@@ -27,7 +28,15 @@ Where the browser runs in CI:
 
 - In the Playwright image, as `www/` does. The browser is the same locally and in CI, and pinned. Every run pulls about 2 GB.
 - Playwright's Chromium, installed on the runner. Pinned and the same as locally, without the image, but every run downloads and installs it.
-- On the runner, in its Google Chrome, and locally in the Playwright image. CI downloads neither an image nor a browser, and tests the browser that players use. Chrome's version follows the runner image, and a run on a Mac uses the image's Chromium, which can differ from it.
+- On the runner, in its Google Chrome, and locally in the Playwright image. CI downloads no image and no Chromium, and tests the browser that players use. Chrome's version follows the runner image, and a run on a Mac uses the image's Chromium, which can differ from it.
+
+Which browsers run the tests:
+
+- Chrome alone. Each run is one pass. But a fault that only Safari has reaches players unless someone checks it by hand.
+- Chrome, and WebKit for every test that it can run, on the dev servers. A fault of WebKit in what those tests check, such as the size of the controls of the 3D lobby, the address of a title's page, the tab lock and the connections of transport, fails the pull request before players get it. But each run installs WebKit and runs most tests twice, and the tests of two players of a title still run in Chrome alone.
+- Chrome, and WebKit only for the tests that open one page. Fewer runs, but the tests of the tab lock and most tests of transport, which pass in WebKit, stay out of it.
+- WebKit in a job of CI of its own. It runs beside Chrome and its failures stay apart, but it repeats the setup of the job and its install of the workspace.
+- WebKit also in the run on the images before a deploy of `main`. It would test the built files and the proxy in Safari's engine, but WebKit has no flag that maps host names, as Chrome's `--host-resolver-rules` does, so that run would need entries in the hosts file of the machine, which need root.
 
 Where Playwright is set up:
 
@@ -50,11 +59,11 @@ What the tests of the titles run against before a deploy of `main`:
 
 - Only the dev servers, as in a pull request. Nothing more to run. A page that only its build or the proxy breaks deploys.
 - The images that the deploy built, with signaling and coturn in their images, behind nginx with the configs of production and certificates of the run, without the client certificate check. The deploy tests what it deploys, through the headers and limits that players get, and needs no secret; it takes about a minute more, runs one test at a time because every page comes from one address, and a failure that only it finds shows on `main`.
-- The production site after the deploy. The real way, but it takes rooms from players, as the fourth part says, and finds a broken page only after players got it.
+- The production site after the deploy. The real way, but it takes rooms from players, as the part on the servers says, and finds a broken page only after players got it.
 
 ## Decision
 
-Browser tests, set up once at the root of the workspace, with local servers, run locally in the Playwright image, which reaches coturn's network on a Mac too, and in CI in the runner's Chrome. The local servers test the branch in seconds without a secret and without taking from players, which the production servers cannot. Their coturn keeps the denied ranges as deployed and logs in detail, because allowing the test machine's addresses breaks the relay, and a change of the test page or the transport would answer a cause that no failure has shown yet. The runner's Chrome saves a download on every run, and a difference between Chromium and Chrome shows as a failure in CI. One setup at the root serves every package, as the other shared tools of the workspace do. Before a deploy of `main`, the tests of the titles also run on the images that the deploy built, behind the proxy's configs, because only that tests the built files and the headers that players get, before players get them; the test pages of the modules have no images and stay on the dev servers.
+Browser tests, set up once at the root of the workspace, with local servers, run locally in the Playwright image, which reaches coturn's network on a Mac too, and in CI in the runner's Chrome. The local servers test the branch in seconds without a secret and without taking from players, which the production servers cannot. Their coturn keeps the denied ranges as deployed and logs in detail, because allowing the test machine's addresses breaks the relay, and a change of the test page or the transport would answer a cause that no failure has shown yet. The runner's Chrome saves the download of Chromium on every run, and a difference between Chromium and Chrome shows as a failure in CI. Every test without the tag `@chromium` also runs in WebKit on the dev servers, locally and in the same job of CI, which saves a second setup of the job and a second install of the workspace, so that a fault of Safari's engine in what those tests check fails before players get it; WebKit on Linux does not show how Safari paints a page, so the tests do not check that. The run on the images stays in Chrome, whose flag maps the production host names without root. One setup at the root serves every package, as the other shared tools of the workspace do. Before a deploy of `main`, the tests of the titles also run on the images that the deploy built, behind the proxy's configs, because only that tests the built files and the headers that players get, before players get them; the test pages of the modules have no images and stay on the dev servers.
 
 ## Consequences
 

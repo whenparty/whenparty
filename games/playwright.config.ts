@@ -11,14 +11,20 @@ export default defineConfig({
   workers: onImages ? 1 : undefined,
   globalSetup: onImages ? undefined : './tests/servers.mjs',
   reporter: process.env.CI ? [['list'], ['html', {open: 'never'}]] : 'list',
-  use: {
-    browserName: 'chromium',
-    channel: process.env.CI || onImages ? 'chrome' : undefined,
-    launchOptions: {
-      args: [
-        '--disable-features=WebRtcHideLocalIpsWithMdns',
-        ...(onImages ? [productionHostsOnThisMachine, '--ignore-certificate-errors'] : [])
-      ]
-    }
-  }
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        browserName: 'chromium',
+        channel: process.env.CI || onImages ? 'chrome' : undefined,
+        launchOptions: {
+          args: [
+            '--disable-features=WebRtcHideLocalIpsWithMdns',
+            ...(onImages ? [productionHostsOnThisMachine, '--ignore-certificate-errors'] : [])
+          ]
+        }
+      }
+    },
+    ...(onImages ? [] : [{name: 'webkit', grepInvert: /@chromium/, use: {browserName: 'webkit' as const}}])
+  ]
 })
