@@ -17,9 +17,9 @@ The [writing rules](/docs/conventions/writing.md) leave splitting documents and 
 
 Count the words of every document, one file at a time, with this command, which skips Mermaid blocks and counts a link by its text:
 
-```sh
+````sh
 LC_ALL=C awk '/^ *```mermaid *$/ { m = 1; k = 0; next } m && /^ *```/ { m = 0; next } m { k += NF; next } { n += NF } END { print n + m * (k + 1) }' <file>
-```
+````
 
 List the documents over 1000 words, with their counts now and at the last commit of `origin/main` a week ago.
 

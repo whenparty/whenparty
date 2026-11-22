@@ -27,9 +27,9 @@
 - `2-11` When the person leaves the game on a page, the netcode makes the page's participant leave the room ([8-1](../../../rooms/docs/specs/8-ending.md) and [8-2](../../../rooms/docs/specs/8-ending.md)), which for the host closes the room for all. Leaving ends starting or entering that has not completed, and a late answer to it creates nothing ([8-3](../../../rooms/docs/specs/8-ending.md) and [8-5](../../../rooms/docs/specs/8-ending.md)); it also ends waiting for the host ([3-2](3-entry.md)) or for the term and roster ([10-2](10-recovery.md)). Then the netcode tells the page nothing more about the game.
 - `2-12` When a page starts or enters a game while its last game goes on, the netcode first leaves that game as 2-11 says.
 - `2-13` A first entry fails with "bad app", "no room", "full", "busy", "refused", "unreachable", "offline" or "outdated" when the rooms module fails the join with that cause ([2-2](../../../rooms/docs/specs/2-join.md), [2-3](../../../rooms/docs/specs/2-join.md), [2-5](../../../rooms/docs/specs/2-join.md), [2-6](../../../rooms/docs/specs/2-join.md), [2-10](../../../rooms/docs/specs/2-join.md) and [2-11](../../../rooms/docs/specs/2-join.md), [8-6](../../../rooms/docs/specs/8-ending.md)), except for a refusal that carries the host's versions ([3-5](3-entry.md)). When the room ends for the page after the join completed and before the page's first snapshot, entering fails as this table says:
-  | Cause of the end of the room | Entering fails with |
-  | --- | --- |
-  | "room closed" or "idle" | "no room" |
-  | "owner away" | "owner away" |
-  | "removed", "unreachable" or "no relay" | "unreachable" |
-  | "outdated" | "outdated" |
+  | Cause of the end of the room           | Entering fails with |
+  | -------------------------------------- | ------------------- |
+  | "room closed" or "idle"                | "no room"           |
+  | "owner away"                           | "owner away"        |
+  | "removed", "unreachable" or "no relay" | "unreachable"       |
+  | "outdated"                             | "outdated"          |

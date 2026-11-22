@@ -17,10 +17,10 @@
 - `3-6` When a return gets "owner away", or gets no answer ([1-12](1-room.md)), or its signaling connection cannot open ([1-13](1-room.md)) or closes before the answer, or its peer connection closes before it opens for rooms, the page asks to return again 5 seconds later.
 - `3-7` When the waiting time has passed since the owner was lost and the page is not in the room, the page stops returning and the room ends for it: with "unreachable" when the latest answer to its returns gave it the peer ID of the owner's page, "no relay" when, in addition, its latest peer connection closed with `no relay` ([3-9](../../../transport/docs/specs/3-connection.md)), and "owner away" otherwise. The page tells the rooms server that it leaves, when its signaling connection is open.
 - `3-8` The room also ends for the page with these reasons:
-  | When | Reason |
-  | --- | --- |
-  | a return gets "no room" | "owner away" when the waiting time has passed since the owner was lost, "room closed" otherwise |
-  | a return gets "removed" | "removed", except after a join with the record's code ([9-5](9-tab.md)): then the page deletes the record and joins as a new participant ([2-3](2-join.md)) |
-  | the owner's page sends "room closed", "idle" or "outdated" | that reason |
+  | When                                                       | Reason                                                                                                                                                      |
+  | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | a return gets "no room"                                    | "owner away" when the waiting time has passed since the owner was lost, "room closed" otherwise                                                             |
+  | a return gets "removed"                                    | "removed", except after a join with the record's code ([9-5](9-tab.md)): then the page deletes the record and joins as a new participant ([2-3](2-join.md)) |
+  | the owner's page sends "room closed", "idle" or "outdated" | that reason                                                                                                                                                 |
 - `3-9` When the page returns from a record with a participant's token ([9-5](9-tab.md)), the owner is lost since the moment that the record keeps. When the record keeps none, the page writes the moment its return started into the record and counts from it. The app is not told "owner lost".
 - `3-10` The page has at most one peer connection to the owner's page and starts a new one only after closing the previous one. An event of a previous peer connection or signaling connection that arrives after the page started a new one changes nothing: it does not close the new one or change the page's state.

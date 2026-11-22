@@ -8,11 +8,11 @@ WCAG 2.2 success criterion 2.2.2, Pause, Stop, Hide, at level A, asks that motio
 
 ## Options
 
-| Option | Advantages | Drawbacks |
-| --- | --- | --- |
-| Bob without end, the previous decision | The balloons stay alive while the page is open. No change, and the sharpness of balloon-sharpness.md holds | The page does not meet 2.2.2 for visitors who have not asked for reduced motion |
-| Stop the bob 5 seconds after the inflate starts | Meets 2.2.2 without a control | The balloons sway about once and then stand still. Sharpness in Safari after the bob ends is unchecked, and balloon-sharpness.md would change |
-| A control that pauses the bob | Meets 2.2.2, and the balloons move until a visitor pauses them | A new control, script and styles on a page of a few lines of text. Sharpness in Safari after a pause is unchecked |
+| Option                                          | Advantages                                                                                                 | Drawbacks                                                                                                                                     |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bob without end, the previous decision          | The balloons stay alive while the page is open. No change, and the sharpness of balloon-sharpness.md holds | The page does not meet 2.2.2 for visitors who have not asked for reduced motion                                                               |
+| Stop the bob 5 seconds after the inflate starts | Meets 2.2.2 without a control                                                                              | The balloons sway about once and then stand still. Sharpness in Safari after the bob ends is unchecked, and balloon-sharpness.md would change |
+| A control that pauses the bob                   | Meets 2.2.2, and the balloons move until a visitor pauses them                                             | A new control, script and styles on a page of a few lines of text. Sharpness in Safari after a pause is unchecked                             |
 
 ## Decision
 

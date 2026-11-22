@@ -120,8 +120,8 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: "${{ inputs.path }}"
-          target: "${{ env.SERVICES_DIR }}/"
+          source: '${{ inputs.path }}'
+          target: '${{ env.SERVICES_DIR }}/'
 
       - name: Deploy project
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5

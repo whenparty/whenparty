@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - "blog/**"
-      - "!blog/**/*.md"
-      - "blog/src/posts/**"
-      - ".github/workflows/blog.yml"
-      - ".github/workflows/site.yml"
+      - 'blog/**'
+      - '!blog/**/*.md'
+      - 'blog/src/posts/**'
+      - '.github/workflows/blog.yml'
+      - '.github/workflows/site.yml'
 
 permissions:
   contents: read

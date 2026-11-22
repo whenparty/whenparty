@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - "www/**"
-      - "!www/**/*.md"
-      - ".github/workflows/www.yml"
-      - ".github/workflows/site.yml"
+      - 'www/**'
+      - '!www/**/*.md'
+      - '.github/workflows/www.yml'
+      - '.github/workflows/site.yml'
 
 permissions:
   contents: read

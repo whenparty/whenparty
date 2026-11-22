@@ -18,3 +18,5 @@ infra/nginx/conf.d/cloudflare_real_ip.conf
 !.claude/hooks/
 !.claude/agents/
 !.claude/skills/
+
+/node_modules/

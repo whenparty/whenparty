@@ -1,6 +1,6 @@
 ---
 title: Influence without authority
-description: "The more senior an engineer gets, the more decisions depend on them. But making a decision isn’t enough. It still has to be pushed through. A manager can order their own team to carry it out. An engineer with no direct reports has no one to give orders to, so they move decisions forward in other ways, most often through influence."
+description: 'The more senior an engineer gets, the more decisions depend on them. But making a decision isn’t enough. It still has to be pushed through. A manager can order their own team to carry it out. An engineer with no direct reports has no one to give orders to, so they move decisions forward in other ways, most often through influence.'
 date: 2026-11-16
 cover: influence-cover.webp
 coverAlt: Amy, a squirrel, and Ian, a badger, sketch a plan together at a table
@@ -18,13 +18,13 @@ Formal authority comes with the job title. A manager sets priorities, a product 
 
 Influence works where there’s no reporting line. People accept someone else’s proposal of their own free will, because they trust its author or see something in it for themselves.
 
-|  | Authority | Influence |
-| --- | --- | --- |
-| Where it comes from | The job title | How other people see the person |
-| How it sounds | “We’re doing it this way” | “Here’s what I suggest, and here’s what’s in it for you” |
-| Who it works on | Direct reports | Anyone who trusts the author, including people on other teams |
-| What it costs | Give orders too often and people stop trying | Every request spends trust, and every kept promise earns it back |
-| What happens when the person changes roles | It’s gone | It stays, as long as the same people are around |
+|                                            | Authority                                    | Influence                                                        |
+| ------------------------------------------ | -------------------------------------------- | ---------------------------------------------------------------- |
+| Where it comes from                        | The job title                                | How other people see the person                                  |
+| How it sounds                              | “We’re doing it this way”                    | “Here’s what I suggest, and here’s what’s in it for you”         |
+| Who it works on                            | Direct reports                               | Anyone who trusts the author, including people on other teams    |
+| What it costs                              | Give orders too often and people stop trying | Every request spends trust, and every kept promise earns it back |
+| What happens when the person changes roles | It’s gone                                    | It stays, as long as the same people are around                  |
 
 Managers have to rely on influence too. A manager who too often settles things by giving orders ends up with people who do exactly what they’re told and nothing more. That’s why good managers rarely give orders.
 
@@ -88,18 +88,18 @@ A track record lives in people’s memories, and memories are short. A forecast 
 
 ## What trust is made of
 
-All three sources of influence rest on trust. A useful way to analyse trust is the [trust equation](https://trustedadvisor.com/?p=16765) from *The Trusted Advisor* (David Maister, Charles Green, Robert Galford, 2000). The book was written for consultants, but an engineer without authority is in the same boat. All they can do is advise.
+All three sources of influence rest on trust. A useful way to analyse trust is the [trust equation](https://trustedadvisor.com/?p=16765) from _The Trusted Advisor_ (David Maister, Charles Green, Robert Galford, 2000). The book was written for consultants, but an engineer without authority is in the same boat. All they can do is advise.
 
 ```latex
 T = \frac{C + R + I}{S}
 ```
 
-| What’s in the equation | What the other person asks themselves | What it looks like in practice |
-| --- | --- | --- |
-| C, credibility | Can I believe what they say? | Gives exact numbers, and when unsure says “I don’t know, I’ll check” |
-| R, reliability | Do they do what they promise? | Finishes reviews on time and warns early if a date is going to slip |
-| I, intimacy | Can I bring them a problem and not regret it? | Answers a junior’s question without mocking them and doesn’t drag someone’s mistake into the team channel |
-| S, self-orientation | Who are they doing this for? | Says “I told you so”, argues to win, makes proposals that mostly benefit themselves |
+| What’s in the equation | What the other person asks themselves         | What it looks like in practice                                                                            |
+| ---------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| C, credibility         | Can I believe what they say?                  | Gives exact numbers, and when unsure says “I don’t know, I’ll check”                                      |
+| R, reliability         | Do they do what they promise?                 | Finishes reviews on time and warns early if a date is going to slip                                       |
+| I, intimacy            | Can I bring them a problem and not regret it? | Answers a junior’s question without mocking them and doesn’t drag someone’s mistake into the team channel |
+| S, self-orientation    | Who are they doing this for?                  | Says “I told you so”, argues to win, makes proposals that mostly benefit themselves                       |
 
 ### The more self-focused someone is, the less they’re trusted
 
@@ -123,7 +123,7 @@ Personal interests are best raised separately. A conversation about a decision s
 
 Trust capital is how far people will take someone at their word without full proof. When someone has a lot of it, their proposals go ahead without a pilot, they get time for experiments with uncertain outcomes, and their mistakes are forgiven.
 
-It helps to picture it as a bank account. Stephen Covey popularised the metaphor in *The 7 Habits of Highly Effective People*, where he calls it the “emotional bank account”. Every action is either a deposit or a withdrawal.
+It helps to picture it as a bank account. Stephen Covey popularised the metaphor in _The 7 Habits of Highly Effective People_, where he calls it the “emotional bank account”. Every action is either a deposit or a withdrawal.
 
 ### How the account works
 
@@ -133,14 +133,14 @@ It helps to picture it as a bank account. Stephen Covey popularised the metaphor
 
 ### Deposits and withdrawals
 
-| What counts as a deposit | What counts as a withdrawal |
-| --- | --- |
+| What counts as a deposit                                                          | What counts as a withdrawal                         |
+| --------------------------------------------------------------------------------- | --------------------------------------------------- |
 | A kept promise, including a small one, such as reviewing a PR on the promised day | A proposal without data, resting on “just trust me” |
-| A written forecast that later came true | Arguing with a decision that’s already been made |
-| Helping someone with their goal | Asking people to invest again after a failure |
-| Being the first to own up to a mistake | Escalation, especially going over someone’s head |
-| Backing a decision despite disagreeing with it | Turning down someone’s request |
-| Thanking colleagues publicly for their work | A flat statement that later turned out to be wrong |
+| A written forecast that later came true                                           | Arguing with a decision that’s already been made    |
+| Helping someone with their goal                                                   | Asking people to invest again after a failure       |
+| Being the first to own up to a mistake                                            | Escalation, especially going over someone’s head    |
+| Backing a decision despite disagreeing with it                                    | Turning down someone’s request                      |
+| Thanking colleagues publicly for their work                                       | A flat statement that later turned out to be wrong  |
 
 ### What trust capital is for
 
@@ -238,12 +238,12 @@ Another team has its own lead and its own roadmap, and it doesn’t owe anyone h
 
 The first step is to find out what’s keeping the other team from agreeing. The answer determines what to bring them.
 
-| What’s in the way | What to bring |
-| --- | --- |
-| They’re short of people | An offer to do the work, with them reviewing it |
-| Risk to their system | An option that affects only one team at first, plus a rollback plan |
-| The system is too complex to understand and change quickly | A direction for the solution and a request for an hour of pairing |
-| A different priority | First, the smallest possible version of the ask. If that doesn’t work, a joint escalation with their lead |
+| What’s in the way                                          | What to bring                                                                                             |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| They’re short of people                                    | An offer to do the work, with them reviewing it                                                           |
+| Risk to their system                                       | An option that affects only one team at first, plus a rollback plan                                       |
+| The system is too complex to understand and change quickly | A direction for the solution and a request for an hour of pairing                                         |
+| A different priority                                       | First, the smallest possible version of the ask. If that doesn’t work, a joint escalation with their lead |
 
 Two rules follow from this. The first is that code gets written only after the direction is agreed. Otherwise it’s work on someone else’s system behind its owners’ backs, and the owners will most likely refuse to accept that code. The second is that escalation settles a clash of priorities but doesn’t make up for missing knowledge. When knowledge is missing, the answer is to ask.
 
@@ -271,11 +271,11 @@ Pushing in this situation is pointless. It drains capital and achieves nothing. 
 
 ## Further reading
 
-| Source | Why read it |
-| --- | --- |
-| [Tanya Reilly, The Staff Engineer’s Path](https://www.oreilly.com/library/view/the-staff-engineers-path/9781098118723/) | A book on how an engineer without authority leads projects and people |
-| [Will Larson, Staff Engineer: Leadership beyond the management track](https://staffeng.com/book) | How to work with leadership and sponsors. Some of the guides are free on staffeng.com |
-| [Will Larson, Staff engineer archetypes](https://lethain.com/staff-engineer-archetypes/) | Four shapes a staff engineer’s influence takes (Tech Lead, Architect, Solver, Right Hand) |
-| [Maister, Green, Galford, The Trusted Advisor (the trust equation)](https://trustedadvisor.com/?p=16765) | Where the trust equation comes from and why self-orientation destroys trust |
-| [Tanya Reilly, Being Glue (talk summary)](https://threadreaderapp.com/thread/1025043287311372288.html) | How glue work builds influence even when it doesn’t get counted |
-| [Julia Evans, Get your work recognized: write a brag document](https://jvns.ca/blog/brag-documents/) | How to keep a track record from getting lost by writing down the work and what it changed |
+| Source                                                                                                                  | Why read it                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [Tanya Reilly, The Staff Engineer’s Path](https://www.oreilly.com/library/view/the-staff-engineers-path/9781098118723/) | A book on how an engineer without authority leads projects and people                     |
+| [Will Larson, Staff Engineer: Leadership beyond the management track](https://staffeng.com/book)                        | How to work with leadership and sponsors. Some of the guides are free on staffeng.com     |
+| [Will Larson, Staff engineer archetypes](https://lethain.com/staff-engineer-archetypes/)                                | Four shapes a staff engineer’s influence takes (Tech Lead, Architect, Solver, Right Hand) |
+| [Maister, Green, Galford, The Trusted Advisor (the trust equation)](https://trustedadvisor.com/?p=16765)                | Where the trust equation comes from and why self-orientation destroys trust               |
+| [Tanya Reilly, Being Glue (talk summary)](https://threadreaderapp.com/thread/1025043287311372288.html)                  | How glue work builds influence even when it doesn’t get counted                           |
+| [Julia Evans, Get your work recognized: write a brag document](https://jvns.ca/blog/brag-documents/)                    | How to keep a track record from getting lost by writing down the work and what it changed |

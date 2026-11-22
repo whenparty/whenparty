@@ -29,7 +29,9 @@ interface Presence {
 const contextOf = (taken: readonly string[], {lost = [], hidden = []}: Presence = {}, roomTime = 0, matchRuns = true): Context => ({
   roomTime,
   matchRuns,
-  seats: Object.fromEntries(seats.map(seat => [seat, {taken: taken.includes(seat), lost: lost.includes(seat), hidden: hidden.includes(seat)}]))
+  seats: Object.fromEntries(
+    seats.map(seat => [seat, {taken: taken.includes(seat), lost: lost.includes(seat), hidden: hidden.includes(seat)}])
+  )
 })
 
 const three = seated(3)
@@ -203,7 +205,16 @@ const happen = ({state, matchNumber, absent}: Setup, event: Event): Happened => 
       return {next: asState(rules.deadline!(asJson(state), time, 0, contextOf(three, absent, late))), now: late}
     }
     case 'away':
-      return {next: presence(state, absent.lost?.length ? '3' : '2', 'lost', {lost: [...(absent.lost ?? []), absent.lost?.length ? '3' : '2']}, now), now}
+      return {
+        next: presence(
+          state,
+          absent.lost?.length ? '3' : '2',
+          'lost',
+          {lost: [...(absent.lost ?? []), absent.lost?.length ? '3' : '2']},
+          now
+        ),
+        now
+      }
     case 'back':
       return {next: presence(state, '2', absent.lost?.includes('2') ? 'back' : 'visible', {lost: without(absent.lost, '2')}, now), now}
     case 'backOthersAway':
@@ -284,7 +295,9 @@ describe('3-match', () => {
     assert.equal(nameOf(''), undefined)
     assert.equal(nameOf('x'.repeat(20)), 'x'.repeat(20))
     assert.equal(nameOf('x'.repeat(21)), undefined)
-    const twins = must(step(must(step(lobby, '1', {type: 'profile', profile: {name: 'Sam'}})), '2', {type: 'profile', profile: {name: 'Sam'}}))
+    const twins = must(
+      step(must(step(lobby, '1', {type: 'profile', profile: {name: 'Sam'}})), '2', {type: 'profile', profile: {name: 'Sam'}})
+    )
     assert.equal(twins.profiles['2']?.name, 'Sam')
   })
 
@@ -365,7 +378,9 @@ describe('3-match', () => {
 
   it('3-7 takes names and appearances in a lobby after a lost championship, but starts no championship there', () => {
     const lost = asState(rules.lobby!())
-    const named = must(step(must(step(lost, '1', {type: 'profile', profile: {name: 'Ann'}})), '2', {type: 'profile', profile: {name: 'Bo'}}))
+    const named = must(
+      step(must(step(lost, '1', {type: 'profile', profile: {name: 'Ann'}})), '2', {type: 'profile', profile: {name: 'Bo'}})
+    )
     assert.ok(step(named, '2', {type: 'appearance', appearance: {hairstyle: 'bald'}}))
     assert.equal(rules.canStart!(asJson(named), seated(2), 1), false)
     assert.equal(rules.canStart!(asJson(named), seated(2), 0), true)

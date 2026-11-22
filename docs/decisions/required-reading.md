@@ -10,10 +10,10 @@ When the hook changed to require maps and the four rule files, an edit of `check
 
 The [evaluation](/.claude/hooks/docs/evaluation.md) checks which documents an agent running a realistic task reads in full before its first edit. With the hook requiring only the maps and the four rule files, and `.github/AGENTS.md` as a map, Opus 5.5 ran each of two tasks five times, at $0.56 and $0.79 a run:
 
-| Task | Must reach | Reached | Outcome |
-| - | - | - | - |
-| Skip Markdown-only changes in `ci.yml` with `paths-ignore` | [ci-checks.md](/docs/decisions/ci-checks.md) | 5/5 | All stopped: the record rejects `paths` filters |
-| Change the Node image in `check-games.yml` | `.github/docs/checks.md`, which names the Dockerfiles in `games/` | 5/5 | 3 changed all four files, 2 stopped to ask |
+| Task                                                       | Must reach                                                        | Reached | Outcome                                         |
+| ---------------------------------------------------------- | ----------------------------------------------------------------- | ------- | ----------------------------------------------- |
+| Skip Markdown-only changes in `ci.yml` with `paths-ignore` | [ci-checks.md](/docs/decisions/ci-checks.md)                      | 5/5     | All stopped: the record rejects `paths` filters |
+| Change the Node image in `check-games.yml`                 | `.github/docs/checks.md`, which names the Dockerfiles in `games/` | 5/5     | 3 changed all four files, 2 stopped to ask      |
 
 ## Options
 

@@ -45,8 +45,8 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: "${{ inputs.site }}/docker-compose.yml"
-          target: "/opt/services/whenparty/${{ inputs.site }}/"
+          source: '${{ inputs.site }}/docker-compose.yml'
+          target: '/opt/services/whenparty/${{ inputs.site }}/'
           strip_components: 1
 
       - name: Deploy to VPS

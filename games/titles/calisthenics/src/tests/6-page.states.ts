@@ -55,8 +55,13 @@ const noGame = {impossible: 'without a game the netcode tells the page nothing a
 const noStartScreen = {impossible: 'the room is shown in place of the start screen (6-2)'} as const
 const alreadyOpen = {impossible: 'the page is already open; it opens again only by a reload'} as const
 const nothingKept = {impossible: 'the page keeps no action in this state (6-5)'} as const
-const sendsAtOnce = {impossible: 'the page sends a kept action as soon as the netcode tells it can act, so it cannot act while it keeps one (6-5)'} as const
-const ended = {impossible: 'after starting or entering fails or the game ends, the room shows no controls for actions (6-2) and the netcode tells the page nothing more (2-7 of netcode 2-page.md)'} as const
+const sendsAtOnce = {
+  impossible: 'the page sends a kept action as soon as the netcode tells it can act, so it cannot act while it keeps one (6-5)'
+} as const
+const ended = {
+  impossible:
+    'after starting or entering fails or the game ends, the room shows no controls for actions (6-2) and the netcode tells the page nothing more (2-7 of netcode 2-page.md)'
+} as const
 const startsAnew = (kept?: Outcome['kept']): Cell => ({
   ids: kept ? ['6-1', '6-5'] : ['6-1'],
   outcome: {next: 'start', screen: 'start', leaveButton: false, netcode: 'nothing', ...(kept ? {kept} : {})}
@@ -83,17 +88,42 @@ const inGame = (state: 'inRoom' | 'keeping'): Row => {
     addressNoChange: {ids: ['6-3'], outcome: {next: state, ...room, netcode: 'nothing'}},
     leavePressed: {
       ids: ['6-2', ...dropIds],
-      outcome: {next: 'start', screen: 'start', leaveButton: false, netcode: 'leaves the game', address: 'no room code', ...(dropped ? {kept: dropped} : {})}
+      outcome: {
+        next: 'start',
+        screen: 'start',
+        leaveButton: false,
+        netcode: 'leaves the game',
+        address: 'no room code',
+        ...(dropped ? {kept: dropped} : {})
+      }
     },
     joinRequest: {ids: ['6-4'], outcome: {next: state, ...room, request: 'let in'}},
     action: state === 'inRoom' ? {ids: ['6-5'], outcome: {next: 'inRoom', ...room, sent: 'the action'}} : sendsAtOnce,
     actionCannotAct: {ids: ['6-5'], outcome: {next: 'keeping', ...room, sent: 'nothing', kept: 'added'}},
-    appearanceKept: state === 'keeping' ? {ids: ['6-5'], outcome: {next: 'keeping', ...room, sent: 'nothing', kept: 'merged into the last'}} : nothingKept,
-    nameKept: state === 'keeping' ? {ids: ['6-5'], outcome: {next: 'keeping', ...room, sent: 'nothing', kept: 'replaces the kept name'}} : nothingKept,
-    canActOne: state === 'keeping' ? {ids: ['6-5'], outcome: {next: 'inRoom', ...room, sent: 'the first kept action', kept: 'none left'}} : nothingKept,
-    canActSeveral: state === 'keeping' ? {ids: ['6-5'], outcome: {next: 'keeping', ...room, sent: 'the first kept action', kept: 'one left'}} : nothingKept,
-    canActStale: state === 'keeping' ? {ids: ['6-5'], outcome: {next: 'inRoom', ...room, sent: 'the second kept action', kept: 'none left'}} : nothingKept,
-    canActTooLarge: state === 'keeping' ? {ids: ['6-5'], outcome: {next: 'inRoom', ...room, sent: 'the second kept action', kept: 'none left'}} : nothingKept,
+    appearanceKept:
+      state === 'keeping'
+        ? {ids: ['6-5'], outcome: {next: 'keeping', ...room, sent: 'nothing', kept: 'merged into the last'}}
+        : nothingKept,
+    nameKept:
+      state === 'keeping'
+        ? {ids: ['6-5'], outcome: {next: 'keeping', ...room, sent: 'nothing', kept: 'replaces the kept name'}}
+        : nothingKept,
+    canActOne:
+      state === 'keeping'
+        ? {ids: ['6-5'], outcome: {next: 'inRoom', ...room, sent: 'the first kept action', kept: 'none left'}}
+        : nothingKept,
+    canActSeveral:
+      state === 'keeping'
+        ? {ids: ['6-5'], outcome: {next: 'keeping', ...room, sent: 'the first kept action', kept: 'one left'}}
+        : nothingKept,
+    canActStale:
+      state === 'keeping'
+        ? {ids: ['6-5'], outcome: {next: 'inRoom', ...room, sent: 'the second kept action', kept: 'none left'}}
+        : nothingKept,
+    canActTooLarge:
+      state === 'keeping'
+        ? {ids: ['6-5'], outcome: {next: 'inRoom', ...room, sent: 'the second kept action', kept: 'none left'}}
+        : nothingKept,
     gameEnds: {ids: ['6-2', ...dropIds], outcome: {next: 'over', ...room, ...(dropped ? {kept: dropped} : {})}}
   }
 }
@@ -104,7 +134,13 @@ export const table: {readonly [S in State]: Row} = {
     submitCode: enters('inRoom', ['6-1', '6-2']),
     submitNoCode: {
       ids: ['6-1'],
-      outcome: {next: 'start', screen: 'start', leaveButton: false, netcode: 'nothing', formError: 'That is not a room code. Codes have 5 characters, like K7MXQ.'}
+      outcome: {
+        next: 'start',
+        screen: 'start',
+        leaveButton: false,
+        netcode: 'nothing',
+        formError: 'That is not a room code. Codes have 5 characters, like K7MXQ.'
+      }
     },
     openWithCode: enters('inRoom', ['6-1', '6-2']),
     reload: enters('inRoom', ['6-1', '6-2']),
@@ -134,7 +170,10 @@ export const table: {readonly [S in State]: Row} = {
     reloadNoCode: startsAnew(),
     addressOtherCode: enters('inRoom', ['6-3']),
     addressNoChange: {ids: ['6-3'], outcome: {next: 'over', ...room, netcode: 'nothing'}},
-    leavePressed: {ids: ['6-2'], outcome: {next: 'start', screen: 'start', leaveButton: false, netcode: 'nothing', address: 'no room code'}},
+    leavePressed: {
+      ids: ['6-2'],
+      outcome: {next: 'start', screen: 'start', leaveButton: false, netcode: 'nothing', address: 'no room code'}
+    },
     joinRequest: ended,
     action: ended,
     actionCannotAct: ended,

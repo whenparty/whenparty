@@ -25,15 +25,15 @@ The games in [games/](/games/README.md) send game data directly between players'
 
 A change reaches `main` through a [pull request](/.github/docs/github-setup.md#main-branch) once `ci.yml` passes on it. A push to `main` [deploys](/.github/docs/deploys.md) only the parts whose files it changes. A change to Markdown files alone deploys nothing, apart from a post of the blog.
 
-| Folder | Workflow | What it deploys |
-| --- | --- | --- |
-| `infra/` | `infra.yml` | the nginx proxy and its configs |
-| `www/` | `www.yml` | the When Party site |
-| `blog/` | `blog.yml` | the blog |
-| `nii-au/` | `nii-au.yml` | the `www.nii.au` site |
-| `temp-sites/projects/` | `temp-sites.yml` | each temporary site that changed |
-| `temp-sites/traefik/` | `traefik.yml` | the Traefik router |
-| `games/` | `games.yml` | the [deployments](/docs/glossary.md#deployment) that a change reaches: each game, the index page, the signaling server and the TURN relay |
+| Folder                 | Workflow         | What it deploys                                                                                                                           |
+| ---------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `infra/`               | `infra.yml`      | the nginx proxy and its configs                                                                                                           |
+| `www/`                 | `www.yml`        | the When Party site                                                                                                                       |
+| `blog/`                | `blog.yml`       | the blog                                                                                                                                  |
+| `nii-au/`              | `nii-au.yml`     | the `www.nii.au` site                                                                                                                     |
+| `temp-sites/projects/` | `temp-sites.yml` | each temporary site that changed                                                                                                          |
+| `temp-sites/traefik/`  | `traefik.yml`    | the Traefik router                                                                                                                        |
+| `games/`               | `games.yml`      | the [deployments](/docs/glossary.md#deployment) that a change reaches: each game, the index page, the signaling server and the TURN relay |
 
 The [workflows](/.github/workflows/) live in `.github/workflows/`. Each site and game runs as a container from an image that the workflow builds and pushes to the [GitHub Container Registry](/.github/docs/github-setup.md#container-packages), and the VPS pulls it from there.
 

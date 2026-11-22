@@ -7,11 +7,11 @@ const framesMs = [130, 250, 400, 550, 700]
 
 const test = base.extend({
   context: async ({context}, use) => {
-    await context.route('http://www.test/**', (route) => {
+    await context.route('http://www.test/**', route => {
       const {pathname} = new URL(route.request().url())
       return route.fulfill({path: html + (pathname === '/' ? 'index.html' : pathname.slice(1))})
     })
-    await context.route(games, (route) => route.fulfill({body: 'games'}))
+    await context.route(games, route => route.fulfill({body: 'games'}))
     await use(context)
   }
 })
@@ -34,7 +34,7 @@ async function openAtRest(page: Page) {
 }
 
 async function seekTakeoff(page: Page, timeMs: number) {
-  await page.evaluate((timeMs) => {
+  await page.evaluate(timeMs => {
     for (const animation of document.getAnimations()) {
       if (animation instanceof CSSAnimation && animation.animationName !== 'takeoff') continue
       animation.pause()
@@ -46,8 +46,7 @@ async function seekTakeoff(page: Page, timeMs: number) {
 async function contactSheet(page: Page, frames: {label: string; png: Buffer}[]) {
   const sheet = await page.context().newPage()
   const figures = frames.map(
-    ({label, png}) =>
-      `<figure><img src="data:image/png;base64,${png.toString('base64')}"><figcaption>${label}</figcaption></figure>`
+    ({label, png}) => `<figure><img src="data:image/png;base64,${png.toString('base64')}"><figcaption>${label}</figcaption></figure>`
   )
   await sheet.setContent(
     `<style>
@@ -70,7 +69,7 @@ for (const {name, viewport} of storyboards) {
     const frames = [{label: 'at rest', png: await page.screenshot()}]
     const link = page.locator('.balloon-games a')
     await link.hover()
-    await page.evaluate(() => document.getAnimations().forEach((animation) => animation instanceof CSSTransition && animation.finish()))
+    await page.evaluate(() => document.getAnimations().forEach(animation => animation instanceof CSSTransition && animation.finish()))
     await link.click()
     for (const timeMs of framesMs) {
       await seekTakeoff(page, timeMs)
@@ -91,7 +90,7 @@ test('a click releases the balloon and opens its link by the end of the takeoff'
   expect(page.url()).toBe('http://www.test/')
   const takeoffMs = await balloon
     .locator('.balloon-float')
-    .evaluate((float) => Number(float.getAnimations()[0]!.effect!.getTiming().duration))
+    .evaluate(float => Number(float.getAnimations()[0]!.effect!.getTiming().duration))
   await page.clock.runFor(takeoffMs)
   await expect(page).toHaveURL(games)
 })
@@ -102,7 +101,7 @@ test('during the takeoff Tab reaches no other link and no further click releases
   await page.evaluate(() => {
     const opened: string[] = []
     Object.assign(window, {opened})
-    navigation.addEventListener('navigate', (event) => {
+    navigation.addEventListener('navigate', event => {
       opened.push(event.destination.url)
       event.preventDefault()
     })
@@ -129,8 +128,8 @@ test('a click with a modifier key is left to the browser without the takeoff', a
   await openAtRest(page)
   const prevented = page.evaluate(
     () =>
-      new Promise<boolean>((resolve) =>
-        addEventListener('click', (event) => {
+      new Promise<boolean>(resolve =>
+        addEventListener('click', event => {
           resolve(event.defaultPrevented)
           event.preventDefault()
         })
@@ -150,7 +149,9 @@ test('under reduced motion a click opens the link at once', async ({page}) => {
   await expect(page).toHaveURL(games)
 })
 
-test('a page restored from the back-forward cache shows its balloons again, leaves nothing inert and refilters the one that flew', async ({page}) => {
+test('a page restored from the back-forward cache shows its balloons again, leaves nothing inert and refilters the one that flew', async ({
+  page
+}) => {
   await openAtRest(page)
   await page.locator('.balloon-games a').click()
   const {inflate, art} = await page.evaluate(() => {
@@ -158,7 +159,11 @@ test('a page restored from the back-forward cache shows its balloons again, leav
     const timing = (animation: Animation) => ({name: (animation as CSSAnimation).animationName, ...animation.effect!.getTiming()})
     const balloon = document.querySelector('.balloon-games')!
     return {
-      inflate: balloon.querySelector('.balloon-float')!.getAnimations().map(timing).find(({name}) => name === 'inflate')!,
+      inflate: balloon
+        .querySelector('.balloon-float')!
+        .getAnimations()
+        .map(timing)
+        .find(({name}) => name === 'inflate')!,
       art: balloon.querySelector('.balloon-art')!.getAnimations().map(timing)
     }
   })

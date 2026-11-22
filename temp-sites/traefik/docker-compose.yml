@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "127.0.0.1:18080:8080"
+      - '127.0.0.1:18080:8080'
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -17,19 +17,19 @@ services:
       - wp_tempsites
 
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
-      - "traefik.http.routers.dashboard.entrypoints=traefik"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
-      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH:-}"
-      - "traefik.http.routers.unknown-host.rule=HostRegexp(`.+`)"
-      - "traefik.http.routers.unknown-host.priority=1"
-      - "traefik.http.routers.unknown-host.entrypoints=web"
-      - "traefik.http.routers.unknown-host.service=noop@internal"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.dashboard.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)'
+      - 'traefik.http.routers.dashboard.entrypoints=traefik'
+      - 'traefik.http.routers.dashboard.service=api@internal'
+      - 'traefik.http.routers.dashboard.middlewares=dashboard-auth'
+      - 'traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH:-}'
+      - 'traefik.http.routers.unknown-host.rule=HostRegexp(`.+`)'
+      - 'traefik.http.routers.unknown-host.priority=1'
+      - 'traefik.http.routers.unknown-host.entrypoints=web'
+      - 'traefik.http.routers.unknown-host.service=noop@internal'
 
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      test: ['CMD', 'traefik', 'healthcheck', '--ping']
       interval: 30s
       timeout: 3s
       retries: 3

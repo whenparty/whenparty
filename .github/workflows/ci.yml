@@ -138,8 +138,11 @@ jobs:
   docs:
     uses: ./.github/workflows/check-docs.yml
 
+  format:
+    uses: ./.github/workflows/check-format.yml
+
   result:
-    needs: [changes, games-changes, games, turn, nginx, project-names, game-names, www, blog, docs]
+    needs: [changes, games-changes, games, turn, nginx, project-names, game-names, www, blog, docs, format]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15

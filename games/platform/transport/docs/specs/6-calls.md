@@ -6,6 +6,7 @@
   - `busy`, when the called connection is the callee of 12 live call records, or of 2 with this caller, or the caller's connection is the caller of 64.
 
   The server tells the caller the reason at once. A rejected call creates no record, and the called page is not told of it.
+
 - `6-2` When it accepts a call, the server creates a call record with the call's identifier, both peer IDs and the server's deadline, and at once passes the call with the caller's description to the called page. A record is live until the server forgets it (6-5, 6-6). The server never forgets a record to make room for another.
 - `6-3` A signal is a description, or a batch of candidates, that a page sends for a peer connection. The server passes signals and one closing message only between the two pages of a live record, holds nothing back and passes them in the order they arrive. It drops the ones of no live record, and the ones from a page that is not of the record.
 - `6-4` A call carries the caller's remaining time until its deadline ([3-5](3-connection.md)), rounded up to a whole millisecond. The server's deadline is the moment it gets the call plus that time. With the call, the server passes the called page its own remaining time, rounded up.

@@ -6,12 +6,12 @@
 nii-au/scripts/encode-media.sh nii-au/media-source/journey.mp4
 ```
 
-| Files | What they are |
-|---|---|
-| `journey-desktop.av1.mp4`, `journey-desktop.mp4` | AV1 and H.264, 1280x720, the full frame |
-| `journey-mobile.av1.mp4`, `journey-mobile.mp4` | AV1 and H.264, 576x720, a portrait slice of the frame |
-| `poster-desktop.webp`, `poster-mobile.webp` | frame 0 of each video |
-| `paper.png` | the tiled page background |
+| Files                                            | What they are                                         |
+| ------------------------------------------------ | ----------------------------------------------------- |
+| `journey-desktop.av1.mp4`, `journey-desktop.mp4` | AV1 and H.264, 1280x720, the full frame               |
+| `journey-mobile.av1.mp4`, `journey-mobile.mp4`   | AV1 and H.264, 576x720, a portrait slice of the frame |
+| `poster-desktop.webp`, `poster-mobile.webp`      | frame 0 of each video                                 |
+| `paper.png`                                      | the tiled page background                             |
 
 ## Which file a visitor gets
 

@@ -6,7 +6,7 @@ The packages of `games/` form one pnpm workspace, whose folders [pnpm-workspace.
 
 - `pnpm --filter <package> test` runs one package's [tests in Node](/docs/conventions/tests.md), and `pnpm --filter <package> exec node --test --test-name-pattern '\b1-3 ' 'src/**/!(*.browser).test.{ts,mjs}'` only those of its requirement `1-3`. `pnpm test` runs the Node tests of every package, and `pnpm typecheck` checks the types of every package that has a `typecheck` script; [signaling](../platform/signaling/AGENTS.md) has none.
 - `pnpm test:browser` runs the browser tests of every package, as [browser-tests.md](browser-tests.md) says.
-- `pnpm format` formats the code of every package. Run it before committing.
+- Prettier formats the files of `games/` with the rest of the repository: `pnpm format` in the root of the repository, as [checks.md](/.github/docs/checks.md#the-checks) says.
 - [games-changes.md](/.github/docs/games-changes.md) says which packages a change checks in CI.
 
 ## Running a title locally

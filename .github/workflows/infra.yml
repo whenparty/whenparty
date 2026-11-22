@@ -4,9 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      - "infra/**"
-      - "!infra/**/*.md"
-      - ".github/workflows/infra.yml"
+      - 'infra/**'
+      - '!infra/**/*.md'
+      - '.github/workflows/infra.yml'
 
 jobs:
   validate:
@@ -26,8 +26,8 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: "infra/docker-compose.yml,infra/nginx/conf.d,infra/scripts"
-          target: "/opt/services/whenparty/infra/"
+          source: 'infra/docker-compose.yml,infra/nginx/conf.d,infra/scripts'
+          target: '/opt/services/whenparty/infra/'
           strip_components: 1
 
       - name: Deploy

@@ -1,0 +1,13 @@
+{
+  "name": "whenparty",
+  "private": true,
+  "description": "Tools for every file of the repository: Prettier",
+  "scripts": {
+    "deps:cached": "pnpm install --frozen-lockfile --offline",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

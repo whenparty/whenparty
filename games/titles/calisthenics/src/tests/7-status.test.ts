@@ -4,7 +4,19 @@ import type {End, Failure} from '@whenparty/netcode'
 import type {Visit} from '../connection.ts'
 import {createChampionship, type Championship} from '../core/index.ts'
 import {statusOf} from '../frontends/shared/texts.ts'
-import {announced, confirmAll, finishPerformances, lobbyOf, must, move, perfectPlans, performing, rests, started, withAthlete} from './fixtures.ts'
+import {
+  announced,
+  confirmAll,
+  finishPerformances,
+  lobbyOf,
+  must,
+  move,
+  perfectPlans,
+  performing,
+  rests,
+  started,
+  withAthlete
+} from './fixtures.ts'
 
 const visitOf = (change: Partial<Visit>): Visit => ({
   code: 'K7MXQ',
@@ -57,11 +69,17 @@ describe('7-status', () => {
   })
 
   it('7-1 says that the room lost its championship, before the lobby rows', () => {
-    assert.equal(playing(createChampionship(), {...asHost, matchNumber: 1}), 'This room lost its championship. Create a new room to play again.')
+    assert.equal(
+      playing(createChampionship(), {...asHost, matchNumber: 1}),
+      'This room lost its championship. Create a new room to play again.'
+    )
   })
 
   it('7-1 gives the lobby status of the host and of another seated player', () => {
-    assert.equal(playing(lobbyOf(2), {...asHost, matchNumber: 0}), 'Send the code to the other players. Start when everyone has entered a name.')
+    assert.equal(
+      playing(lobbyOf(2), {...asHost, matchNumber: 0}),
+      'Send the code to the other players. Start when everyone has entered a name.'
+    )
     assert.equal(playing(lobbyOf(2), {matchNumber: 0}), 'Enter a name. The host starts the championship.')
   })
 
@@ -112,7 +130,10 @@ describe('7-status', () => {
     const failed = (failure: Failure, waitedForHost = false) =>
       statusOf(visitOf({phase: 'over', finish: {kind: 'failed', failure}, waitedForHost}))
     assert.equal(failed({cause: 'other version', older: 'page'}), 'This game was updated. Reload the page.')
-    assert.equal(failed({cause: 'other version', older: 'host'}), 'The host of K7MXQ runs an older version of the game. Ask them to reload the page.')
+    assert.equal(
+      failed({cause: 'other version', older: 'host'}),
+      'The host of K7MXQ runs an older version of the game. Ask them to reload the page.'
+    )
     assert.equal(failed({cause: 'outdated', older: 'server'}), 'The game server is being updated. Try again in a few minutes.')
     assert.equal(failed({cause: 'outdated', older: 'page'}), 'This game was updated. Reload the page.')
     assert.equal(failed({cause: 'bad rules'}), 'This game has an error and cannot start.')

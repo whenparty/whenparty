@@ -38,7 +38,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_DEPLOY_KEY }}
-          source: "temp-sites/traefik/docker-compose.yml,temp-sites/traefik/traefik.yml"
+          source: 'temp-sites/traefik/docker-compose.yml,temp-sites/traefik/traefik.yml'
           target: ${{ env.TRAEFIK_DIR }}
           overwrite: true
           strip_components: 2

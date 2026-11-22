@@ -71,7 +71,9 @@ const endingOf = (finish: Finish, code: string, waitedForHost: boolean): string 
           ? 'The host runs an older version of the game. Ask them to reload the page.'
           : 'This game was updated. Reload the page.'
       case 'outdated':
-        return end.older === 'page' ? 'This game was updated. Reload the page.' : 'The game server is being updated. Try again in a few minutes.'
+        return end.older === 'page'
+          ? 'This game was updated. Reload the page.'
+          : 'The game server is being updated. Try again in a few minutes.'
       case 'removed':
         return 'You were away too long, so you left this game.'
       case 'owner away':
@@ -92,7 +94,9 @@ const endingOf = (finish: Finish, code: string, waitedForHost: boolean): string 
         ? 'This game was updated. Reload the page.'
         : `The host of ${code} runs an older version of the game. Ask them to reload the page.`
     case 'outdated':
-      return failure.older === 'page' ? 'This game was updated. Reload the page.' : 'The game server is being updated. Try again in a few minutes.'
+      return failure.older === 'page'
+        ? 'This game was updated. Reload the page.'
+        : 'The game server is being updated. Try again in a few minutes.'
     case 'bad rules':
       return 'This game has an error and cannot start.'
     case 'busy':
@@ -128,7 +132,9 @@ const championshipText = (visit: Visit, state: Championship): string => {
   }
 
   if (state.stage === 'lobby') {
-    return isHost ? 'Send the code to the other players. Start when everyone has entered a name.' : 'Enter a name. The host starts the championship.'
+    return isHost
+      ? 'Send the code to the other players. Start when everyone has entered a name.'
+      : 'Enter a name. The host starts the championship.'
   }
 
   if (isFinished(state)) {

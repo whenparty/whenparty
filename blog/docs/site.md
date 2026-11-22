@@ -19,4 +19,5 @@
   ```
 
   Then open http://localhost:3002. The container sends none of the proxy's headers, so a local run does not show what the Content-Security-Policy blocks.
+
 - A push to `main` that changes a file in `blog/` other than Markdown, or a post, runs [blog.yml](/.github/workflows/blog.yml), which deploys through [site.yml](/.github/workflows/site.yml), as [deploys.md](/.github/docs/deploys.md) says.

@@ -4,18 +4,19 @@
 
 ## The checks
 
-| Job in `ci.yml` | Workflow | Runs when a change touches | Also called by |
-| --- | --- | --- | --- |
-| `games` | `check-games.yml` | `games/`, except `games/platform/turn/` | `games.yml` |
-| `turn` | `check-turn.yml` | `games/platform/turn/` | `games.yml` |
-| `nginx` | `check-nginx.yml` | `infra/` | `infra.yml` |
-| `project-names` | `check-project-names.yml` | `games/` or `temp-sites/projects/` | `games.yml` |
-| `game-names` | `check-game-names.yml` | a `compose.yml` or `docker-compose.yml` anywhere, also with `.yaml`, or `infra/nginx/conf.d/games.conf` | none |
-| `www` | `check-www.yml` | `www/` | none |
-| `blog` | `check-blog.yml` | `blog/`, a [post](/blog/docs/posts.md) in `blog/src/posts/` included | none |
-| `docs` | `check-docs.yml` | any file | none |
+| Job in `ci.yml` | Workflow                  | Runs when a change touches                                                                              | Also called by |
+| --------------- | ------------------------- | ------------------------------------------------------------------------------------------------------- | -------------- |
+| `games`         | `check-games.yml`         | `games/`, except `games/platform/turn/`                                                                 | `games.yml`    |
+| `turn`          | `check-turn.yml`          | `games/platform/turn/`                                                                                  | `games.yml`    |
+| `nginx`         | `check-nginx.yml`         | `infra/`                                                                                                | `infra.yml`    |
+| `project-names` | `check-project-names.yml` | `games/` or `temp-sites/projects/`                                                                      | `games.yml`    |
+| `game-names`    | `check-game-names.yml`    | a `compose.yml` or `docker-compose.yml` anywhere, also with `.yaml`, or `infra/nginx/conf.d/games.conf` | none           |
+| `www`           | `check-www.yml`           | `www/`                                                                                                  | none           |
+| `blog`          | `check-blog.yml`          | `blog/`, a [post](/blog/docs/posts.md) in `blog/src/posts/` included                                    | none           |
+| `docs`          | `check-docs.yml`          | any file                                                                                                | none           |
+| `format`        | `check-format.yml`        | any file                                                                                                | none           |
 
-Every check also runs when `ci.yml`, its own workflow or the [deploy workflow](/.github/docs/deploys.md) that calls it changes. Only `games.yml` and `infra.yml` call their checks before every deploy, and a failing check stops the deploy. No other deploy workflow runs a check before it deploys. Markdown files start no check other than `docs`, apart from a post in `blog/src/posts/`, which also starts `blog`.
+Every check also runs when `ci.yml`, its own workflow or the [deploy workflow](/.github/docs/deploys.md) that calls it changes. Only `games.yml` and `infra.yml` call their checks before every deploy, and a failing check stops the deploy. No other deploy workflow runs a check before it deploys. Markdown files start no check other than `docs` and `format`, apart from a post in `blog/src/posts/`, which also starts `blog`.
 
 - `check-games.yml` tests the packages that the `games-changes` job finds, as [games-changes.md](/.github/docs/games-changes.md) says. When one of the workflows above or `games-changes.yml` changes, it tests every package. Its `test` job runs pnpm in the Node image of the Dockerfiles in `games/`, with pnpm from the image `ghcr.io/pnpm/pnpm` that they use, as [pnpm-in-images.md](/games/docs/decisions/pnpm-in-images.md) decides. The tag of the pnpm image is `<version>-alpine` with the version that `packageManager` in `games/package.json` names. Its `browser` job runs the browser tests of the same packages on the runner, in its Google Chrome, on the Node version of that image and with coturn in Docker, as [browser-tests.md](/games/docs/browser-tests.md) says. When they fail, it uploads their report and results as the `games-browser-tests` artifact. Its `images` job builds the image of each [deployment](/docs/glossary.md#deployment) with a `Dockerfile` that the `games-changes` job finds, or, in `ci.yml` when one of the workflows above or `games-changes.yml` changes, of every deployment of `games/` with a `Dockerfile`, from the context `games/` that `games.yml` gives `deploy-project.yml`, without a cache from earlier runs and without pushing it. Then it starts the image and waits up to 30 seconds for its health check to pass, and fails, with the container's log, when the check does not pass or the image has none, so a change that breaks the build or the start of an image fails before it reaches `main`. `games.yml` calls `check-games.yml` with every package and with the deployments that its `changes` job finds, so before each deploy it tests every package and builds and starts the images of the deployments that the push reaches. A new Node image changes `check-games.yml`, the Node version of its `browser` job and every Dockerfile in `games/` together. A new pnpm version changes `packageManager`, `pnpm-lock.yaml` and the tag of the pnpm image in `check-games.yml` and every Dockerfile in `games/` together.
 - `check-nginx.yml` runs `nginx -t` on the nginx configs with throwaway self-signed certificates that it creates only for `nii.au` and `when.party`. A config that names another certificate file also needs that name in the loop of `check-nginx.yml` and in that of the tests' `proxy.sh`. Then it runs the smoke tests of the proxy, as [verification.md](/infra/docs/verification.md) says. [nginx-configs.md](/infra/docs/nginx-configs.md#checking-a-change) says how to run the same check locally.
@@ -34,9 +35,11 @@ Every check also runs when `ci.yml`, its own workflow or the [deploy workflow](/
 
   The script prints each error as a line `path:line: message` and as an annotation. Run in the root of a working tree, it gives the same errors and also reads the files that git does not track yet. [docs-check.md](/docs/decisions/docs-check.md) explains why it runs in CI on every change.
 
+- `check-format.yml` installs the root `package.json` from its `pnpm-lock.yaml`, with the pnpm version that `packageManager` in `games/package.json` names, and runs its `format:check`: Prettier checks every file of the repository with [.prettierrc.json](/.prettierrc.json), skips the files that [.prettierignore](/.prettierignore) lists and those whose type it does not know, and fails when a file is not formatted or it cannot parse one. Before a commit of an agent, [format-guard.sh](/.claude/hooks/docs/format-guard.md) checks the files that the branch changes. `pnpm format` in the root formats every file.
+
 ## Skipping and the result job
 
-`ci.yml` has no `paths`. Its `changes` job finds what changed, and its `games-changes` job finds the affected packages of `games/`. Every check other than `docs` has an `if:` on their outputs; `docs` runs for every change. A workflow that `paths` keeps from running leaves a required status check pending, while a job skipped by `if:` counts as passed.
+`ci.yml` has no `paths`. Its `changes` job finds what changed, and its `games-changes` job finds the affected packages of `games/`. Every check other than `docs` and `format` has an `if:` on their outputs; `docs` and `format` run for every change. A workflow that `paths` keeps from running leaves a required status check pending, while a job skipped by `if:` counts as passed.
 
 The `result` job fails when any job it needs failed or was cancelled. So the ruleset `main-pull-requests` requires only `result`, as [github-setup.md](/.github/docs/github-setup.md#main-branch) says.
 
