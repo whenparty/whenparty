@@ -174,7 +174,9 @@ jobs:
               echo "$PROJECT_DIR already absent on server"
             fi
 
-            docker image prune -f
+            if ! docker image prune -f; then
+              echo "Warning: docker image prune did not run; the next deploy removes the unused images"
+            fi
 
       - name: Point latest at the deployed image
         if: inputs.image-ref != '' && steps.project_dir.outputs.exists == 'true'

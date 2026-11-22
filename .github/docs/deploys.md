@@ -40,6 +40,7 @@ What the deploy leaves behind:
 - After the containers of a given digest pass, it moves the tag `latest` to that digest, so `latest` is the image that the last successful deploy started.
 - When the folder's `compose.yml` names `TURN_SECRET`, it writes the secret to a private `.env` next to it when the secret is set, and otherwise warns. [github-setup.md](/.github/docs/github-setup.md) says which deployments use it.
 - When the folder is gone, it runs `docker compose down` on the VPS and deletes the folder there.
+- Last, it removes the images that no container uses with `docker image prune`. Docker runs one prune at a time, and the deploys of one run of `games.yml` reach this step together, so a prune that Docker refuses only warns, and a later deploy removes those images.
 
 Deployment names of `games/` and `temp-sites/projects/` share one namespace, and `check-project-names.yml` checks it.
 
