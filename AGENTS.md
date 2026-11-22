@@ -21,6 +21,7 @@ This repository holds everything that runs on the WhenParty VPS. Its top-level f
 - The conventions files in `docs/conventions/`, listed below, hold the rules for each kind of file and for how to work.
 - The [glossary](/docs/glossary.md) defines the terms that documents use and that can be read in more than one way.
 - [Open questions](/docs/open-questions.md) lists undecided questions. The [workflow rules](/docs/conventions/workflow.md) say when a question is added and deleted.
+- [pnpm-deps-check.md](/docs/decisions/pnpm-deps-check.md) says why the root [pnpm-workspace.yaml](/pnpm-workspace.yaml) sets `verifyDepsBeforeRun` to `warn`. Read it before changing that file.
 
 ## Conventions files
 
