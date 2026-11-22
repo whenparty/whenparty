@@ -25,6 +25,14 @@
       "Bash(pnpm * install *)",
       "Bash(pnpm i *)",
       "Bash(pnpm * i *)"
+    ],
+    "deny": [
+      "Bash(npx *)",
+      "Bash(npm exec *)",
+      "Bash(npm * exec *)",
+      "Bash(npm x *)",
+      "Bash(pnpm dlx *)",
+      "Bash(pnpm * dlx *)"
     ]
   },
   "hooks": {
