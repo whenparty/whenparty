@@ -5,3 +5,5 @@ packages:
 
 allowBuilds:
   '@swc/core': false
+
+verifyDepsBeforeRun: warn
