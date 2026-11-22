@@ -1,140 +1,163 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
-  <title>When Party</title>
-  <meta name="description" content="When Party: games you play together in the browser, and a blog. Contact: whenparty@nii.au">
-  <link rel="icon" href="data:,">
-  <link rel="preload" href="golos-text.woff2?v=6e2de38e" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=4d19d2b5">
-  <script src="takeoff.js?v=d13ac7ea" defer></script>
-</head>
-<body>
-  <svg class="defs" aria-hidden="true" focusable="false">
-    <defs>
-      <filter id="pencil" x="-5%" y="-30%" width="110%" height="160%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="grain"/>
-        <feDisplacementMap in="SourceGraphic" in2="grain" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
-      </filter>
-      <filter id="wash" x="-10%" y="-40%" width="120%" height="180%" color-interpolation-filters="sRGB">
-        <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="4" result="flow"/>
-        <feDisplacementMap in="SourceGraphic" in2="flow" scale="7" xChannelSelector="R" yChannelSelector="G" result="bleed"/>
-        <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="9" result="pigment"/>
-        <feColorMatrix in="pigment" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1 0 0 0 1.35" result="pigmentMask"/>
-        <feComposite in="bleed" in2="pigmentMask" operator="in"/>
-      </filter>
-    </defs>
-  </svg>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>When Party</title>
+    <meta name="description" content="When Party: games you play together in the browser, and a blog. Contact: whenparty@nii.au" />
+    <link rel="icon" href="data:," />
+    <link rel="preload" href="golos-text.woff2?v=6e2de38e" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css?v=662c3a16" />
+    <script src="takeoff.js?v=f44a79e3" defer></script>
+  </head>
+  <body>
+    <svg class="defs" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="pencil" x="-5%" y="-30%" width="110%" height="160%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="grain" />
+          <feDisplacementMap in="SourceGraphic" in2="grain" scale="1.6" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <filter id="wash" x="-10%" y="-40%" width="120%" height="180%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="4" result="flow" />
+          <feDisplacementMap in="SourceGraphic" in2="flow" scale="7" xChannelSelector="R" yChannelSelector="G" result="bleed" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="9" result="pigment" />
+          <feColorMatrix in="pigment" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1 0 0 0 1.35" result="pigmentMask" />
+          <feComposite in="bleed" in2="pigmentMask" operator="in" />
+        </filter>
+      </defs>
+    </svg>
 
-  <main class="layout">
-    <div class="intro">
-      <svg class="garland" viewBox="0 0 360 64" aria-hidden="true" focusable="false">
-        <g filter="url(#pencil)">
-          <path class="pencil draw" pathLength="1" d="M6 10 C 90 34, 270 34, 354 10"/>
-          <g class="flags">
-            <path class="pencil" d="M36 16.9 L48 46.8 L60 20.7 M100 24.9 L112 53.7 L124 26.5 M164 27.9 L176 55.9 L188 28.0 M228 26.9 L240 54.2 L252 25.5 M292 21.7 L304 48.0 L316 18.3"/>
-            <path class="hatch" d="M45 38.8 L51 32.8 M109 45.7 L115 39.7 M173 47.9 L179 41.9 M237 46.2 L243 40.2 M301 40.0 L307 34.0"/>
+    <main class="layout">
+      <div class="intro">
+        <svg class="garland" viewBox="0 0 360 64" aria-hidden="true" focusable="false">
+          <g filter="url(#pencil)">
+            <path class="pencil draw" pathLength="1" d="M6 10 C 90 34, 270 34, 354 10" />
+            <g class="flags">
+              <path
+                class="pencil"
+                d="M36 16.9 L48 46.8 L60 20.7 M100 24.9 L112 53.7 L124 26.5 M164 27.9 L176 55.9 L188 28.0 M228 26.9 L240 54.2 L252 25.5 M292 21.7 L304 48.0 L316 18.3"
+              />
+              <path class="hatch" d="M45 38.8 L51 32.8 M109 45.7 L115 39.7 M173 47.9 L179 41.9 M237 46.2 L243 40.2 M301 40.0 L307 34.0" />
+            </g>
+            <path class="pencil pencil-second draw" pathLength="1" d="M7 11 C 91 35, 271 35, 353 11" />
           </g>
-          <path class="pencil pencil-second draw" pathLength="1" d="M7 11 C 91 35, 271 35, 353 11"/>
-        </g>
-      </svg>
-
-      <h1 class="rise">When Party</h1>
-      <p class="lead rise">When’s the party? Soon. Keep going.</p>
-      <p class="about rise">A small place for the work that gets us there and the evenings with friends when it comes. Each new thing gets a balloon of its own.</p>
-    </div>
-
-    <nav class="places" aria-label="When Party sites">
-      <ul>
-        <li class="balloon balloon-games">
-          <a class="balloon-float" href="https://games.when.party/">
-            <svg class="balloon-art" viewBox="0 0 200 210" aria-hidden="true" focusable="false">
-              <path class="string string-side" d="M84 140 C 82 152, 96 158, 110 161 C 122 164, 130 164, 134 168"/>
-              <path class="string string-short" d="M84 140 C 80 150, 87 160, 83 170 C 82 174, 81 177, 80.5 180"/>
-              <path class="string string-long" d="M84 140 C 79 158, 94 176, 89 196 C 87 208, 92 220, 92 229"/>
-              <path class="balloon-fill" filter="url(#wash)" d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"/>
-              <path class="shine" d="M48 54 C 50 40, 58 29, 70 23"/>
-              <g filter="url(#pencil)">
-                <path class="pencil balloon-outline" d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"/>
-                <path class="pencil pencil-second" d="M118 22 C 132 36, 138 56, 135 74 C 132 98, 112 122, 88 130"/>
-                <path class="pencil knot" d="M77 141 C 80 137, 82 134, 84 132 C 86 134, 88 137, 91 141 C 86 139, 82 139, 77 141 Z"/>
-                <path class="hatch" d="M112 104 L120 96 M104 114 L116 102 M96 121 L106 111"/>
-              </g>
-            </svg>
-            <span class="balloon-name">Games</span>
-          </a>
-        </li>
-        <li class="balloon balloon-blog">
-          <a class="balloon-float" href="https://blog.when.party/">
-            <svg class="balloon-art" viewBox="0 0 200 210" aria-hidden="true" focusable="false">
-              <path class="string string-side" d="M84 140 C 82 152, 96 158, 110 161 C 122 164, 130 164, 134 168"/>
-              <path class="string string-short" d="M84 140 C 80 150, 87 160, 83 170 C 82 174, 81 177, 80.5 180"/>
-              <path class="string string-long" d="M84 140 C 79 158, 94 176, 89 196 C 87 208, 92 220, 92 229"/>
-              <path class="balloon-fill" filter="url(#wash)" d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"/>
-              <path class="shine" d="M48 54 C 50 40, 58 29, 70 23"/>
-              <g filter="url(#pencil)">
-                <path class="pencil balloon-outline" d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"/>
-                <path class="pencil pencil-second" d="M118 22 C 132 36, 138 56, 135 74 C 132 98, 112 122, 88 130"/>
-                <path class="pencil knot" d="M77 141 C 80 137, 82 134, 84 132 C 86 134, 88 137, 91 141 C 86 139, 82 139, 77 141 Z"/>
-                <path class="hatch" d="M112 104 L120 96 M104 114 L116 102 M96 121 L106 111"/>
-              </g>
-            </svg>
-            <span class="balloon-name">Blog</span>
-          </a>
-        </li>
-        <li class="balloon balloon-soon" aria-hidden="true">
-          <div class="balloon-float">
-            <svg class="balloon-art" viewBox="0 0 200 210" focusable="false">
-              <path class="string string-side" d="M84 140 C 82 152, 96 158, 110 161 C 122 164, 130 164, 134 168"/>
-              <path class="string string-short" d="M84 140 C 80 150, 87 160, 83 170 C 82 174, 81 177, 80.5 180"/>
-              <path class="string string-long" d="M84 140 C 79 158, 94 176, 89 196 C 87 208, 92 220, 92 229"/>
-              <g class="balloon-body" filter="url(#pencil)">
-                <path class="pencil balloon-outline" d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"/>
-                <path class="pencil knot" d="M77 141 C 80 137, 82 134, 84 132 C 86 134, 88 137, 91 141 C 86 139, 82 139, 77 141 Z"/>
-              </g>
-            </svg>
-            <span class="balloon-name">soon</span>
-          </div>
-        </li>
-      </ul>
-      <svg class="rope rope-vertical" viewBox="0 0 16 600" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        <g filter="url(#pencil)">
-          <path class="pencil rope-line draw" pathLength="1" d="M8 0 C 6 150, 10 330, 8 600"/>
-        </g>
-      </svg>
-      <svg class="rope rope-horizontal" viewBox="0 0 600 16" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        <g filter="url(#pencil)">
-          <path class="pencil rope-line draw" pathLength="1" d="M0 8 C 150 6, 390 11, 600 8"/>
-        </g>
-      </svg>
-      <svg class="weight" viewBox="0 0 28 30" aria-hidden="true" focusable="false">
-        <g filter="url(#pencil)">
-          <path class="pencil" d="M14 9 C 9 2, 4 6, 14 9 C 24 6, 19 2, 14 9"/>
-          <path class="pencil" d="M4 10 L24 10 L24 27 L4 27 Z"/>
-          <path class="pencil pencil-second" d="M14 10 L14 27"/>
-          <path class="hatch" d="M18 24 L22 20 M18 19 L22 15"/>
-        </g>
-      </svg>
-    </nav>
-
-    <div class="contact rise">
-      <svg class="rule" viewBox="0 0 560 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        <g filter="url(#pencil)">
-          <path class="pencil" d="M2 7 C 140 4, 300 9, 558 5"/>
-          <path class="pencil pencil-second" d="M3 8 C 141 5, 301 10, 557 6"/>
-        </g>
-      </svg>
-
-      <p class="label">Contact</p>
-      <a class="email pg-sketch" href="mailto:whenparty@nii.au">
-        <svg class="band" viewBox="0 0 200 16" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-          <rect class="band-fill" x="3" y="1" width="194" height="14" rx="6" filter="url(#wash)"/>
         </svg>
-        <span>whenparty@nii.au</span>
-      </a>
-    </div>
-  </main>
-</body>
+
+        <h1 class="rise">When Party</h1>
+        <p class="lead rise">When’s the party? Soon. Keep going.</p>
+        <p class="about rise">
+          A small place for the work that gets us there and the evenings with friends when it comes. Each new thing gets a balloon of its
+          own.
+        </p>
+      </div>
+
+      <nav class="places" aria-label="When Party sites">
+        <ul>
+          <li class="balloon balloon-games">
+            <a class="balloon-float" href="https://games.when.party/">
+              <svg class="balloon-art" viewBox="0 0 200 210" aria-hidden="true" focusable="false">
+                <path class="string string-side" d="M84 140 C 82 152, 96 158, 110 161 C 122 164, 130 164, 134 168" />
+                <path class="string string-short" d="M84 140 C 80 150, 87 160, 83 170 C 82 174, 81 177, 80.5 180" />
+                <path class="string string-long" d="M84 140 C 79 158, 94 176, 89 196 C 87 208, 92 220, 92 229" />
+                <path
+                  class="balloon-fill"
+                  filter="url(#wash)"
+                  d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"
+                />
+                <path class="shine" d="M48 54 C 50 40, 58 29, 70 23" />
+                <g filter="url(#pencil)">
+                  <path
+                    class="pencil balloon-outline"
+                    d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"
+                  />
+                  <path class="pencil pencil-second" d="M118 22 C 132 36, 138 56, 135 74 C 132 98, 112 122, 88 130" />
+                  <path class="pencil knot" d="M77 141 C 80 137, 82 134, 84 132 C 86 134, 88 137, 91 141 C 86 139, 82 139, 77 141 Z" />
+                  <path class="hatch" d="M112 104 L120 96 M104 114 L116 102 M96 121 L106 111" />
+                </g>
+              </svg>
+              <span class="balloon-name">Games</span>
+            </a>
+          </li>
+          <li class="balloon balloon-blog">
+            <a class="balloon-float" href="https://blog.when.party/">
+              <svg class="balloon-art" viewBox="0 0 200 210" aria-hidden="true" focusable="false">
+                <path class="string string-side" d="M84 140 C 82 152, 96 158, 110 161 C 122 164, 130 164, 134 168" />
+                <path class="string string-short" d="M84 140 C 80 150, 87 160, 83 170 C 82 174, 81 177, 80.5 180" />
+                <path class="string string-long" d="M84 140 C 79 158, 94 176, 89 196 C 87 208, 92 220, 92 229" />
+                <path
+                  class="balloon-fill"
+                  filter="url(#wash)"
+                  d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"
+                />
+                <path class="shine" d="M48 54 C 50 40, 58 29, 70 23" />
+                <g filter="url(#pencil)">
+                  <path
+                    class="pencil balloon-outline"
+                    d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"
+                  />
+                  <path class="pencil pencil-second" d="M118 22 C 132 36, 138 56, 135 74 C 132 98, 112 122, 88 130" />
+                  <path class="pencil knot" d="M77 141 C 80 137, 82 134, 84 132 C 86 134, 88 137, 91 141 C 86 139, 82 139, 77 141 Z" />
+                  <path class="hatch" d="M112 104 L120 96 M104 114 L116 102 M96 121 L106 111" />
+                </g>
+              </svg>
+              <span class="balloon-name">Blog</span>
+            </a>
+          </li>
+          <li class="balloon balloon-soon" aria-hidden="true">
+            <div class="balloon-float">
+              <svg class="balloon-art" viewBox="0 0 200 210" focusable="false">
+                <path class="string string-side" d="M84 140 C 82 152, 96 158, 110 161 C 122 164, 130 164, 134 168" />
+                <path class="string string-short" d="M84 140 C 80 150, 87 160, 83 170 C 82 174, 81 177, 80.5 180" />
+                <path class="string string-long" d="M84 140 C 79 158, 94 176, 89 196 C 87 208, 92 220, 92 229" />
+                <g class="balloon-body" filter="url(#pencil)">
+                  <path
+                    class="pencil balloon-outline"
+                    d="M84 10 C 116 10, 138 36, 136 68 C 134 100, 108 128, 84 132 C 60 128, 34 100, 32 68 C 30 36, 52 10, 84 10 Z"
+                  />
+                  <path class="pencil knot" d="M77 141 C 80 137, 82 134, 84 132 C 86 134, 88 137, 91 141 C 86 139, 82 139, 77 141 Z" />
+                </g>
+              </svg>
+              <span class="balloon-name">soon</span>
+            </div>
+          </li>
+        </ul>
+        <svg class="rope rope-vertical" viewBox="0 0 16 600" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <g filter="url(#pencil)">
+            <path class="pencil rope-line draw" pathLength="1" d="M8 0 C 6 150, 10 330, 8 600" />
+          </g>
+        </svg>
+        <svg class="rope rope-horizontal" viewBox="0 0 600 16" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <g filter="url(#pencil)">
+            <path class="pencil rope-line draw" pathLength="1" d="M0 8 C 150 6, 390 11, 600 8" />
+          </g>
+        </svg>
+        <svg class="weight" viewBox="0 0 28 30" aria-hidden="true" focusable="false">
+          <g filter="url(#pencil)">
+            <path class="pencil" d="M14 9 C 9 2, 4 6, 14 9 C 24 6, 19 2, 14 9" />
+            <path class="pencil" d="M4 10 L24 10 L24 27 L4 27 Z" />
+            <path class="pencil pencil-second" d="M14 10 L14 27" />
+            <path class="hatch" d="M18 24 L22 20 M18 19 L22 15" />
+          </g>
+        </svg>
+      </nav>
+
+      <div class="contact rise">
+        <svg class="rule" viewBox="0 0 560 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <g filter="url(#pencil)">
+            <path class="pencil" d="M2 7 C 140 4, 300 9, 558 5" />
+            <path class="pencil pencil-second" d="M3 8 C 141 5, 301 10, 557 6" />
+          </g>
+        </svg>
+
+        <p class="label">Contact</p>
+        <a class="email pg-sketch" href="mailto:whenparty@nii.au">
+          <svg class="band" viewBox="0 0 200 16" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <rect class="band-fill" x="3" y="1" width="194" height="14" rx="6" filter="url(#wash)" />
+          </svg>
+          <span>whenparty@nii.au</span>
+        </a>
+      </div>
+    </main>
+  </body>
 </html>

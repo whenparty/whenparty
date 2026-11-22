@@ -11,14 +11,11 @@
     "deps:cached": "pnpm install --frozen-lockfile --offline",
     "test": "pnpm -r test",
     "test:browser": "sh tests/browser.sh",
-    "typecheck": "pnpm -r typecheck",
-    "format": "prettier --write \"platform/*/src/**/*.{ts,mjs}\" \"titles/*/src/**/*.ts\" \"index/src/**/*.ts\" \"tests/*.mjs\" playwright.config.ts",
-    "format:check": "prettier --check \"platform/*/src/**/*.{ts,mjs}\" \"titles/*/src/**/*.ts\" \"index/src/**/*.ts\" \"tests/*.mjs\" playwright.config.ts"
+    "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
     "@types/node": "26.6.6",
-    "prettier": "3.9.10",
     "typescript": "7.0.2",
     "vite": "8.3.4"
   }

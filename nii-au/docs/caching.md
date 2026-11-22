@@ -2,7 +2,7 @@
 
 ## Content-hashed names
 
-- To meet [serving.md](/docs/conventions/serving.md), the image build runs `scripts/fingerprint.sh`, which gives every file in `media/`, `styles.css` and `script.js` a name with a hash of its content, rewrites the references to them and lists them in `sw.js`.
+- To meet [serving.md](/docs/conventions/serving.md), the image build runs `scripts/fingerprint.sh`, which gives every file in `media/`, `styles.css` and `script.js` a name with a hash of its content, rewrites the references to them and lists them in `sw.js`. It renames the media first, because their new names change the content, and so the hashes, of `styles.css` and `script.js`.
 - In the source, reference these files by their plain path from the site root, such as `/media/poster-desktop.webp` or `/styles.css`. Media may be referenced only from `index.html`, `styles.css` and `script.js`, and `styles.css` and `script.js` only from `index.html`, because the script rewrites only those files. The build fails when nothing references a file in `media/`.
 - `nginx.conf` serves hashed files as immutable for a year and everything else with `no-cache`, so a deploy shows on the next visit. It finds hashed files by a pattern that lists their extensions, `css`, `js`, `mp4`, `webp` and `png`. A media file with another extension gets a hashed name but `no-cache`, until the pattern lists it.
 - The hash is 10 hex characters in `fingerprint.sh`, in the `nginx.conf` pattern and in `HASHED` in `sw.js`. Change the three together.

@@ -2,15 +2,15 @@
 
 Each deploy workflow runs on a push to `main` that changes a file in its folder other than Markdown, or a workflow file in its `paths`. `blog.yml` also runs on a change to a post in `blog/src/posts/`.
 
-| Workflow | Folder | Also starts on a change to | Deploys | Manual run |
-| --- | --- | --- | --- | --- |
-| `infra.yml` | `infra/` | itself | the nginx proxy, as [infra.yml](#infrayml) says | no |
-| `www.yml` | `www/` | itself, `site.yml` | `www/` through `site.yml` | no |
-| `blog.yml` | `blog/` | itself, `site.yml` | `blog/` through `site.yml` | no |
-| `nii-au.yml` | `nii-au/` | itself, `site.yml` | `nii-au/` through `site.yml` | no |
-| `temp-sites.yml` | `temp-sites/projects/` | itself, `deploy-project.yml` | each changed project through `deploy-project.yml` | no |
-| `traefik.yml` | `temp-sites/traefik/` | itself | the Traefik router | yes |
-| `games.yml` | `games/` | itself, `deploy-project.yml` | each [deployment](/docs/glossary.md#deployment) a change reaches, through `deploy-project.yml` | yes |
+| Workflow         | Folder                 | Also starts on a change to   | Deploys                                                                                        | Manual run |
+| ---------------- | ---------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------- | ---------- |
+| `infra.yml`      | `infra/`               | itself                       | the nginx proxy, as [infra.yml](#infrayml) says                                                | no         |
+| `www.yml`        | `www/`                 | itself, `site.yml`           | `www/` through `site.yml`                                                                      | no         |
+| `blog.yml`       | `blog/`                | itself, `site.yml`           | `blog/` through `site.yml`                                                                     | no         |
+| `nii-au.yml`     | `nii-au/`              | itself, `site.yml`           | `nii-au/` through `site.yml`                                                                   | no         |
+| `temp-sites.yml` | `temp-sites/projects/` | itself, `deploy-project.yml` | each changed project through `deploy-project.yml`                                              | no         |
+| `traefik.yml`    | `temp-sites/traefik/`  | itself                       | the Traefik router                                                                             | yes        |
+| `games.yml`      | `games/`               | itself, `deploy-project.yml` | each [deployment](/docs/glossary.md#deployment) a change reaches, through `deploy-project.yml` | yes        |
 
 So merging a change to `site.yml` redeploys all three sites, and a change to `infra.yml` or `traefik.yml` redeploys what it deploys. `games.yml` and `temp-sites.yml` deploy only the deployments that a change reaches, so a change to their workflows or to `deploy-project.yml` alone deploys nothing. No deploy workflow lists a `check-*.yml` file, so a change to a check deploys nothing.
 
@@ -50,12 +50,12 @@ The `images` job starts after the `check-games.yml`, `check-turn.yml` and `check
 
 After the deploys, also when some of them failed, the `smoke` job of `games.yml` runs [smoke-games.py](/.github/scripts/smoke-games.py) with every deployment of the run. It checks the live site over public HTTPS, through Cloudflare, needs no secrets and fails the run when a check fails. [deploy-checks.md](/docs/decisions/deploy-checks.md) explains why it checks the live site, opens no room and rolls nothing back.
 
-| Deployment | What it checks |
-| --- | --- |
-| a title in `games/titles/<name>/` | `https://games.when.party/<name>/`, and each page and file under `/<name>/` that a page names in `src` or `href`, a stylesheet in `url()` or a script as a quoted path that starts with `/` or `./` and ends in an extension, such as a 3D model |
-| `games/index/` | `https://games.when.party/`, and each page and file named in the same way whose path goes to the index page, not to a title (`4-1` and `4-3` of [4-games.md](/infra/docs/specs/4-games.md)) |
-| `games/platform/signaling/` | `https://signaling.when.party/health`, and a WebSocket upgrade at `/platform` with the origin `https://games.when.party` |
-| `games/platform/turn/` and a removed deployment | nothing |
+| Deployment                                      | What it checks                                                                                                                                                                                                                                   |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| a title in `games/titles/<name>/`               | `https://games.when.party/<name>/`, and each page and file under `/<name>/` that a page names in `src` or `href`, a stylesheet in `url()` or a script as a quoted path that starts with `/` or `./` and ends in an extension, such as a 3D model |
+| `games/index/`                                  | `https://games.when.party/`, and each page and file named in the same way whose path goes to the index page, not to a title (`4-1` and `4-3` of [4-games.md](/infra/docs/specs/4-games.md))                                                      |
+| `games/platform/signaling/`                     | `https://signaling.when.party/health`, and a WebSocket upgrade at `/platform` with the origin `https://games.when.party`                                                                                                                         |
+| `games/platform/turn/` and a removed deployment | nothing                                                                                                                                                                                                                                          |
 
 - Each page and file answers 200, and `/health` too. Each response carries once, with its value, every header that the `add_header <name> "<value>" always;` lines of [default.conf](/infra/nginx/conf.d/default.conf) and of the host's server in [games.conf](/infra/nginx/conf.d/games.conf) add, which are those of `2-1` and `2-2` in [2-headers.md](/infra/docs/specs/2-headers.md). The script reads those lines from the commit of the run, so a manual run on a branch that adds such a line or changes its value fails while the VPS runs the proxy of `main`.
 - The upgrade answers 101, and the script closes the connection at once. So the connection names no versions and gets no peer ID, and the check opens no room.

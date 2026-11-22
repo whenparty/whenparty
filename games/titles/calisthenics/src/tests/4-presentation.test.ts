@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict'
 import {describe, it} from 'node:test'
-import {bodyVolume, canStart, createChampionship, isChampionship, isMove, podiumOf, startChampionship, startingCondition, type Championship} from '../core/index.ts'
+import {
+  bodyVolume,
+  canStart,
+  createChampionship,
+  isChampionship,
+  isMove,
+  podiumOf,
+  startChampionship,
+  startingCondition,
+  type Championship
+} from '../core/index.ts'
 import {appearanceOf, defaultAppearance} from '../frontends/3d/appearance.ts'
 import {demonstrationMotion, performanceMotion} from '../frontends/3d/presentation.ts'
 import {positionOf, withAthleteModel} from './athlete-fixtures.ts'

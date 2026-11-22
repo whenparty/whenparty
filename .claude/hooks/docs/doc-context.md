@@ -11,5 +11,6 @@
   - the `AGENTS.md` of the folder of each `@whenparty/*` package that the `package.json` of the deepest folder on its path with an `AGENTS.md` lists in `dependencies` or `devDependencies`. The workflow does not require these; required-reading.md says why the hook does.
 
   Only files that git tracks and that exist on disk are needed, and never the file being edited.
+
 - The main agent and each subagent have their own record of what they have read. A subagent gets no list of root documents when it starts, so its first edit is denied with the full list. The records live in `whenparty-doc-context/` under `$TMPDIR`, or under `/tmp` when it is not set.
 - A file read through Bash, such as with `cat`, does not count as read, and edits through Bash are not checked.

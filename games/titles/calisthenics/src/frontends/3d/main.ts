@@ -154,8 +154,7 @@ const update = (next: Visit | null) => {
       if (turn) {
         view.activeSeat = state.athletes[turn.index]?.seat
         view.elapsed =
-          Math.min(performanceMs, Math.max(0, performanceMs - (turn.endsAt === null ? turn.remainingMs : turn.endsAt - roomTime()))) /
-          1000
+          Math.min(performanceMs, Math.max(0, performanceMs - (turn.endsAt === null ? turn.remainingMs : turn.endsAt - roomTime()))) / 1000
         view.paused = isPaused(state) || Boolean(next?.hostAway)
         caption.textContent = `${state.athletes[turn.index]?.profile.name} · ${turn.index + 1} of ${state.athletes.length}`
       }

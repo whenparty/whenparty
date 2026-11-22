@@ -34,7 +34,17 @@ import {
   type Plan
 } from '../../core/index.ts'
 import type {Visit} from '../../connection.ts'
-import {athleteStatus, characteristicNames, notACode, completionNames, levelsText, namesOf, problemNote, statusOf, trainedText} from './texts.ts'
+import {
+  athleteStatus,
+  characteristicNames,
+  notACode,
+  completionNames,
+  levelsText,
+  namesOf,
+  problemNote,
+  statusOf,
+  trainedText
+} from './texts.ts'
 
 export interface PanelActions {
   create: () => void

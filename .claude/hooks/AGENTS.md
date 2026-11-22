@@ -7,5 +7,6 @@
 - [required-reading.md](/docs/decisions/required-reading.md): the decision record on why doc-context.sh lists paths and denies edits, and why it requires only these documents. Read it before changing which documents the hook requires.
 - [docs/ruleset-guard.md](/.claude/hooks/docs/ruleset-guard.md): which Bash commands [ruleset-guard.sh](/.claude/hooks/ruleset-guard.sh) denies: changes to a ruleset or branch protection on GitHub. Read it before changing `ruleset-guard.sh`.
 - [agent-ruleset-changes.md](/docs/decisions/agent-ruleset-changes.md): the decision record on why a hook keeps agents from changing the rulesets on `main`, and why it does not check `git push`. Read it before changing what the hook denies or replacing it.
+- [docs/format-guard.md](/.claude/hooks/docs/format-guard.md): how [format-guard.sh](/.claude/hooks/format-guard.sh) checks the files of a branch with Prettier before a `git commit`. Read it before changing `format-guard.sh`.
 - [docs/testing.md](/.claude/hooks/docs/testing.md): how to test a hook with made-up inputs and with `claude -p`.
 - [docs/evaluation.md](/.claude/hooks/docs/evaluation.md): how the evaluation in `evals/` checks whether agents reach the documents a task needs through the maps and change the files it needs, when to run it, how to run it and how to write its tasks.

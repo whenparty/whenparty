@@ -25,10 +25,10 @@ After the first deploy of `infra/`, write the list of Cloudflare addresses as th
 
 The certificates are Cloudflare Origin Certificates, valid for 15 years, created in the Cloudflare dashboard under SSL/TLS → Origin Server. Git ignores `*.crt` and `*.key` files, so they exist only on the VPS.
 
-| Files in `/opt/services/whenparty/infra/nginx/certs/` | Host names |
-| --- | --- |
-| `nii.au.crt`, `nii.au.key` | `nii.au`, `*.nii.au` |
-| `when.party.crt`, `when.party.key` | `when.party`, `*.when.party` |
+| Files in `/opt/services/whenparty/infra/nginx/certs/` | Host names                   |
+| ----------------------------------------------------- | ---------------------------- |
+| `nii.au.crt`, `nii.au.key`                            | `nii.au`, `*.nii.au`         |
+| `when.party.crt`, `when.party.key`                    | `when.party`, `*.when.party` |
 
 ```bash
 chmod 644 /opt/services/whenparty/infra/nginx/certs/*.crt

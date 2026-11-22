@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - "nii-au/**"
-      - "!nii-au/**/*.md"
-      - ".github/workflows/nii-au.yml"
-      - ".github/workflows/site.yml"
+      - 'nii-au/**'
+      - '!nii-au/**/*.md'
+      - '.github/workflows/nii-au.yml'
+      - '.github/workflows/site.yml'
 
 permissions:
   contents: read

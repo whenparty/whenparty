@@ -18,9 +18,7 @@ export const seated = (count: number) => seats.slice(0, count)
 export const contextOf = (count: number, roomTime = 0, absent: readonly string[] = []): Context => ({
   roomTime,
   matchRuns: true,
-  seats: Object.fromEntries(
-    seats.map(seat => [seat, {taken: seated(count).includes(seat), lost: absent.includes(seat), hidden: false}])
-  )
+  seats: Object.fromEntries(seats.map(seat => [seat, {taken: seated(count).includes(seat), lost: absent.includes(seat), hidden: false}]))
 })
 
 export const must = (state: Championship | null): Championship => {

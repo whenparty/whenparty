@@ -1,4 +1,13 @@
-import {createNetcode, type End, type Failure, type GameHandlers, type Json, type Netcode, type SnapshotView, type Waiting} from '@whenparty/netcode'
+import {
+  createNetcode,
+  type End,
+  type Failure,
+  type GameHandlers,
+  type Json,
+  type Netcode,
+  type SnapshotView,
+  type Waiting
+} from '@whenparty/netcode'
 import {browserEnvironment} from '@whenparty/netcode/browser'
 import {seats, title, type Championship, type Move} from './core/index.ts'
 

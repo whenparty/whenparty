@@ -6,11 +6,11 @@
 
 `games-changes.yml` compares the checked-out commit with a base, and logs the base and both outputs.
 
-| Event | Base |
-| --- | --- |
-| pull request | the first parent of the merge commit that GitHub checks out, which is the tip of the target branch |
-| merge group of the merge queue | the commit that GitHub gives as the group's base, `merge_group.base_sha` |
-| push or manual run | the commit before the push, as [deploys.md](/.github/docs/deploys.md#which-deployments-a-push-reaches) says |
+| Event                          | Base                                                                                                        |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| pull request                   | the first parent of the merge commit that GitHub checks out, which is the tip of the target branch          |
+| merge group of the merge queue | the commit that GitHub gives as the group's base, `merge_group.base_sha`                                    |
+| push or manual run             | the commit before the push, as [deploys.md](/.github/docs/deploys.md#which-deployments-a-push-reaches) says |
 
 ## Packages
 

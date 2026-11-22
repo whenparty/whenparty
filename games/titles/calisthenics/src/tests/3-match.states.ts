@@ -92,7 +92,10 @@ const lobbyRow = (state: 'lobby' | 'lostLobby'): Row => ({
   startNotReady: cannotStart(state, '3-2'),
   name: {ids: state === 'lobby' ? ['3-1'] : ['3-1', '3-7'], outcome: {next: state, result: 'accepted', detail: "seat 2's name is trimmed"}},
   badName: refused(state, '3-1'),
-  appearance: {ids: state === 'lobby' ? ['3-1'] : ['3-1', '3-7'], outcome: {next: state, result: 'accepted', detail: "seat 2's appearance changes"}},
+  appearance: {
+    ids: state === 'lobby' ? ['3-1'] : ['3-1', '3-7'],
+    outcome: {next: state, result: 'accepted', detail: "seat 2's appearance changes"}
+  },
   train: refused(state, '3-3'),
   perform: refused(state, '3-3'),
   performUnconfirmed: refused(state, '3-3'),

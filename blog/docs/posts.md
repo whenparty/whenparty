@@ -6,17 +6,17 @@ A post keeps the views of its date. When the views change, a new post says so an
 
 `index.md` starts with front matter:
 
-| Field | Required | Holds |
-| --- | --- | --- |
-| `title` | yes | the title |
-| `description` | yes | one or two sentences, shown under the title, in the post's entry in the list, in search results and in link previews |
-| `date` | yes | the day of the post, such as `2026-11-15`, which orders the list, newest first |
-| `cover` | no | the file name of the picture beside the title and in the post's entry in the list. Without it, the entry shows an empty frame. |
-| `coverAlt` | with `cover` | what the picture shows, for readers who cannot see it |
-| `shareImage` | no, only with `cover` | the file name of the picture of the link preview, cut from the cover as below and described by `coverAlt`. Without it, the page names no picture for link previews. |
-| `audio` | no | `file`, the name of the MP3 file in the audio folder; `bytes`, its size in bytes; and `seconds`, its length in whole seconds. The podcast feed needs all three. The post page and the list show the length rounded to minutes. Without `audio`, the post has no player and no episode in the feed. |
-| `credits` | no | who did what, shown as the line under the text of the post page, such as `Conceived and edited by Nikolai Krivous. Drafted by Claude Opus 5.5.` Without it, the line says `Written with help from AI.` |
-| `draft` | no | `true` keeps the post off the site; the local preview shows it |
+| Field         | Required              | Holds                                                                                                                                                                                                                                                                                              |
+| ------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`       | yes                   | the title                                                                                                                                                                                                                                                                                          |
+| `description` | yes                   | one or two sentences, shown under the title, in the post's entry in the list, in search results and in link previews                                                                                                                                                                               |
+| `date`        | yes                   | the day of the post, such as `2026-11-15`, which orders the list, newest first                                                                                                                                                                                                                     |
+| `cover`       | no                    | the file name of the picture beside the title and in the post's entry in the list. Without it, the entry shows an empty frame.                                                                                                                                                                     |
+| `coverAlt`    | with `cover`          | what the picture shows, for readers who cannot see it                                                                                                                                                                                                                                              |
+| `shareImage`  | no, only with `cover` | the file name of the picture of the link preview, cut from the cover as below and described by `coverAlt`. Without it, the page names no picture for link previews.                                                                                                                                |
+| `audio`       | no                    | `file`, the name of the MP3 file in the audio folder; `bytes`, its size in bytes; and `seconds`, its length in whole seconds. The podcast feed needs all three. The post page and the list show the length rounded to minutes. Without `audio`, the post has no player and no episode in the feed. |
+| `credits`     | no                    | who did what, shown as the line under the text of the post page, such as `Conceived and edited by Nikolai Krivous. Drafted by Claude Opus 5.5.` Without it, the line says `Written with help from AI.`                                                                                             |
+| `draft`       | no                    | `true` keeps the post off the site; the local preview shows it                                                                                                                                                                                                                                     |
 
 - An image alone in its paragraph, with blank lines around it, becomes a taped card across the text: `![what it shows](name.webp "caption")`. The caption is optional, the description in square brackets is not.
 - With `#side` after the file name, as in `![what it shows](name.webp#side "caption")`, the card is a side card. A side card outside quotes and lists belongs to the block right after it when that block is a paragraph of text, a quote or a list. In windows 1280 px wide and wider such a card stands in the margin to the right of its block, level with its top, and stays in view until the block scrolls past; the text after a block shorter than the card starts below the card. In narrower windows it stands across the text above the block. Other side cards, such as one inside a quote, at the end of the post or before a heading, table, formula or another card, are cards across the text at every width.
@@ -28,6 +28,7 @@ A post keeps the views of its date. When the views change, a new post says so an
   ```bash
   scripts/picture.sh influence-without-authority ~/Downloads/cover.png influence-cover influence-share
   ```
+
 - LinkedIn, Facebook and Telegram keep the link preview of a page once they have fetched it. After a deploy that changes the `title`, the `description` or the picture of the link preview of a published post, ask the user to refresh the preview with their accounts: in LinkedIn's [Post Inspector](https://www.linkedin.com/post-inspector/), which changes only the previews of links shared on LinkedIn after the inspection, in Facebook's [Sharing Debugger](https://developers.facebook.com/tools/debug/) and by sending the link to `@WebpageBot` in Telegram. X, Slack, WhatsApp and iMessage have no such tool.
 - Each heading of level 2, `##`, starts a section. A post with more than three gets contents under the description and the audio player.
 - A table scrolls sideways when the text column is narrower than it. The alignment of a column, such as `---:`, becomes a class.

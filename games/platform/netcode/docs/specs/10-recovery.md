@@ -10,5 +10,6 @@
   5. While a match runs, the netcode calls "over" ([5-4](5-matches.md)); when no match runs then, the first spectators of the queue take the free seats ([4-5](4-seats.md)), and [5-11](5-matches.md) says what a title that gives "lobby" gets for them.
 
   The host is not in the roster, and it keeps its seat ([4-7](4-seats.md)).
+
 - `10-4` Right after the change that ends recovery, before any other cause, the host makes a batch ([7-1](7-deadlines.md)) when a match runs, and sets its timer.
 - `10-5` A host's page whose scripts the browser suspended and resumed keeps its game and does not recover.
