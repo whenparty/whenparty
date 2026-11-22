@@ -14,7 +14,7 @@ The transport server checks its signaling connections every 15 seconds (`7-2` of
 
 ## Tests
 
-`pnpm --filter @whenparty/signaling test` from `games/` runs the [tests](../src/tests/). They cover the HTTP responses, the refusal of upgrades at other paths, and the hand-over of upgrades at `/platform` (`1-13` of [1-signaling.md](../../transport/docs/specs/1-signaling.md)) to the transport server and its rooms server. After a change to the dependencies of signaling, also run `pnpm test` and `pnpm typecheck` from `games/` ([workspace.md](../../../docs/workspace.md#checks)).
+`pnpm --filter @whenparty/signaling test` from `games/` runs the [tests](../src/tests/). They cover the HTTP responses, the refusal of upgrades at other paths, and the hand-over of upgrades at `/platform` (`1-13` of [1-signaling.md](../../transport/docs/specs/1-signaling.md)) to the transport server and its rooms server. `pnpm test` and `pnpm typecheck` from `games/` run the tests and typechecks of every package ([workspace.md](../../../docs/workspace.md#checks)).
 
 ## Image and deploys
 
