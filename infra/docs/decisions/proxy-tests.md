@@ -9,12 +9,12 @@ The [specification](../specs/) of `infra/` describes what the proxy does for vis
 ## Options
 
 - By hand only, like the smoke test of the index page. No time in CI. A change that breaks a requirement deploys unless someone ran the tests.
-- A check of its own that only `ci.yml` calls. A pull request with broken routing cannot merge, and a deploy does not wait for the check. Routing that a merge breaks by combining changes that each passed alone deploys before the check fails.
+- A check of its own that only `ci.yml` calls. A pull request with broken routing cannot merge, and a deploy does not wait for the check. Routing that a direct push breaks deploys before the check fails.
 - A step of `check-nginx.yml` after `nginx -t`. A pull request with broken routing cannot merge, and broken routing never deploys. Every deploy of `infra/` waits a little over a minute longer, and a test that fails by chance stops it.
 
 ## Decision
 
-A step of `check-nginx.yml`. A broken proxy takes every site down, and `infra/` deploys rarely, so a minute before each deploy costs less than a broken proxy that a merge of changes that each passed alone would deploy. A test that fails by chance is retried by running the workflow again.
+A step of `check-nginx.yml`. A broken proxy takes every site down, and `infra/` deploys rarely, so a minute before each deploy costs less than a broken proxy that a direct push, which `ci.yml` does not stop, would deploy. A test that fails by chance is retried by running the workflow again.
 
 ## Consequences
 

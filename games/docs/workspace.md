@@ -2,6 +2,10 @@
 
 The packages of `games/` form one pnpm workspace, whose folders [pnpm-workspace.yaml](../pnpm-workspace.yaml) lists. Run the scripts of the workspace and of its packages from `games/`.
 
+## Installing
+
+`pnpm deps:cached` installs the workspace from the lockfile, taking every package from pnpm's store on the machine and downloading none; it fails when the store lacks one, and `pnpm install --frozen-lockfile` then downloads it. [configuration.md](/.claude/docs/configuration.md) says why agents run the first without asking and the second only after asking.
+
 ## Checks
 
 - `pnpm --filter <package> test` runs one package's [tests in Node](/docs/conventions/tests.md), and `pnpm --filter <package> exec node --test --test-name-pattern '\b1-3 ' 'src/**/!(*.browser).test.{ts,mjs}'` only those of its requirement `1-3`. `pnpm test` runs the Node tests of every package, and `pnpm typecheck` checks the types of every package that has a `typecheck` script; [signaling](../platform/signaling/AGENTS.md) has none.

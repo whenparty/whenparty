@@ -1,5 +1,6 @@
-# Build context of every image in games/
 **/node_modules
 **/dist
 **/tests
 **/*.md
+playwright-report
+test-results

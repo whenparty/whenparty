@@ -1,18 +1,23 @@
+FROM node:26.13.1-alpine3.24 AS build
+
+WORKDIR /games
+
+COPY . .
+RUN --mount=type=bind,from=ghcr.io/pnpm/pnpm:12.21.0-alpine,source=/opt/pnpm,target=/opt/pnpm \
+  /opt/pnpm/pnpm install --frozen-lockfile --prod --filter @whenparty/signaling... \
+  && mkdir /app \
+  && cp -a package.json node_modules /app/ \
+  && /opt/pnpm/pnpm --filter @whenparty/signaling... ls --depth -1 --parseable | while read -r package; do \
+    folder=${package#/games/}; \
+    mkdir -p "/app/$(dirname "$folder")"; \
+    cp -a "$package" "/app/$folder"; \
+  done
+
 FROM node:26.13.1-alpine3.24
 
 WORKDIR /games
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY platform/signaling/package.json platform/signaling/
-COPY platform/transport/package.json platform/transport/
-COPY platform/rooms/package.json platform/rooms/
-RUN --mount=type=bind,from=ghcr.io/pnpm/pnpm:12.21.0-alpine,source=/opt/pnpm,target=/opt/pnpm \
-  /opt/pnpm/pnpm install --frozen-lockfile --prod --filter @whenparty/signaling... \
-  && rm -rf /root/.local/share/pnpm /root/.cache
-
-COPY platform/signaling/src/ platform/signaling/src/
-COPY platform/transport/src/ platform/transport/src/
-COPY platform/rooms/src/ platform/rooms/src/
+COPY --from=build /app/ ./
 
 USER node
 

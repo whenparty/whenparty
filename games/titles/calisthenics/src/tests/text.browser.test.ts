@@ -1,7 +1,7 @@
 import {expect, test as base, type Page} from '@playwright/test'
-import {leaveRoom, networkWaitMs, watchSignaling} from './browser-rooms.ts'
+import {leaveRoom, networkWaitMs, pageUrl as gameUrl, watchSignaling} from './browser-rooms.ts'
 
-const pageUrl = 'http://localhost:5175/calisthenics/text.html'
+const pageUrl = `${gameUrl}text.html`
 const minContrast = 4.5
 
 interface Players {

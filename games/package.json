@@ -8,6 +8,7 @@
     "node": ">=26"
   },
   "scripts": {
+    "deps:cached": "pnpm install --frozen-lockfile --offline",
     "test": "pnpm -r test",
     "test:browser": "sh tests/browser.sh",
     "typecheck": "pnpm -r typecheck",

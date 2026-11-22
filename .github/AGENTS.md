@@ -1,6 +1,6 @@
 # GitHub Actions
 
-`.github/` holds the GitHub Actions workflows of this repository in `workflows/`: `ci.yml`, which checks every pull request and every push to `main`, the checks it calls, the deploy workflows and the weekly image scan. `scripts/` holds the scripts that the checks and `games.yml` run. It is not a [project](/docs/glossary.md#project) and has no [specification](/docs/conventions/specs.md).
+`.github/` holds the GitHub Actions workflows of this repository in `workflows/`: `ci.yml`, which checks every pull request, every merge group of the merge queue and every push to `main`, the checks it calls, the deploy workflows and the weekly image scan. `scripts/` holds the scripts that the checks and `games.yml` run. It is not a [project](/docs/glossary.md#project) and has no [specification](/docs/conventions/specs.md).
 
 - [workflows.md](/.github/docs/workflows.md): rules for every workflow file: action pinning, the permissions and secrets of reusable workflows, job time limits, and how a change to a workflow can be tried. Read it before changing any workflow.
 - [checks.md](/.github/docs/checks.md): `ci.yml`, the `check-*.yml` workflows and the scripts in `scripts/` that they run, and how to add a check. Read it before changing them.
@@ -19,4 +19,4 @@
 - [game-names-check.md](/docs/decisions/game-names-check.md): why a check of its own keeps other containers off the names that nginx reaches for the games, and why no deploy calls it.
 - [deploy-checks.md](/docs/decisions/deploy-checks.md): why every deploy of `deploy-project.yml`, temporary sites included, waits for its containers' health, why `games.yml` then checks the live site over public HTTPS, why that check opens no room and why a failed deploy rolls nothing back.
 - [scans-in-deploys.md](/docs/decisions/scans-in-deploys.md): why only the weekly `image-scan.yml` scans the images, and no deploy.
-- [main-branch-protection.md](/docs/decisions/main-branch-protection.md): why two rulesets on `main`, with no bypass, block force pushes and deletion and require a pull request and the `result` check of `ci.yml`, and why branches need not be up to date.
+- [main-branch-protection.md](/docs/decisions/main-branch-protection.md): why two rulesets on `main`, with no bypass, block force pushes and deletion and require a pull request, the `result` check of `ci.yml` and a merge queue that squash-merges, in place of branches that must be up to date.

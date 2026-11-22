@@ -11,8 +11,8 @@ on:
         description: GHCR image name
         required: true
         type: string
-      context:
-        description: Docker build context (default the project folder)
+      image-ref:
+        description: Image to deploy by digest instead of building one from the Dockerfile; latest moves to it after the deploy
         required: false
         type: string
         default: ''
@@ -80,7 +80,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
-        if: steps.dockerfile.outputs.exists == 'true'
+        if: steps.dockerfile.outputs.exists == 'true' && inputs.image-ref == ''
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Login to GHCR
@@ -92,10 +92,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push image
-        if: steps.dockerfile.outputs.exists == 'true'
+        if: steps.dockerfile.outputs.exists == 'true' && inputs.image-ref == ''
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
-          context: ${{ inputs.context || inputs.path }}
+          context: ${{ inputs.path }}
           file: ${{ inputs.path }}/Dockerfile
           push: true
           tags: |
@@ -106,8 +106,12 @@ jobs:
 
       - name: Determine deploy image
         id: deploy_image
+        env:
+          IMAGE_REF: ${{ inputs.image-ref }}
         run: |
-          if [ "${{ steps.dockerfile.outputs.exists }}" = "true" ]; then
+          if [ -n "$IMAGE_REF" ]; then
+            echo "value=$IMAGE_REF" >> "$GITHUB_OUTPUT"
+          elif [ "${{ steps.dockerfile.outputs.exists }}" = "true" ]; then
             echo "value=${{ steps.image.outputs.sha }}" >> "$GITHUB_OUTPUT"
           else
             echo "value=" >> "$GITHUB_OUTPUT"
@@ -171,3 +175,10 @@ jobs:
             fi
 
             docker image prune -f
+
+      - name: Point latest at the deployed image
+        if: inputs.image-ref != '' && steps.project_dir.outputs.exists == 'true'
+        env:
+          IMAGE_REF: ${{ inputs.image-ref }}
+          LATEST: ${{ steps.image.outputs.latest }}
+        run: docker buildx imagetools create --prefer-index=false --tag "$LATEST" "$IMAGE_REF"

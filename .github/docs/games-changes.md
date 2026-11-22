@@ -1,6 +1,6 @@
 # Packages and deployments a games change reaches
 
-[games-changes.yml](/.github/workflows/games-changes.yml) finds the packages and [deployments](/docs/glossary.md#deployment) of `games/` that a change reaches. `ci.yml` passes the packages and the deployments to `check-games.yml`, and `games.yml` passes it the deployments and deploys them, as [checks.md](/.github/docs/checks.md) says. The `smoke` job of `games.yml` then checks each deployment, by its `path`, on the live site, as [deploys.md](/.github/docs/deploys.md#gamesyml) says. [games-check-scope.md](/docs/decisions/games-check-scope.md) explains why pnpm finds them on the runner.
+[games-changes.yml](/.github/workflows/games-changes.yml) finds the packages and [deployments](/docs/glossary.md#deployment) of `games/` that a change reaches. `ci.yml` passes the packages and the deployments to `check-games.yml`, and `games.yml` builds, tests and deploys the deployments, as [checks.md](/.github/docs/checks.md) says. The `smoke` job of `games.yml` then checks each deployment, by its `path`, on the live site, as [deploys.md](/.github/docs/deploys.md#gamesyml) says. [games-check-scope.md](/docs/decisions/games-check-scope.md) explains why pnpm finds them on the runner.
 
 ## The base
 
@@ -9,6 +9,7 @@
 | Event | Base |
 | --- | --- |
 | pull request | the first parent of the merge commit that GitHub checks out, which is the tip of the target branch |
+| merge group of the merge queue | the commit that GitHub gives as the group's base, `merge_group.base_sha` |
 | push or manual run | the commit before the push, as [deploys.md](/.github/docs/deploys.md#which-deployments-a-push-reaches) says |
 
 ## Packages
