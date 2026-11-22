@@ -11,11 +11,13 @@ The three workflow files, this one, workflow-specs.md and workflow-checks.md, ar
 - A fix of a few lines, and a change that repeats elsewhere a change the user already agreed, need no plan: do them at once.
 - A session that another session started proposes no plan: it follows the steps of its brief, and goes to the user only when the brief does not cover its case.
 
-These hold in every case, outside the hypothesis: the [conventions files](/AGENTS.md#conventions-files) other than the workflow files, which say how files look; the scheduled skills [`rules-evening`](/.claude/skills/rules-evening/SKILL.md) and [`docs-weekly`](/.claude/skills/docs-weekly/SKILL.md), which run their steps as written; the hook [doc-context.sh](/.claude/hooks/docs/doc-context.md), which makes a session read the workflow files and the writing rules before it edits; and saving the user's corrections, as [Decisions](#decisions) says.
+These hold in every case, outside the hypothesis: the [conventions files](/AGENTS.md#conventions-files) other than the workflow files, which say how files look; the scheduled skills [`rules-evening`](/.claude/skills/rules-evening/SKILL.md) and [`docs-weekly`](/.claude/skills/docs-weekly/SKILL.md), which run their steps as written; the hook [doc-context.sh](/.claude/hooks/docs/doc-context.md), which makes a session read the workflow files and the writing rules before it edits; checking that you can do the work the way the user asked, as [Starting](#starting) says; and saving the user's corrections, as [Decisions](#decisions) says.
 
 The workflow files change from what happens on tasks: at the weekly review of `whenparty-notes/interaction-log.md`, the user and you look at which proposed steps the user accepted, removed or added, and change these files from that.
 
 ## Starting
+
+Before you start any work that the user asks for, directly or through the brief of your session, check that you can do it the way the request says: each thing that it states about how to do the work, such as the model, the effort, a tool, the order of steps or the place. When you cannot do one of them, or are not sure that you can, tell the user which one and why, and ask how to go on. Do not start the work, and do not do it in another way, until the user answers.
 
 Before starting work, read the [writing rules](/docs/conventions/writing.md) and the conventions files that cover what the task changes, as the [map](/AGENTS.md) lists them, and follow them.
 
