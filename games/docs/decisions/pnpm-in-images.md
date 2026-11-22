@@ -7,7 +7,7 @@ The Dockerfiles in `games/` start from the Node image and install the workspace 
 - The Node 26 Alpine image has npm but no Corepack. Corepack is a separate npm package.
 - When the pnpm that runs is not the version that `packageManager` in [package.json](../../package.json) names, pnpm downloads that version and runs it instead, so a pnpm of another version adds a download to every build and check.
 - The pnpm project publishes the image `ghcr.io/pnpm/pnpm` with a standalone pnpm in `/opt/pnpm`, which needs no Node, and documents copying that folder into a Node image. For pnpm 12 the image has Alpine variants, tagged `<version>-alpine`; for pnpm 11 it has only Debian ones, whose pnpm does not start on Alpine. The image has no Node and no `node` user.
-- `/opt/pnpm` takes 52 MB. The signaling image has one stage, so whatever its build installs ships, and it runs as the `node` user of the Node image. The other images copy only the built files from their Node stage into an nginx image.
+- `/opt/pnpm` takes 52 MB. The signaling image copies from its build stage only the installed packages into a second Node stage, so pnpm, which the build mounts, does not ship, and it runs as the `node` user of the Node image. The other images copy only the built files from their Node stage into an nginx image.
 - `check-games.yml` runs the tests with `docker run`, not in a build, so it cannot use the `RUN --mount` of the Dockerfiles.
 
 ## Options

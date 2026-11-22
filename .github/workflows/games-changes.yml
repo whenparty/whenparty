@@ -36,11 +36,14 @@ jobs:
         env:
           EVENT: ${{ github.event_name }}
           BEFORE: ${{ github.event.before }}
+          QUEUE_BASE: ${{ github.event.merge_group.base_sha }}
         run: |
           set -euo pipefail
 
           if [ "$EVENT" = pull_request ]; then
             base=$(git rev-parse HEAD^1)
+          elif [ "$EVENT" = merge_group ]; then
+            base=$QUEUE_BASE
           elif [ -z "$BEFORE" ] || [ "$BEFORE" = 0000000000000000000000000000000000000000 ]; then
             base=$(git hash-object -t tree /dev/null)
           else

@@ -6,7 +6,7 @@
 
 A browser test can measure each part at a set time of an animation, or take a screenshot. Playwright compares a screenshot with an approved one within a tolerance and, when they differ, leaves both and their difference. Browsers draw some pixels differently on another system or processor. A pull request shows old and new images side by side. Git LFS keeps files outside the repository, and every checkout of them counts towards a transfer quota.
 
-As [ci-checks.md](/docs/decisions/ci-checks.md) decides, `ci.yml` checks every pull request and push to `main`, and only `games.yml` and `infra.yml` wait for their checks. A ruleset on `main` requires a pull request and the `result` check of `ci.yml`, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides. The site deploys in about 1.5 minutes, and the browser tests take about half a minute in CI.
+As [ci-checks.md](/docs/decisions/ci-checks.md) decides, `ci.yml` checks every pull request, merge group of the merge queue and push to `main`, and only `games.yml` and `infra.yml` wait for their checks. A ruleset on `main` requires a pull request, the `result` check of `ci.yml` and a merge queue, which checks each pull request together with `main` before it merges, as [main-branch-protection.md](/docs/decisions/main-branch-protection.md) decides. The site deploys in about 1.5 minutes, and the browser tests take about half a minute in CI.
 
 ## Options
 
@@ -27,14 +27,14 @@ Where the approved screenshots live:
 
 Whether the deploy waits for the tests:
 
-- `www.yml` calls the check before it deploys. Failing tests stop the page from going live, even after a merge that combines changes that each passed alone. Every deploy takes about half a minute longer.
-- The deploy does not wait. A pull request that fails the tests cannot merge. A merge that combines changes that each passed alone can put a broken page live before `ci.yml` reports it.
+- `www.yml` calls the check before it deploys. Failing tests stop the page from going live, even after a direct push. Every deploy takes about half a minute longer.
+- The deploy does not wait. A pull request that fails the tests cannot merge. A direct push can put a broken page live before `ci.yml` reports it.
 
 ## Decision
 
 Storyboards of the takeoff at a desktop and a phone width, compared with PNG files in git, and a few tests without screenshots, such as when the link opens. Approving a sheet of frames by eye costs less than an assertion for every part, and it catches mistakes nobody foresaw. The page has no components for stories. A few hundred kilobytes per update do not justify Git LFS, and hashes would hide the difference that makes a failure useful.
 
-The deploy does not wait for the tests. A pull request that fails them cannot merge, and a merged change goes live at once. A merge that combines changes that each passed alone can put a broken page live until a fix follows, which costs less than half a minute on every deploy.
+The deploy does not wait for the tests. A pull request that fails them cannot merge, and a merged change goes live at once. A direct push can put a broken page live until a fix follows, which costs less than half a minute on every deploy.
 
 ## Consequences
 

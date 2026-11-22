@@ -16,7 +16,7 @@ A reusable workflow gets only the permissions and secrets its caller passes. A c
 
 ## Timeouts
 
-Every job that runs steps sets `timeout-minutes: 15`. The jobs take under three minutes, and a job without a limit runs for up to six hours when a step hangs. A job that calls a reusable workflow cannot set a limit, so the jobs of that workflow do.
+Every job that runs steps sets `timeout-minutes: 15`. A job without a limit runs for up to six hours when a step hangs. A job that calls a reusable workflow cannot set a limit, so the jobs of that workflow do.
 
 ## Trying a change
 

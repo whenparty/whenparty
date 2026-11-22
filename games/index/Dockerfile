@@ -2,8 +2,7 @@ FROM node:26.13.1-alpine3.24 AS build
 
 WORKDIR /games
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
-COPY index/ index/
+COPY . .
 RUN --mount=type=bind,from=ghcr.io/pnpm/pnpm:12.21.0-alpine,source=/opt/pnpm,target=/opt/pnpm \
   /opt/pnpm/pnpm install --frozen-lockfile --include-workspace-root --filter @whenparty/index... \
   && /opt/pnpm/pnpm --filter @whenparty/index build

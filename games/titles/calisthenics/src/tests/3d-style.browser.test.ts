@@ -1,7 +1,6 @@
 import {expect, test, type Page} from '@playwright/test'
-import {leaveRoom, networkWaitMs, watchSignaling} from './browser-rooms.ts'
+import {leaveRoom, networkWaitMs, pageUrl, watchSignaling} from './browser-rooms.ts'
 
-const pageUrl = 'http://localhost:5175/calisthenics/'
 const phone = {width: 375, height: 812}
 const minTextPx = 12
 const minTouchTargetPx = 44

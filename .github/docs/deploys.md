@@ -34,15 +34,18 @@ What the deploy leaves behind:
 
 `deploy-project.yml` deploys one deployment of `games/` or `temp-sites/projects/`. Its callers name the image after the last part of the folder's path.
 
-- When the folder has a `Dockerfile`, it builds the image and pushes it with the tags `latest` and `sha-<commit>`. Each image has its own build cache scope, so images built side by side do not evict each other's cache.
-- It copies the folder to the same path under `/opt/services/whenparty/` and runs `docker compose up -d --remove-orphans --wait` there, with `IMAGE` set to the `sha-<commit>` image when it built one. The copy never deletes files, so a file removed from a folder that still exists stays on the VPS.
+- When its caller gives an image by digest, as `games.yml` does, it deploys that image and builds none. Otherwise, when the folder has a `Dockerfile`, it builds the image and pushes it with the tags `latest` and `sha-<commit>`, as for a temporary site. Each image has its own build cache scope, so images built side by side do not evict each other's cache.
+- It copies the folder to the same path under `/opt/services/whenparty/` and runs `docker compose up -d --remove-orphans --wait` there, with `IMAGE` set to the given digest or to the `sha-<commit>` image it built. The copy never deletes files, so a file removed from a folder that still exists stays on the VPS.
 - When a container does not run, or does not pass its health check, within 2 minutes, it prints `docker compose ps --all` without the containers' logs, which can hold the addresses of visitors and would show in the public run, and fails. A container without a health check only has to run. The new containers stay in place, also one that does not run: nothing rolls back, as [deploy-checks.md](/docs/decisions/deploy-checks.md) decides.
+- After the containers of a given digest pass, it moves the tag `latest` to that digest, so `latest` is the image that the last successful deploy started.
 - When the folder's `compose.yml` names `TURN_SECRET`, it writes the secret to a private `.env` next to it when the secret is set, and otherwise warns. [github-setup.md](/.github/docs/github-setup.md) says which deployments use it.
 - When the folder is gone, it runs `docker compose down` on the VPS and deletes the folder there.
 
 Deployment names of `games/` and `temp-sites/projects/` share one namespace, and `check-project-names.yml` checks it.
 
 ## games.yml
+
+The `images` job starts after the `check-games.yml`, `check-turn.yml` and `check-project-names.yml` checks pass. When the push reaches a deployment that has a `Dockerfile`, it builds and starts the image of every deployment of `games/` with a `Dockerfile` from the pushed commit, with [build-images.sh](/.github/scripts/build-images.sh), as `check-games.yml` does, and runs the end-to-end tests on them with [e2e.sh](/games/tests/e2e.sh), as [browser-tests.md](/games/docs/browser-tests.md#end-to-end-tests-on-the-images) says. It uploads their report and results as the `games-e2e-tests` artifact when they fail. Only then does it push the images of the reached deployments with the tag `sha-<commit>` and give `deploy-project.yml` their digests; the other images are dropped with the runner. So the VPS runs the image that these tests passed, and a failed build, start or test pushes and deploys nothing, and the VPS keeps the version it runs.
 
 After the deploys, also when some of them failed, the `smoke` job of `games.yml` runs [smoke-games.py](/.github/scripts/smoke-games.py) with every deployment of the run. It checks the live site over public HTTPS, through Cloudflare, needs no secrets and fails the run when a check fails. [deploy-checks.md](/docs/decisions/deploy-checks.md) explains why it checks the live site, opens no room and rolls nothing back.
 

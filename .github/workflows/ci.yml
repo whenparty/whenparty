@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+  merge_group:
   push:
     branches: [main]
 
@@ -31,12 +32,15 @@ jobs:
         env:
           EVENT: ${{ github.event_name }}
           BEFORE: ${{ github.event.before }}
+          QUEUE_BASE: ${{ github.event.merge_group.base_sha }}
         run: |
           set -euo pipefail
 
           base=HEAD^1
           if [ "$EVENT" = push ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
             base=$BEFORE
+          elif [ "$EVENT" = merge_group ]; then
+            base=$QUEUE_BASE
           fi
 
           code=$(git diff --name-only "$base" HEAD -- ':!*.md')
@@ -50,7 +54,7 @@ jobs:
           }
 
           games_workflows=false
-          if workflow_touched 'check-games|games|games-changes'; then
+          if workflow_touched 'check-games|games|games-changes' || touched '^\.github/scripts/build-images\.sh$'; then
             games_workflows=true
           fi
 
