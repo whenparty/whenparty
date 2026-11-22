@@ -25,10 +25,12 @@ const leaveRoom = async ({page, signaling}: Player): Promise<void> => {
 }
 
 export const test = base.extend<{newPlayer: (url?: string) => Promise<Page>; players: Players}>({
-  newPlayer: async ({browser}, use) => {
+  newPlayer: async ({browser, browserName}, use) => {
     const players: Player[] = []
     await use(async (url = pageUrl) => {
-      const context = await browser.newContext({permissions: ['clipboard-read', 'clipboard-write']})
+      const context = await browser.newContext({
+        permissions: browserName === 'chromium' ? ['clipboard-read', 'clipboard-write'] : []
+      })
       const page = await context.newPage()
       const player: Player = {page, signaling: []}
       page.on('websocket', socket => socket.url() === signalingUrl && player.signaling.push(socket))

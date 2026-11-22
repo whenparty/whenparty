@@ -63,7 +63,7 @@ const storyboards = [
 ]
 
 for (const {name, viewport} of storyboards) {
-  test(`the balloon takeoff on ${name} matches its approved storyboard`, async ({page}) => {
+  test(`the balloon takeoff on ${name} matches its approved storyboard`, {tag: '@chromium'}, async ({page}) => {
     await page.setViewportSize(viewport)
     await openAtRest(page)
     const frames = [{label: 'at rest', png: await page.screenshot()}]

@@ -18,15 +18,17 @@ test('3-12 when a page unloads, the other side closes as if the module of the pa
   await expect.poll(() => noticesOf(callee)).toContainEqual({kind: 'closed', reason: 'closed'})
 })
 
-test('3-9 a side without a relay candidate, to which coturn gave no free allocation, closes with no relay at its deadline after the other description arrived', async ({
-  context
-}) => {
-  await context.clock.install()
-  const credentials = credentialsExpiringIn(60_000)
-  const [caller, callee] = await openSides(context, {relayOnly: true, turn: credentials}, {})
-  expect(await caller.evaluate(used => harness.useUpAllocations(used, 64), credentials)).toBe(true)
-  await call([caller, callee])
-  await expect.poll(() => caller.evaluate(() => harness.refusedWithOtherDescription()), {timeout: networkWaitMs}).toBe(true)
-  await context.clock.fastForward(15_000)
-  await expect.poll(() => noticesOf(caller)).toEqual([{kind: 'closed', reason: 'no relay'}])
-})
+test(
+  '3-9 a side without a relay candidate, to which coturn gave no free allocation, closes with no relay at its deadline after the other description arrived',
+  {tag: '@chromium'},
+  async ({context}) => {
+    await context.clock.install()
+    const credentials = credentialsExpiringIn(60_000)
+    const [caller, callee] = await openSides(context, {relayOnly: true, turn: credentials}, {})
+    expect(await caller.evaluate(used => harness.useUpAllocations(used, 64), credentials)).toBe(true)
+    await call([caller, callee])
+    await expect.poll(() => caller.evaluate(() => harness.refusedWithOtherDescription()), {timeout: networkWaitMs}).toBe(true)
+    await context.clock.fastForward(15_000)
+    await expect.poll(() => noticesOf(caller)).toEqual([{kind: 'closed', reason: 'no relay'}])
+  }
+)
