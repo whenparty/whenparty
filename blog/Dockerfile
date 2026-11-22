@@ -1,10 +1,11 @@
 FROM node:26.13.1-alpine3.24 AS build
 WORKDIR /blog
-COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=bind,from=ghcr.io/pnpm/pnpm:12.21.0-alpine,source=/opt/pnpm,target=/opt/pnpm \
+    /opt/pnpm/pnpm install --frozen-lockfile
 COPY eleventy.config.js ./
 COPY src/ src/
-RUN npx @11ty/eleventy
+RUN node_modules/.bin/eleventy
 
 FROM nginx:1.31.8-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf

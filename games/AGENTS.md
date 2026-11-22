@@ -10,7 +10,8 @@
 - [docs/decisions/browser-tests.md](docs/decisions/browser-tests.md): why the browser tests are set up once at the root of the workspace and use local servers and, in CI, the runner's Chrome, and why the tests of the titles also run on the built images behind the proxy before a deploy of `main`.
 - [docs/decisions/dev-headers.md](docs/decisions/dev-headers.md): why the dev headers of the titles are an export of the netcode package. Read it before moving them.
 - [docs/decisions/index-page-location.md](docs/decisions/index-page-location.md): why the index page lives in `index/`.
-- [docs/decisions/pnpm-in-images.md](docs/decisions/pnpm-in-images.md): why the Dockerfiles here and `check-games.yml` take pnpm from `ghcr.io/pnpm/pnpm` instead of Corepack or npm. Read it before changing how they get pnpm or Node.
+- [pnpm-in-images.md](/docs/decisions/pnpm-in-images.md): why the Dockerfiles here and the `test` job of `check-games.yml` take pnpm from `ghcr.io/pnpm/pnpm` instead of Corepack or npm. Read it before changing how they get pnpm or Node.
+- [pnpm-deps-check.md](/docs/decisions/pnpm-deps-check.md): why `pnpm-workspace.yaml` sets `verifyDepsBeforeRun` to `warn`. Read it before changing that setting.
 - [games-routing.md](/docs/decisions/games-routing.md): how nginx reaches the containers of `games/`. Read it before changing the name or network of a container here.
 - [game-names-check.md](/docs/decisions/game-names-check.md): which names the containers of `games/` keep. Read it before changing the name or network of a container here.
 

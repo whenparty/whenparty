@@ -4,7 +4,7 @@ The packages of `games/` form one pnpm workspace, whose folders [pnpm-workspace.
 
 ## Installing
 
-`pnpm deps:cached` installs the workspace from the lockfile, taking every package from pnpm's store on the machine and downloading none; it fails when the store lacks one, and `pnpm install --frozen-lockfile` then downloads it. [configuration.md](/.claude/docs/configuration.md) says why agents run the first without asking and the second only after asking.
+`pnpm deps:cached` installs the workspace from the lockfile, taking every package from pnpm's store on the machine and downloading none; it fails when the store lacks one, and `pnpm install --frozen-lockfile` then downloads it. [configuration.md](/.claude/docs/configuration.md) says why agents run the first without asking and the second only after asking. [pnpm-workspace.yaml](../pnpm-workspace.yaml) sets `verifyDepsBeforeRun` to `warn`, so that the first downloads nothing, as [pnpm-deps-check.md](/docs/decisions/pnpm-deps-check.md) decides.
 
 ## Checks
 
