@@ -1,4 +1,4 @@
-import {expect, type BrowserContext, type Page} from '@playwright/test'
+import {expect, test, type BrowserContext, type Page} from '@playwright/test'
 import {turnCredentials} from '../server/turn.ts'
 import type {Credentials, Notice, PageOptions, Turn} from './browser-page.ts'
 
@@ -64,10 +64,23 @@ export const call = async ([caller, callee]: readonly [Page, Page]): Promise<voi
   await caller.evaluate(peerId => harness.connect(peerId), calleeId)
 }
 
+const attachNotices = async (pages: readonly [Page, Page]): Promise<void> => {
+  const [caller, callee] = await Promise.all(pages.map(page => noticesOf(page).catch(() => 'not readable')))
+  await test.info().attach('notices', {
+    body: `caller: ${JSON.stringify(caller)}\ncallee: ${JSON.stringify(callee)}`,
+    contentType: 'text/plain'
+  })
+}
+
 export const connect = async (pages: readonly [Page, Page]): Promise<void> => {
-  await call(pages)
-  for (const page of pages) {
-    await expect.poll(() => page.evaluate(() => harness.state()), {timeout: networkWaitMs}).toBe('open')
+  try {
+    await call(pages)
+    for (const page of pages) {
+      await expect.poll(() => page.evaluate(() => harness.state()), {timeout: networkWaitMs}).toBe('open')
+    }
+  } catch (error) {
+    await attachNotices(pages)
+    throw error
   }
 }
 
