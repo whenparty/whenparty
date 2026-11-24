@@ -26,7 +26,7 @@ The same thing happens with technical arguments. An engineer says “the export 
 
 ### Plain language isn’t enough
 
-The engineer can drop the jargon and say “the export is slow”. The words are now easy to understand, but it’s still tapping. The stakeholder still doesn’t know what this means for their work or plans. The engineer needs to follow the reasoning through to something the stakeholder cares about and make that connection explicit. Otherwise, the stakeholder won’t make the connection, or will make the wrong one.
+The engineer can drop the jargon and say “the export is slow”. The words are now easy to understand, but it’s still tapping. The stakeholder still doesn’t know what this means for their work or plans. The engineer needs to follow the reasoning through to something the stakeholder cares about and make that connection explicit. Otherwise, the stakeholder won’t see it, or will draw the wrong conclusion.
 
 In The Software Architect Elevator, Gregor Hohpe compares this work to riding an elevator. At the bottom is the engine room, where the technology gets built. At the top is the penthouse, where company strategy is set. People on each floor speak their own language, and the person riding the elevator has to translate. Hohpe argues that an architect’s value lies in how many floors they can span.
 
@@ -38,7 +38,7 @@ In The Software Architect Elevator, Gregor Hohpe compares this work to riding an
 >
 > Kate asked whether they could add a cache and suggested revisiting the export after launch.
 >
-> Amy had long since learned to frame conversations with Ian, the team’s engineering manager, around his goals. But that was easy with Ian, who had been an engineer himself and also made product decisions for the main online store. Kate had a background in working with major clients and wasn’t technical. Out of habit, Amy had written to her as though she were another engineer. Amy heard the whole tune in her email. Kate heard only tapping.
+> Amy had long since learned to frame conversations with Ian, the team’s engineering manager, around his goals. But that came easily, because Ian had been an engineer himself and also made product decisions for the main online store. Kate had a background in working with major clients and wasn’t technical. Out of habit, Amy had written to her as though she were another engineer. Amy heard the whole tune in her email. Kate heard only tapping.
 
 ## Every stakeholder speaks a different language
 
@@ -48,7 +48,7 @@ There is no single “language of business”. A product manager, an engineering
 
 Stakeholders are people who are affected by a decision or can influence it. To reach agreement with them, an engineer needs to understand their responsibilities: their goals for the quarter, commitments to others, the people and time they manage, and the risks they will have to answer for.
 
-The same slow export worries each of them for a different reason. The product manager worries about missing the launch date. The engineering manager anticipates support tickets and more work for the on-call engineer. If the export reads from another team’s database, that team is nervous about its database.
+The same slow export worries each of them for a different reason. The product manager worries about missing the launch date. The engineering manager anticipates support tickets and more work for the on-call engineer. Another team is nervous about its database if the export reads data from it.
 
 This leads to a common mistake. The engineer brings their own problem (“this module is getting in my way”) and expects the stakeholder to make it a priority. But the stakeholder will respond only once they see how the problem affects their own responsibilities.
 
@@ -74,7 +74,7 @@ An engineering manager may also be responsible for the product or serve as tech 
 
 It helps to name the role in the question:
 
-- “With your product hat on, would you be willing to delay the new search by a sprint so we can rework payments?”
+- “With your product hat on, would you be willing to move the new search to a later release so we can rework payments?”
 - “As engineering manager, who could you assign to spend a week on the rework?”
 
 This makes it clear which perspective is needed. It also brings conflicting priorities into the open: “From a product perspective, I’m against it. As engineering manager, I can see why it matters. Let’s look at the numbers.”
@@ -85,7 +85,7 @@ Because responsibilities vary between companies, the simplest approach is to ask
 
 ![Kate, a deer, shows Amy, a squirrel, a tray of ten client cards](stakeholders-client-cards.webp#side)
 
-> After talking to Oliver, Amy asked Kate what a successful launch would look like. Amy expected to hear a date. Instead, Kate explained that the ten clients’ first quarter would be a trial. Success meant keeping all ten after the trial ended. Amy asked what those clients wanted from the portal. Almost all of them, Kate said, had requested an order export for their accounts teams.
+> After talking to Oliver, Amy asked Kate what a successful launch would look like, expecting to hear a date. Instead, Kate explained that the ten clients’ first quarter would be a trial. Success meant keeping all ten after the trial ended. Amy asked what those clients wanted from the portal. Almost all of them, Kate said, had requested an order export for their accounts teams.
 
 ## What the stakeholder needs to know
 
@@ -95,19 +95,19 @@ Once the audience and their priorities are clear, the next question is what to s
 | ------------ | -------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Problem      | What’s happened?           | The facts in the stakeholder’s terms, without technical jargon | Some major clients won’t be able to export a quarter’s orders                                                   |
 | Consequences | What’s at stake for me?    | How their priorities will be affected, how seriously and when  | Three of the ten initial clients are joining partly for the export feature, which won’t work for them at launch |
-| Proposal     | What do you need me to do? | A recommendation, its cost, a specific request and a deadline  | Assign one engineer for a week before launch, delay the branch filters by a sprint, and decide by Friday        |
+| Proposal     | What do you need me to do? | A recommendation, its cost, a specific request and a deadline  | A week of one engineer’s time before launch, the branch filters ship after launch, a decision needed by Friday  |
 
 Engineers most often leave out the consequences. The problem is easy to name, the proposal is usually ready, and the consequences seem obvious. Without them, however, the stakeholder has no basis for weighing the proposal against other work. Time goes to the work whose consequences someone has explained.
 
 ### What to say first
 
-The detailed explanation follows that order, but the opening sentence should give the main point: what will happen and what the engineer proposes to do about it. For example: “Some major clients won’t be able to export a quarter’s orders when we launch. I propose a week to rework the export beforehand, and I need your decision by Friday.”
+The detailed explanation follows that order, but the opening should give the main point: what will happen and what the engineer proposes to do about it. For example: “Some major clients won’t be able to export a quarter’s orders when we launch. I propose a week to rework the export before launch, which means the branch filters ship after launch. Can you approve that by Friday?”
 
 This is the idea behind Barbara Minto’s Pyramid Principle. The main point comes first, and the supporting arguments sit beneath it. Readers who know the conclusion can see how each argument supports it. Readers who don’t know it have to hold the details in their heads while waiting to see where the explanation is going.
 
 The US Army follows the same principle in its standards for official correspondence, Army Regulation 25-50, where it is known as BLUF, bottom line up front. Someone who reads only the first sentence should still get the main point.
 
-In conversation, a stakeholder may need a moment to get up to speed. In that case, the first sentence can say what will be needed from them: “I need your decision on the order export. Let me explain why.” When they know the decision will be theirs, they listen differently and weigh each argument against the decision ahead.
+In conversation, a stakeholder may need a moment to get up to speed. In that case, the first sentence can say what will be needed from them: “I need your decision on the order export. Let me explain why.” When they know the decision will be theirs, they listen differently and weigh each argument with that decision in mind.
 
 ### Lead with the news that matters most
 
@@ -149,7 +149,7 @@ The stakeholder usually needs to hear only the last steps: what the user will ex
 
 ## Discussing consequences without exact numbers
 
-Consequences lie in the future, so nobody knows them exactly. It is tempting either to stay vague (“it’ll be slow”) or to invent precision (“performance will drop by 30%”). Both get in the way of the stakeholder’s decision. One gives them nothing to compare against, and the other gives them something made up to compare against.
+Consequences lie in the future, so nobody knows them exactly. It is tempting either to stay vague (“it’ll be slow”) or to invent precision (“performance will drop by 30%”). Both get in the way of the stakeholder’s decision. With the first, they have nothing to compare against. With the second, they’re comparing against something made up.
 
 ### A back-of-the-envelope estimate instead of an exact figure
 
@@ -162,7 +162,7 @@ What separates a useful estimate from an invented number is a clear basis for ea
 
 If a factor is an assumption, the engineer says so, for example: “assuming there are about ten clients like this”. The stakeholder can then tell the evidence from the assumptions.
 
-In How to Measure Anything, Douglas Hubbard advises measuring only what could change the decision. If the product manager would postpone the fix either way, whether the problem costs the team one week a quarter or two, there’s no point refining that estimate. If the difference would change the decision, that is where further measurement is worthwhile.
+In How to Measure Anything, Douglas Hubbard advises measuring only what could change the decision. If the product manager would put off the fix whether the problem costs the team one week a quarter or two, there’s no point refining that estimate. If the difference would change the decision, that is where further measurement is worthwhile.
 
 ### When a consequence can’t be estimated
 
@@ -199,7 +199,7 @@ Engineers often have more arguments than a stakeholder needs. Both the number of
 
 ### A weak argument weakens a strong one
 
-It seems reasonable to assume that every additional argument makes a case more convincing. Experiments on the presenter’s paradox show the opposite. In 2012, Kimberlee Weaver, Stephen Garcia and Norbert Schwarz described how presenters tend to add up the value of their arguments, while listeners tend to average them. So a weaker argument dilutes a stronger one. In one experiment, a $750 fine for littering seemed harsher than the same fine combined with two hours of community service.
+It seems reasonable to assume that every additional argument makes a case more convincing. Experiments show the opposite. In 2012, Kimberlee Weaver, Stephen Garcia and Norbert Schwarz described the presenter’s paradox: presenters tend to add up the value of their arguments, while listeners tend to average them. A weaker argument therefore dilutes a stronger one. In one experiment, a $750 fine for littering seemed harsher than the same fine combined with two hours of community service.
 
 So the engineer leads with the argument that matters most to the stakeholder, adds one or two supporting points, and keeps the rest ready for questions. If the strongest argument appears only at the end, after “by the way”, the stakeholder will already have formed an opinion based on the weaker ones.
 
@@ -228,7 +228,7 @@ A bare list of options leaves someone who knows less about the problem to evalua
 
 “We have three options.
 
-1. Rework the export before launch. That takes one engineer for a week and delays the branch filters by a sprint.
+1. Rework the export before launch. That takes one engineer for a week, and the branch filters ship after launch.
 2. Launch with a limit on export size and warn the three affected clients.
 3. Rework the export in the first two weeks after launch.
 
@@ -244,18 +244,18 @@ Before asking, the engineer needs to work out whose decision it is. If a proposa
 
 There are four common approaches:
 
-| Approach                                          | Example                                                                                                                                                                                                           | When it fits                                                                       | Risk if misused                                                                                                                    |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Give a heads-up                                   | “I’m moving the order ownership check into the shared module. Just letting you know.”                                                                                                                             | The decision affects only the engineer’s own work and time, and is easy to reverse | If the decision affects someone else’s work, the person responsible for it is presented with a done deal                           |
-| Proceed unless someone objects                    | “I’ll switch the overnight warehouse sync to the new queue on Tuesday unless anyone objects by Monday.”                                                                                                           | The effect on others is small and reversible, but someone may have objections      | For a significant decision, silence may only mean the email went unread                                                            |
-| Recommend an option and ask for explicit approval | “I recommend spending a week reworking the export before launch. I need your decision by Friday.”                                                                                                                 | The decision affects someone else’s work or can’t be undone                        | Used for minor choices, it takes up the stakeholder’s attention and slows progress                                                 |
-| Present options without a recommendation          | “We can launch with an export size limit, or rework the export first and delay the branch filters by a sprint. Both are technically viable. The choice depends on which feature the initial clients need sooner.” | The choice depends on priorities the engineer doesn’t know                         | When the priorities are already clear or the choice is purely technical, it creates unnecessary work for someone with less context |
+| Approach                                          | Example                                                                                                                                                                                                              | When it fits                                                                       | Risk if misused                                                                                                                    |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Give a heads-up                                   | “I’m moving the order ownership check into the shared module. Just letting you know.”                                                                                                                                | The decision affects only the engineer’s own work and time, and is easy to reverse | If the decision affects someone else’s work, the person responsible for it is presented with a done deal                           |
+| Proceed unless someone objects                    | “I’ll switch the overnight warehouse sync to the new queue on Tuesday unless anyone objects by Monday.”                                                                                                              | The effect on others is small and reversible, but someone may have objections      | For a significant decision, silence may only mean the email went unread                                                            |
+| Recommend an option and ask for explicit approval | “I recommend spending a week reworking the export before launch, with the branch filters shipping after launch. Can you approve this by Friday, so the rework is ready in time for launch?”                          | The decision affects someone else’s work or can’t be undone                        | Used for minor choices, it takes up the stakeholder’s attention and slows progress                                                 |
+| Present options without a recommendation          | “We can launch with an export size limit, or rework the export first and release the branch filters after launch. Both are technically viable. The choice depends on which feature the initial clients need sooner.” | The choice depends on priorities the engineer doesn’t know                         | When the priorities are already clear or the choice is purely technical, it creates unnecessary work for someone with less context |
 
 In Apache Software Foundation projects, proceeding unless someone objects is known as lazy consensus. A contributor announces an intention and allows time for objections, usually 72 hours. If no one objects, they can proceed. Later objections still receive consideration, and the change can be reversed if necessary.
 
 ### How to ask for a decision, and what happens if there’s no answer
 
-The engineer asks directly and says what decision is needed, who needs to make it and by when. The deadline needs a real reason, for example: “by Friday, because sprint planning is on Monday”. An arbitrary deadline is easy to push back. A deadline with a reason is harder to move, because it’s clear what a delay would cost.
+The engineer asks directly and says what decision is needed, who needs to make it and by when. The deadline needs a real reason, for example: “by Friday, or the rework won’t be ready in time for launch”. An arbitrary deadline is easy to push back. A deadline with a reason is harder to move, because it’s clear what a delay would cost.
 
 It also helps to say up front what will happen if no answer arrives: “If we don’t have a decision by Friday, we’ll launch with an export size limit and warn the three clients.” Then silence becomes a decision too, and the stakeholder can see what it costs. The default should be the option that doesn’t use other people’s time or change their plans without asking.
 
@@ -263,7 +263,7 @@ It also helps to say up front what will happen if no answer arrives: “If we do
 
 > Before sending the new email, Amy reread her first one. She had asked Kate to approve something Kate couldn’t decide without Ian, and she hadn’t spelled out the cost or the deadline. Kate decided what went into the launch. Ian decided who on the team worked on what. The only thing Amy could decide herself was how to build the new export, and for that it was enough to keep the team informed.
 >
-> Ian agreed to assign Amy to the rework if Kate postponed the branch filters. Amy asked Kate directly to postpone the branch filters. Her new email included a recommendation, the cost, a Friday deadline because sprint planning was on Monday, and a fallback if no answer arrived. Kate called the finance manager at one of the three affected clients and learned that they needed a single file for their quarter-end close. The next morning, she postponed the branch filters.
+> Ian agreed to assign Amy to the rework if the branch filters could ship after launch. So Amy asked Kate directly: could they launch without the branch filters? Her new email included a recommendation, the cost, a Friday deadline so the rework could be ready in time for launch, and a fallback if no answer arrived. Kate called the finance manager at one of the three affected clients and learned that they needed a single file for their quarter-end close. The next morning, she agreed to launch without them.
 
 ## Further reading
 
